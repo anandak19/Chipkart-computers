@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verification</title>
+    <%- include("../partials/head") %>
+    <link rel="stylesheet" href="/styles/authForm.css" />
+  </head>
+  <body>
+    <%- include("../partials/userHeader") %>
+
+    <div class="form-wrapper page-wrapper">
+      <div class="form-container">
+        <h1 class="text-center">Email Verification</h1>
+        <form action="/signup/varify" method="POST" id="otp-form">
+          <div class="form-group otp-container">
+            <% if (successMessage) { %>
+              <div class="alert text-success text-center">
+                <%= successMessage %>
+              </div>
+            <% } %>
+            <label for="otp">Enter the OTP here</label>
+            <div class="otp-timer text-muted"><span id="timer">60</span></div>
+            <div class="otp-input-group">
+              <input
+                type="text"
+                maxlength="1"
+                class="otp-box"
+                id="otp1"
+                name="otp1"
+                required
+              />
+              <input
+                type="text"
+                maxlength="1"
+                class="otp-box"
+                id="otp2"
+                name="otp2"
+                required
+              />
+              <input
+                type="text"
+                maxlength="1"
+                class="otp-box"
+                id="otp3"
+                name="otp3"
+                required
+              />
+              <input
+                type="text"
+                maxlength="1"
+                class="otp-box"
+                id="otp4"
+                name="otp4"
+                required
+              />
+            </div>
+            <% if (errorMessage) { %>
+            <div class="text-danger error-message"><%= errorMessage %></div>
+            <% } %>
+          </div>
+          <button
+            type="submit"
+            class="btn login-btn btn-primary mt-4 fs-5 fw-bold"
+          >
+            Submit
+          </button>
+        </form>
+        <form action="/signup/resend-otp" method="POST">
+          <button class="btn btn-primary mt-4" type="submit">Resend OTP</button>
+        </form>
+      </div>
+    </div>
+
+    <%- include("../partials/userFooter") %>
+    <script src="/javascripts/validations/signupValidation.js"></script>
+    <script>
+      document.getElementById('otp-form').addEventListener('submit', function (e) {
+        const otp1 = document.getElementById('otp1').value;
+        const otp2 = document.getElementById('otp2').value;
+        const otp3 = document.getElementById('otp3').value;
+        const otp4 = document.getElementById('otp4').value;
+    
+        const otp = otp1 + otp2 + otp3 + otp4;
+    
+        const otpInput = document.createElement('input');
+        otpInput.type = 'hidden';
+        otpInput.name = 'otp';
+        otpInput.value = otp;
+    
+        this.appendChild(otpInput);
+      });
+    </script>
+  </body>
+</html>

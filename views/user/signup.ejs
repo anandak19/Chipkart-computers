@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Signup</title>
+    <%- include("../partials/head") %>
+    <link rel="stylesheet" href="/styles/authForm.css" />
+  </head>
+  <body>
+    <%- include("../partials/userHeader") %>
+
+    <div class="form-wrapper page-wrapper">
+      <div class="form-container">
+        <h1 class="text-center">Signup</h1>
+        <form action="/signup" method="POST">
+          <div class="form-group">
+            <label for="name">Name</label>
+            <input
+              type="text"
+              class="form-control"
+              id="name"
+              name="name"
+              value="<%= name || '' %>"
+              required
+            />
+            <p id="nameAlert" class="input-alert"></p>
+          </div>
+
+          <div class="form-group mt-4">
+            <label for="phoneNumber">Phone Number</label>
+            <input
+              type="text"
+              class="form-control"
+              id="phoneNumber"
+              name="phoneNumber"
+              value="<%= phoneNumber || '' %>"
+              required
+            />
+            <p id="phoneAlert" class="input-alert"></p>
+          </div>
+
+          <div class="form-group mt-4">
+            <label for="email">Email</label>
+            <input
+              type="text"
+              class="form-control"
+              id="email"
+              name="email"
+              value="<%= email || '' %>"
+              required
+            />
+            <p id="emailAlert" class="input-alert"></p>
+          </div>
+
+          <div class="form-group mt-4">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              class="form-control underline-input"
+              id="password"
+              name="password"
+              required
+            />
+            <p id="passwordAlert" class="input-alert"></p>
+          </div>
+
+          <div class="form-group mt-4" id="passControl">
+            <label for="confirmPassword">Confirm Password</label>
+            <input
+              type="password"
+              class="form-control underline-input"
+              id="confirmPassword"
+              name="confirmPassword"
+              required
+            />
+            <p id="confirmPasswordAlert" class="input-alert"></p>
+          </div>
+
+          <% if (errorMessage) { %>
+          <div class="text-danger"><%= errorMessage %></div>
+          <% } %>
+
+          <button
+            type="submit"
+            class="btn login-btn btn-primary mt-4 fs-5 fw-bold"
+          >
+            Signup
+          </button>
+
+          <div class="link-text mt-4">
+            <a href="/login">Have account? Login</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <%- include("../partials/userFooter") %>
+    <script src="/javascripts/validations/signupValidation.js"></script>
+  </body>
+</html>

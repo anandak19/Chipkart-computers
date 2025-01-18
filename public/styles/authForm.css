@@ -1,0 +1,106 @@
+.form-wrapper{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 18px 0;
+}
+
+.form-container {
+    width: 65%;
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 1rem 12rem;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); 
+}
+
+.form-container h1{
+    font-size: 2.3rem;
+    margin: 16px 0;
+}
+
+label{
+    font-size: 0.9rem;
+}
+.form-control{
+    border: none !important;
+    border-bottom: 2px solid #b2b2b2 !important;
+    border-radius: 0% !important;
+}
+.form-control:focus{
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: #021658 !important;
+}
+
+.form-control-error{
+  border-color: #ca0000 !important;
+}
+
+
+
+.otp-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .otp-input-group {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .otp-box {
+    width: 3rem;
+    height: 3rem;
+    font-size: 1.5rem;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .otp-box:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+  }
+  
+  .error-message {
+    font-size: 0.9rem;
+    color: #ff0000;
+  }
+  
+  .otp-timer {
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+
+  #resend{
+    color: #007bff;
+  }
+  #resend:hover{
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  
+
+
+
+
+.input-alert{
+    font-size: 11px;
+    color: #ca0000;
+}
+
+.login-btn{
+    background-color: #146CDA;
+    width: 100%;
+}
+
+.link-text{
+    font-size: 0.9rem;
+}
+.link-text a:hover{
+    color: #051afc;
+}

@@ -1,0 +1,16 @@
+body {
+  font-family: "Poppins", serif;
+  background-color: #f1f3f6;
+}
+
+.page-wrapper{
+  margin-top: 153px;
+}
+
+.content-wrapper{
+  padding: 0 54px;
+}
+
+p{
+  margin-bottom: 0;
+}

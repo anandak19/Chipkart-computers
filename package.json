@@ -1,0 +1,25 @@
+{
+  "name": "chipkart-computers",
+  "version": "1.0.0",
+  "description": "Backend for ecommerce application",
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Anandakrishnan H",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "connect-flash": "^0.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "mongoose": "^8.9.5",
+    "nocache": "^4.0.0",
+    "nodemailer": "^6.9.16",
+    "nodemon": "^3.1.9"
+  }
+}
