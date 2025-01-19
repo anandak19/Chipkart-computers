@@ -14,7 +14,6 @@
       <div class="form-container">
         <h1 class="text-center">Login</h1>
         <form action="/login" method="POST">
-
           <div class="form-group mt-4">
             <label for="email">Email</label>
             <input
@@ -25,7 +24,6 @@
               value="<%= email || '' %>"
               required
             />
-            <p id="emailAlert" class="input-alert"></p>
           </div>
 
           <div class="form-group mt-4">
@@ -37,7 +35,6 @@
               name="password"
               required
             />
-            <p id="passwordAlert" class="input-alert"></p>
           </div>
 
           <% if (errorMessage) { %>
@@ -52,13 +49,21 @@
           </button>
 
           <div class="link-text mt-4">
-            <a href="/signup">Have account? Login</a>
+            <a href="/signup">Don't Have account? Signup</a>
           </div>
         </form>
+
+        <div class="google-auth-button">
+          <p>OR</p>
+
+          <a id="google-btn" href="/auth/google" >
+            <img src="/images/icons/google-auth.png" alt="Google Icon" style="width: 20px; height: 20px; margin-right: 10px;" />
+            Login with Google
+          </a>
+        </div>
       </div>
     </div>
 
     <%- include("../partials/userFooter") %>
-    <script src="/javascripts/validations/signupValidation.js"></script>
   </body>
 </html>

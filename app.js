@@ -3,21 +3,22 @@ const path = require('path');
 const session = require('express-session');
 const flash = require('connect-flash');
 const cors = require('cors');
-const nocache = require("nocache");
-
+const passport = require('passport')
+const morgan = require('morgan')
+const GoogleStrategy = require('passport-google-oauth20').Strategy
+require('dotenv').config()
 
 const app = express()
-app.use(nocache());
+//cache controle
 app.use((req, res, next) => {
-  // Set headers to prevent caching
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0'); // Expiry date set to 0 ensures no caching
-
-  // Continue processing the request
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
   next();
 });
 app.use(cors());
+app.use(morgan('dev'))
 
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
@@ -30,12 +31,36 @@ app.use(
     session({
       secret: 'chipkart-computers',
       resave: false,
-      saveUninitialized: true,
-      cookie: {
-        httpOnly: true,
-      },
+      saveUninitialized: false,
     })
   );
+
+// google auth ---
+app.use(passport.initialize())
+app.use(passport.session())
+
+passport.use(
+    new GoogleStrategy({
+        clientID: process.env.GOOGLE_CLINT_ID,
+        clientSecret: process.env.GOOGLE_CLINT_SECRET,
+        callbackURL: 'http://localhost:3000/auth/google/callback',
+    }, (_accessToken, _refreshToken, profile, done) => {
+        console.log(profile)
+        return done(null, profile)
+    })
+)
+
+passport.serializeUser((user, done) => {
+    done(null, user)
+})
+
+passport.deserializeUser((user, done) => {
+    done(null, user)
+})
+
+
+
+
 
 app.use(flash());
 

@@ -16,9 +16,9 @@
         <form action="/signup/varify" method="POST" id="otp-form">
           <div class="form-group otp-container">
             <% if (successMessage) { %>
-              <div class="alert text-success text-center">
-                <%= successMessage %>
-              </div>
+            <div class="alert text-success text-center">
+              <%= successMessage %>
+            </div>
             <% } %>
             <label for="otp">Enter the OTP here</label>
             <div class="otp-timer text-muted"><span id="timer">60</span></div>
@@ -74,23 +74,62 @@
     </div>
 
     <%- include("../partials/userFooter") %>
-    <script src="/javascripts/validations/signupValidation.js"></script>
     <script>
-      document.getElementById('otp-form').addEventListener('submit', function (e) {
-        const otp1 = document.getElementById('otp1').value;
-        const otp2 = document.getElementById('otp2').value;
-        const otp3 = document.getElementById('otp3').value;
-        const otp4 = document.getElementById('otp4').value;
-    
-        const otp = otp1 + otp2 + otp3 + otp4;
-    
-        const otpInput = document.createElement('input');
-        otpInput.type = 'hidden';
-        otpInput.name = 'otp';
-        otpInput.value = otp;
-    
-        this.appendChild(otpInput);
+      // Timer settings
+      const timerElement = document.getElementById("timer");
+      const resendOtpBtn = document.getElementById("resendOtpBtn");
+      let timeLeft = 60;
+
+      // Countdown function
+      const countdown = setInterval(() => {
+        if (timeLeft > 0) {
+          timeLeft--;
+          timerElement.textContent = timeLeft;
+        } else {
+          clearInterval(countdown);
+          timerElement.textContent = "expired";
+          timerElement.style.color = "red";
+          document
+            .querySelectorAll(".otp-box")
+            .forEach((box) => (box.disabled = true));
+        }
+      }, 1000);
+
+      // OTP Box input navigation
+      const otpBoxes = document.querySelectorAll(".otp-box");
+
+      otpBoxes.forEach((box, index) => {
+        box.addEventListener("input", (e) => {
+          if (e.target.value.length === 1 && index < otpBoxes.length - 1) {
+            otpBoxes[index + 1].focus();
+          } else if (
+            e.target.value.length === 1 &&
+            index === otpBoxes.length - 1
+          ) {
+            box.blur();
+          } else if (e.inputType === "deleteContentBackward" && index > 0) {
+            otpBoxes[index - 1].focus();
+          }
+        });
       });
+
+      document
+        .getElementById("otp-form")
+        .addEventListener("submit", function (e) {
+          const otp1 = document.getElementById("otp1").value;
+          const otp2 = document.getElementById("otp2").value;
+          const otp3 = document.getElementById("otp3").value;
+          const otp4 = document.getElementById("otp4").value;
+
+          const otp = otp1 + otp2 + otp3 + otp4;
+
+          const otpInput = document.createElement("input");
+          otpInput.type = "hidden";
+          otpInput.name = "otp";
+          otpInput.value = otp;
+
+          this.appendChild(otpInput);
+        });
     </script>
   </body>
 </html>

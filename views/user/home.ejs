@@ -1,16 +1,441 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Home</title>
-    <%- include("../partials/head")  %>
-</head>
-<body>
-    <%- include("../partials/userHeader")  %>
+    <link rel="stylesheet" href="/styles/main.css" />
+    <link rel="stylesheet" href="/styles/home.css" />
+    <%- include("../partials/head") %>
+  </head>
+  <body>
+    <%- include("../partials/userHeader") %>
 
-    This is Home
+    <div class="page-wrapper">
+      <div
+        id="bannerSlider"
+        class="carousel slide"
+        data-bs-ride="carousel"
+        data-bs-interval="3000"
+      >
+        <div class="carousel-inner">
+          <div class="carousel-item active">
+            <img
+              src="/images/banners/banner-1.png"
+              class="d-block w-100"
+              alt="Slide 1"
+            />
+          </div>
+          <div class="carousel-item">
+            <img
+              src="/images/banners/banner-2.png"
+              class="d-block w-100"
+              alt="Slide 2"
+            />
+          </div>
+        </div>
+      </div>
 
-    <%- include("../partials/userFooter")  %>
-</body>
+      <div class="content-wrapper">
+        <!-- Top brands -->
+        <div class="page-section">
+          <div class="section-header">
+            <p>Top Categories</p>
+            <hr class="header-line" />
+          </div>
+          <div class="categories-wrapper">
+            <div class="category">
+              <div class="category-image">
+                <img src="/images/home-images/laptop.png" alt="Laptops" />
+              </div>
+              <p class="category-name">Laptops</p>
+            </div>
+            <div class="category">
+              <div class="category-image">
+                <img
+                  src="/images/home-images/pc-parts.png"
+                  alt="PC Components"
+                />
+              </div>
+              <p class="category-name">PC Components</p>
+            </div>
+            <div class="category">
+              <div class="category-image">
+                <img
+                  src="/images/home-images/pre-buit-pc.png"
+                  alt="Pre Built PC"
+                />
+              </div>
+              <p class="category-name">Pre Built PC</p>
+            </div>
+            <div class="category">
+              <div class="category-image">
+                <img
+                  src="/images/home-images/gaming-gears.png"
+                  alt="Gaming Gears"
+                />
+              </div>
+              <p class="category-name">Gaming Gears</p>
+            </div>
+            <div class="category">
+              <div class="category-image">
+                <img
+                  src="/images/home-images/acessories.png"
+                  alt="Accessories"
+                />
+              </div>
+              <p class="category-name">Accessories</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Links -->
+        <div class="page-section links-section">
+          <div class="subsection">
+            <div class="links">
+              <p>
+                Gaming<br />
+                Chairs
+              </p>
+              <a href="">Explore now</a>
+            </div>
+            <div class="image">
+              <img src="/images/home-images/gaming-chairs.png" alt="" />
+            </div>
+          </div>
+
+          <div class="subsection">
+            <div class="links">
+              <p>
+                Laptop<br />
+                Zone
+              </p>
+              <a href="">Explore now</a>
+            </div>
+            <div class="image">
+              <img src="/images/home-images/laptop-banner.png" alt="" />
+            </div>
+          </div>
+
+          <div class="subsection">
+            <div class="links">
+              <p>
+                Built<br />
+                Your PC
+              </p>
+              <a href="">Explore now</a>
+            </div>
+            <div class="image">
+              <img src="/images/home-images/pc-build-banner.png" alt="" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Featured Products -->
+        <div class="page-section">
+          <div class="section-header">
+            <p>Featured Products</p>
+            <hr class="header-line" />
+          </div>
+          <!-- products  -->
+          <div class="products">
+            <!-- Product Cards -->
+            <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <!-- dummy, delete this later  -->
+              <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <!-- dummy products end  -->
+              
+          </div>
+        </div>
+
+        <!-- promise ribbon  -->
+        <div class="page-section">
+            <div class="promise-ribbon">
+                <!-- promises  -->
+                <div class="promise">
+                    <div class="promise-image">
+                        <img src="/images/home-images/la_shipping-fast.png" alt="">
+                    </div>
+                    <div class="promise-texts">
+                        <p>Free Shiping</p>
+                        <span>Accross India</span>
+                    </div>
+                </div>
+
+                <div class="promise">
+                    <div class="promise-image">
+                        <img src="/images/home-images/coupon-outline.png" alt="">
+                    </div>
+                    <div class="promise-texts">
+                        <p>Coupon for Discount</p>
+                        <span>Save with your coupon!</span>
+                    </div>
+                </div>
+                <div class="promise">
+                    <div class="promise-image">
+                        <img src="/images/home-images/discount.png" alt="">
+                    </div>
+                    <div class="promise-texts">
+                        <p>Discount and Offers</p>
+                        <span>On Selected Items</span>
+                    </div>
+                </div>
+                <div class="promise">
+                    <div class="promise-image">
+                        <img src="/images/home-images/bulk-avail.png" alt="">
+                    </div>
+                    <div class="promise-texts">
+                        <p>Bulk Availability</p>
+                        <span>At every time</span>
+                    </div>
+                </div>
+                <div class="promise">
+                    <div class="promise-image">
+                        <img src="/images/home-images/customer-support.png" alt="">
+                    </div>
+                    <div class="promise-texts">
+                        <p>Customer Support</p>
+                        <span>24/4</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Latest products  -->
+        <div class="page-section">
+            <div class="section-header">
+              <p>Latest Products</p>
+              <hr class="header-line" />
+            </div>
+            <!-- products  -->
+            <div class="products">
+              <!-- Product Cards -->
+              <a href="/product/1" class="product-link">
+                  <div class="product-card">
+                    <div class="product-image">
+                      <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                    </div>
+                    <div class="product-details">
+                      <p>Product 1</p>
+                      <p>$100</p>
+                    </div>
+                  </div>
+                </a>
+                <!-- dummy, delete this later  -->
+                <a href="/product/1" class="product-link">
+                  <div class="product-card">
+                    <div class="product-image">
+                      <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                    </div>
+                    <div class="product-details">
+                      <p>Product 1</p>
+                      <p>$100</p>
+                    </div>
+                  </div>
+                </a>
+                <a href="/product/1" class="product-link">
+                  <div class="product-card">
+                    <div class="product-image">
+                      <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                    </div>
+                    <div class="product-details">
+                      <p>Product 1</p>
+                      <p>$100</p>
+                    </div>
+                  </div>
+                </a>
+                <a href="/product/1" class="product-link">
+                  <div class="product-card">
+                    <div class="product-image">
+                      <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                    </div>
+                    <div class="product-details">
+                      <p>Product 1</p>
+                      <p>$100</p>
+                    </div>
+                  </div>
+                </a>
+                <a href="/product/1" class="product-link">
+                  <div class="product-card">
+                    <div class="product-image">
+                      <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                    </div>
+                    <div class="product-details">
+                      <p>Product 1</p>
+                      <p>$100</p>
+                    </div>
+                  </div>
+                </a>
+                <a href="/product/1" class="product-link">
+                  <div class="product-card">
+                    <div class="product-image">
+                      <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                    </div>
+                    <div class="product-details">
+                      <p>Product 1</p>
+                      <p>$100</p>
+                    </div>
+                  </div>
+                </a>
+                <a href="/product/1" class="product-link">
+                  <div class="product-card">
+                    <div class="product-image">
+                      <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                    </div>
+                    <div class="product-details">
+                      <p>Product 1</p>
+                      <p>$100</p>
+                    </div>
+                  </div>
+                </a>
+                <a href="/product/1" class="product-link">
+                  <div class="product-card">
+                    <div class="product-image">
+                      <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                    </div>
+                    <div class="product-details">
+                      <p>Product 1</p>
+                      <p>$100</p>
+                    </div>
+                  </div>
+                </a>
+                <a href="/product/1" class="product-link">
+                  <div class="product-card">
+                    <div class="product-image">
+                      <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                    </div>
+                    <div class="product-details">
+                      <p>Product 1</p>
+                      <p>$100</p>
+                    </div>
+                  </div>
+                </a>
+                <a href="/product/1" class="product-link">
+                  <div class="product-card">
+                    <div class="product-image">
+                      <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                    </div>
+                    <div class="product-details">
+                      <p>Product 1</p>
+                      <p>$100</p>
+                    </div>
+                  </div>
+                </a>
+                <!-- dummy products end  -->
+                
+            </div>
+          </div>
+      </div>
+    </div>
+
+    <%- include("../partials/userFooter") %>
+  </body>
 </html>

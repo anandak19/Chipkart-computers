@@ -1,4 +1,5 @@
 const UserSchema = require("../models/User");
+const bcrypt = require('bcrypt');
 const {
   validateName,
   validatePhoneNumber,
@@ -8,7 +9,8 @@ const {
 
 const signupValidations = async (req, res, next) => {
   try {
-    const { name, phoneNumber, email, password, confirmPassword } = req.body;
+    let { name, phoneNumber, email, password, confirmPassword } = req.body;
+
     console.log(req.body)
     // validate each entered input data 
     const alertMessage =
@@ -27,12 +29,14 @@ const signupValidations = async (req, res, next) => {
       });
     }
 
+    password = await bcrypt.hash(password, 10);
+
     // save the user to database 
     const newUser = new UserSchema({ name, phoneNumber, email, password })
     await newUser.save()
-    req.session.userEmail = email
+    req.session.userEmail = email;
+    req.session.isVerified = false;
     return next()
-
   } catch (error) {
     console.log(error);
   }

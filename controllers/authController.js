@@ -85,131 +85,175 @@ exports.otpVarify = async (req, res) => {
   }
 };
 
-// get the otp  page 
-exports.getVarify = async (req, res) => {
-    console.log("is varified in otp: ", req.session.isVerified)
-    if (req.session.isVerified) {
-        res.redirect("/");
-    }else{
-        try {
-            const email = req.session.userEmail;
-        
-            // Check if the user is logged in
-            if (!email) {
-              // change it to login later 
-              return res.redirect("/signup");
-            }
-        
-            const user = await UserSchema.findOne({ email });
-        
-            if (!user) {
-              // change it to login later 
-              return res.redirect("/signup");
-            }
-        
-            if (user.isVerified) {
-              return res.redirect("/");
-            }
-        
-            // If the user is not verified, render the OTP verification page
-            res.render("user/verification", {
-              successMessage: req.flash("success"),
-              errorMessage: req.flash("error"),
-            });
-        
-          } catch (error) {
-            console.error("Error in getVarify route:", error);
-            req.flash("error", "Something went wrong, please try again.");
-            res.redirect("/signup")
-          }
-    }
+// get the otp  page
+exports.getVerify = async (req, res) => {
+  return res.render("user/verification", {
+    successMessage: req.flash("success"),
+    errorMessage: req.flash("error"),
+  });
 };
-  
-// submit the otp page 
+
+// submit the otp page
 exports.validateOtp = async (req, res) => {
-    try {
-      const { otp } = req.body;
-      const email = req.session.userEmail;
-  
-      if (!email) {
-        return res.redirect("/signup");
-      }
-  
-      const user = await UserSchema.findOne({ email });
-  
-      if (!user) {
-        return res.redirect("/signup");
-      }
-  
-      // Check if the OTP matches and hasn't expired
-      const currentTime = new Date();
-      if (user.otp !== otp || currentTime > new Date(user.otpExpires)) {
-        req.flash('error', 'Invalid or expired OTP!');
-        return res.redirect("/signup/varify");
-      }
-  
-      user.isVerified = true;
-      user.otp = null;
-      user.otpExpires = null;
-      req.session.isVerified = true
-      console.log("is varified 1: ", req.session.isVerified)
-      await user.save();
-      res.redirect("/");
-  
-    } catch (error) {
-      console.error('Error during OTP verification:', error);
-      req.flash('error', 'Something went wrong. Please try again.');
-      res.redirect("/signup/varify");
+  try {
+    const { otp } = req.body;
+    const email = req.session.userEmail;
+    console.log("varifying otp and email", otp)
+
+    if (!email) {
+      return res.redirect("/signup");
     }
+
+    if (!otp) {
+      req.flash("error", "Enter your OTP");
+      return res.redirect("/signup/varify");
+    }
+
+    const user = await UserSchema.findOne({ email });
+
+    if (!user) {
+      return res.redirect("/signup");
+    }
+
+    // Check if the OTP matches and hasn't expired
+    const currentTime = new Date();
+    if (user.otp !== otp || currentTime > new Date(user.otpExpires)) {
+      req.flash("error", "Invalid or expired OTP!");
+      return res.redirect("/signup/varify");
+    }
+
+    req.session.isVerified = true;
+    user.isVerified = true;
+    user.otp = null;
+    user.otpExpires = null;
+    console.log("is varified 1: ", req.session.isVerified);
+    await user.save();
+    res.redirect("/");
+  } catch (error) {
+    console.error("Error during OTP verification:", error);
+    req.flash("error", "Something went wrong. Please try again.");
+    res.redirect("/signup/varify");
+  }
 };
+
+// register the user using google auth 
+exports.registerGoogleUser = async (req, res) =>{
+  try {
+    const profile = req.user
+
+    const email = profile.emails[0].value
+    const name = profile.displayName
+    console.log(email, name)
+
+    let user = await UserSchema.findOne({ email });
+    if (!user) {
+      newUser = new UserSchema({
+        name, email, isVerified: true, 
+      })
+      await newUser.save();
+      console.log('New user saved to the database:', user);
+    }
+
+    return res.redirect('/account');
+
+
+  } catch (error) {
+    console.error('Error saving user to the database:', error);
+    return res.status(500).send('An error occurred while processing your request.');
+  }
+}
 
 // get user login controller
 exports.getUserLogin = (req, res) => {
-    console.log("Session userEmail login:", req.session.userEmail);
-    if (req.session.userEmail) {
-      res.redirect("/");
-    } else {
-      res.render("user/login", {
-        email: req.body.email || "",
-        errorMessage: req.flash("errorMessage"),
-      });
-    }
+  console.log("Session userEmail login:", req.session.userEmail, req.isAuthenticated());
+  if (req.session.userEmail || req.isAuthenticated()) {
+    res.redirect("/");
+  } else {
+    req.session.userEmail = false
+    res.render("user/login", {
+      email: req.flash("email") || "",
+      errorMessage: req.flash("errorMessage"),
+    });
+  }
 };
 
-// post user login 
+// post user login
 exports.postUserLogin = async (req, res) => {
-    try {
-      const { email, password } = req.body;
-  
-      // Check if email and password are provided
-      if (!email || !password) {
-        return res.status(400).json({ error: "Email and password are required" });
-      }
-  
-      // Find user by email
-      const user = await UserSchema.findOne({ email });
-  
-      // Check if the user exists
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-  
-      // Compare the provided password with the stored password in the database
-      if (user.password !== password) {
-        return res.status(400).json({ error: "Invalid credentials" });
-      }
-  
-      // Create a session for the user
-      req.session.userEmail = user.email; // Store user email in session
-      req.session.userId = user._id; // Optionally store the user ID
-  
-      return res.status(200).json({ message: "Login successful" });
-  
-    } catch (error) {
-      console.error("Error in login:", error);
-      return res.status(500).json({ error: "Internal server error" });
+  try {
+    const { email, password } = req.body;
+
+    // Check if email and password are provided
+    if (!email || !password) {
+      req.flash("errorMessage", "Email and password are required.");
+      return res.redirect('/login')
     }
+
+    // Find user by email
+    const user = await UserSchema.findOne({ email });
+
+    // Check if the user exists
+    if (!user) {
+      req.flash("errorMessage", "You dont have account with us.");
+      return res.redirect('/login')
+    }
+
+    // Compare the provided password with the stored password in the database
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (isPasswordValid) {
+      req.flash("errorMessage", "Wrong password.");
+      req.flash("email", email);
+      return res.redirect('/login')
+    }
+
+    req.session.userEmail = user.email;
+    req.session.userId = user._id;
+
+    return res.redirect("/");
+  } catch (error) {
+    console.error("Error in login:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 };
+
+// logout user 
+exports.logoutUser = async (req, res) => {
+  try {
+    if (req.isAuthenticated && req.isAuthenticated()) {
+      req.logout((err) => {
+        if (err) {
+          console.error("Error during logout:", err);
+          return res.status(500).send("An error occurred during logout.");
+        }
+        // Session and cookie cleanup
+        req.session.destroy((err) => {
+          if (err) {
+            console.error("Error while destroying session:", err);
+            return res.status(500).send("An unexpected error occurred while logging out.");
+          }
+          res.clearCookie('connect.sid'); // Clear session cookie
+          console.log("User logged out successfully.");
+          return res.redirect('/login'); // Redirect to login
+        });
+      });
+    } else {
+      // Handle unauthenticated users gracefully
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Error while destroying session:", err);
+          return res.status(500).send("An unexpected error occurred.");
+        }
+        res.clearCookie('connect.sid'); // Clear session cookie
+        console.log("Session destroyed for unauthenticated user.");
+        return res.redirect('/login');
+      });
+    }
+  } catch (error) {
+    console.error("Error in logoutUser:", error);
+    res.status(500).send("An unexpected error occurred.");
+  }
+};
+
+
 
 // admin auth
 exports.getAdminLogin = (req, res) => {
