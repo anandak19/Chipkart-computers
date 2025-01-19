@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const UserSchema = require("../models/User");
 const { sendEmail } = require("../utils/email");
+const bcrypt = require('bcrypt')
 
 // Geting signup page
 exports.getUserSignup = (req, res) => {
@@ -199,7 +200,7 @@ exports.postUserLogin = async (req, res) => {
 
     // Compare the provided password with the stored password in the database
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (isPasswordValid) {
+    if (!isPasswordValid) {
       req.flash("errorMessage", "Wrong password.");
       req.flash("email", email);
       return res.redirect('/login')
@@ -219,32 +220,32 @@ exports.postUserLogin = async (req, res) => {
 exports.logoutUser = async (req, res) => {
   try {
     if (req.isAuthenticated && req.isAuthenticated()) {
+      // for google users 
       req.logout((err) => {
         if (err) {
           console.error("Error during logout:", err);
           return res.status(500).send("An error occurred during logout.");
         }
-        // Session and cookie cleanup
         req.session.destroy((err) => {
           if (err) {
             console.error("Error while destroying session:", err);
             return res.status(500).send("An unexpected error occurred while logging out.");
           }
-          res.clearCookie('connect.sid'); // Clear session cookie
+          res.clearCookie('connect.sid');
           console.log("User logged out successfully.");
-          return res.redirect('/login'); // Redirect to login
+          return res.redirect('/');
         });
       });
     } else {
-      // Handle unauthenticated users gracefully
+      // for normal users
       req.session.destroy((err) => {
         if (err) {
           console.error("Error while destroying session:", err);
           return res.status(500).send("An unexpected error occurred.");
         }
-        res.clearCookie('connect.sid'); // Clear session cookie
+        res.clearCookie('connect.sid');
         console.log("Session destroyed for unauthenticated user.");
-        return res.redirect('/login');
+        return res.redirect('/');
       });
     }
   } catch (error) {
@@ -254,12 +255,49 @@ exports.logoutUser = async (req, res) => {
 };
 
 
-
 // admin auth
 exports.getAdminLogin = (req, res) => {
-  res.send("getAdminLogin");
+  // if admin is logged in do not show this page 
+  req.session.isLogin = false
+  res.render('admin/login', {
+    email: req.flash('email') || '',
+    errorMessage: req.flash('errorMessage') || '',
+  });
 };
 
-exports.postAdminLogin = (req, res) => {
-  res.send("postAdminLogin");
+exports.postAdminLogin = async(req, res) => {
+  try {
+    const {email, password} = req.body
+    console.log(email, password)
+
+    if (!email || !password) {
+      req.flash('errorMessage', 'Please enter the credentials')
+    }
+
+    const admin = await UserSchema.findOne({email})
+    if (!admin) {
+      req.flash('errorMessage', 'Admin not found. Please check your email.');
+      return res.redirect('/admin/login');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, admin.password);
+    if (!isPasswordValid) {
+      req.flash("errorMessage", "Wrong password.");
+      req.flash("email", email);
+      return res.redirect('/admin/login');
+    }
+
+    if (!admin.isAdmin) {
+      req.flash("errorMessage", "You are not an admin");
+      return res.redirect('/admin/login');
+    }
+
+    req.session.isLogin = true
+    req.session.email = admin.email
+    res.redirect('/admin')
+  } catch (error) {
+    console.log(error) 
+    req.flash("errorMessage", "Server error");
+    return res.redirect('/admin/login');
+  }
 };

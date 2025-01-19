@@ -2,7 +2,8 @@ const express = require("express");
 const authController = require("../controllers/authController");
 const { signupValidations } = require("../middlewares/signupValidation");
 const {isVerified, isLogin, isLogout} = require("../middlewares/userAuth");
-const passport = require('passport')
+const passport = require('passport');
+const { isAdminLoginSubmitted } = require("../middlewares/adminAuth");
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ router.get('/auth/google/callback', passport.authenticate('google', {failureRedi
 // user signup
 router.get("/signup", authController.getUserSignup);
 router.post("/signup", signupValidations, authController.otpVarify);
-// otp varification page 
+// otp varification page
 router.get("/signup/varify",isVerified, authController.getVerify)
 router.post("/signup/varify", authController.validateOtp)
 router.post("/signup/resend-otp", authController.otpVarify);
@@ -26,7 +27,8 @@ router.post("/signup/resend-otp", authController.otpVarify);
 
 
 // // admin auth
-// router.get('/login', authController.getAdminLogin)
-// router.post('/login', authController.postAdminLogin)
+router.get('/admin/login', isAdminLoginSubmitted, authController.getAdminLogin)
+router.post('/admin/login', authController.postAdminLogin)
+router.get('/admin/logout', authController.logoutUser)
 
 module.exports = router;
