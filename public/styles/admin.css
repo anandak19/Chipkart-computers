@@ -46,6 +46,54 @@ body {
     margin-bottom: 6px;
 }
 
+.main-content{
+  margin-top: 28px;
+}
+
+/* manage-page  */
+.manage-page{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.manage-page .add-new{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.add-new .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px; 
+  padding: 4px 12px;
+  font-size: 16px;
+  text-decoration: none;
+  border-radius: 5px;
+  background-color: #006809;
+  border: none;
+  color: #ffffff;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.add-new .btn:hover {
+  background-color: #218838;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.add-new .btn:active {
+  background-color: #005414;
+}
+
+.add-new .btn-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+}
+
+
 
 /* search  */
 .search-form {

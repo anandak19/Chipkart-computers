@@ -4,6 +4,7 @@ exports.getDashboard = (req, res) => {
   res.render("admin/dashbord", { title: "Admin Dashboard" });
 };
 
+// -----user management start------
 // render all users 
 exports.getUserManagement = async (req, res) => {
   try {
@@ -71,13 +72,31 @@ exports.searchUser = async (req, res) => {
     res.status(500).send('An error occurred while searching for users.');
   }
 };
+// -----user management end------
 
-
-// user management end 
-
+// -----product management start------
 exports.getProductManagement = (req, res) => {
-  res.render("admin/productManagement", { title: "Product Management" });
+
+  /*
+  get all the products from the databse and return it as an arry
+  */
+
+  res.render("admin/productManagement", { title: "Product Management", searchQuery: '' });
 };
+
+exports.getProductForm = (req, res) => {
+ res.render('admin/productForm', { title: "Product Management - New"})
+}
+
+exports.addNewProduct = (req, res) => {
+  /*
+  get the product details and validate the entered data
+  
+  */
+
+}
+
+// -----product management end------
 
 exports.getCategoryManagement = (req, res) => {
   res.render("admin/categoryManagement", { title: "Category Management" });
