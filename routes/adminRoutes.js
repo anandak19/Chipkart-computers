@@ -8,6 +8,11 @@ const router = express.Router()
 router.get('/', isAdminLogin, adminController.getDashboard)
 // router.get('/users', isAdminLogin, adminController.getUserManagement)
 router.get('/users', adminController.getUserManagement)
+router.post('/users/toggle-block/:id', adminController.toggleBlockUser)
+router.get('/users/search', adminController.searchUser)
+
+// user manaement end  
+
 router.get('/products', isAdminLogin, adminController.getProductManagement)
 router.get('/categories', isAdminLogin, adminController.getCategoryManagement)
 router.get('/offers', isAdminLogin, adminController.getOfferModule)
