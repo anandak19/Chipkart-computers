@@ -58,11 +58,8 @@ passport.deserializeUser((user, done) => {
     done(null, user)
 })
 
-
-
-
-
 app.use(flash());
+
 
 const authRoutes = require('./routes/authRoutes')
 const userRoutes = require('./routes/userRoutes')

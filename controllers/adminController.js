@@ -110,6 +110,8 @@ exports.addNewProduct = (req, res) => {
 
 exports.getCategoryManagement = async (req, res) => {
   try {
+    // delete req.session.flash;
+
     const categoriesArray = await CategoriesSchema.find();
     console.log(categoriesArray);
     // render the categoris with out paginations
@@ -163,14 +165,6 @@ exports.postCategoryForm = async (req, res) => {
 };
 
 exports.toggleListCategory = async (req, res) => {
-  /*
-  get the id from params, if no id return, category not found error message
-  find the category from db, if not found, category not found error message
-  updated the finded category , set its isListed to !isListed and save
-  return redirect to get getCategoryManagement page
-  return errors if any
-  */
-
   try {
     const categoryId = req.params.id;
     if (!categoryId) {
@@ -183,13 +177,72 @@ exports.toggleListCategory = async (req, res) => {
 
     category.isListed = !category.isListed;
     await category.save();
-    // redirect to thsi page update needed 
+
     console.log("updated")
     res.redirect('/admin/categories')
   } catch (error) {
     console.log(error)
+    res.redirect('/admin/categories')
   }
 };
+
+exports.getUpdateCategoryForm = async(req, res) => {
+  try {
+    const categoryId = req.params.id;
+    if (!categoryId) {
+      return res.status(400).send("Category id not found.");
+    }
+    const category = await CategoriesSchema.findById(categoryId);
+    if (!category) {
+      return res.status(404).send("Category not found.");
+    }
+    res.render('admin/formUpdateCategory', {
+      title: "Category Management - Edit",
+      errorMessage: req.flash("errorMessage"),
+      successMessage: req.flash("successMessage"),
+      category
+    })
+  } catch (error) {
+    console.log(error)
+    res.redirect('/admin/categories')
+  }
+};
+
+exports.postUpdateCategoryForm = async(req, res) => {
+
+  try {
+    const { id } = req.params;
+    if(!id) {
+      return res.redirect("/admin/categories");
+    }
+    const categoryName = req.body?.categoryName?.trim() || "";
+    const isListed = req.body?.isListed;
+    const category = {categoryName, isListed, id}
+  
+  
+    if (!categoryName || !isListed) {
+      req.flash("errorMessage", "Please enter the values");
+      return res.redirect("/admin/categories/new");
+    }
+  
+    const updatedCategory = await CategoriesSchema.findOneAndUpdate(
+      {_id: id}, {categoryName: categoryName, isListed: isListed}
+    )
+
+
+    req.flash("successMessage", "Category updated successfully");
+    res.redirect(`/admin/categories/edit/${id}`)
+  } catch (error) {
+    console.log(error)
+    return res.redirect("/admin/categories");
+  }
+
+
+
+
+
+
+}
 
 exports.getOfferModule = (req, res) => {
   res.render("admin/offerModule", { title: "Offer Module" });

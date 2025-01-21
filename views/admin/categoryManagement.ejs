@@ -110,12 +110,12 @@
                   style="display: inline"
                 >
                   <button
-                    class="btn <%= category.isListed ? 'btn-success' : 'btn-danger' %> btn-sm"
+                    class="btn <%= category.isListed ? 'btn-danger' : 'btn-success' %> btn-sm"
                   >
-                    <%= category.isListed ? 'List' : 'Unlist' %>
+                    <%= category.isListed ? 'Unlist' : 'List' %>
                   </button>
-                  <button class="btn btn-primary btn-sm">Edit</button>
                 </form>
+                <a href="/admin/categories/edit/<%= category.id %>" class="btn btn-primary btn-sm">Edit</a>
               </td>
             </tr>
             <% }); %> <% } %>

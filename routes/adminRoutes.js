@@ -20,6 +20,8 @@ router.get('/products/new', adminController.getProductForm)
 // router.get('/categories', isAdminLogin, adminController.getCategoryManagement)
 router.get('/categories', adminController.getCategoryManagement)
 router.post('/categories/toggle-listed/:id', adminController.toggleListCategory)
+router.get('/categories/edit/:id', adminController.getUpdateCategoryForm)
+router.post('/categories/edit/:id', adminController.postUpdateCategoryForm)
 router.get('/categories/new', adminController.getCategoryForm)
 router.post('/categories/new', adminController.postCategoryForm)
 // offer management 
