@@ -233,19 +233,88 @@ exports.getEditProductForm = async (req, res) => {
       },
     ]);
 
-    res.render("admin/updateProductForm", { 
+    res.render("admin/updateProductForm", {
       title: "Product Management - Edit Product",
       categoryArray,
       product,
       errorMessage: req.flash("errorMessage"),
       successMessage: req.flash("successMessage"),
     });
-    
   } catch (error) {
     console.log(error);
     res.redirect("/admin/products");
   }
 };
+
+// need update 
+exports.postEditProductForm = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    if (!productId) {
+      return res.status(400).json({ success: false, message: "Product ID is required" });
+    }
+
+    const { productName, categoryId, brand, description } = req.body;
+    const mrp = parseFloat(req.body.mrp);
+    const discount = parseFloat(req.body.discount);
+    const finalPrice = parseFloat(req.body.finalPrice);
+    const quantity = parseFloat(req.body.quantity);
+    const highlights = req.body.highlights ? JSON.parse(req.body.highlights) : [];
+
+    const product = await ProductSchema.findById(productId);
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
+    product.productName = productName || product.productName;
+    product.categoryId = categoryId || product.categoryId;
+    product.brand = brand || product.brand;
+    product.description = description || product.description;
+    product.mrp = mrp || product.mrp;
+    product.discount = discount || product.discount;
+    product.finalPrice = finalPrice || product.finalPrice;
+    product.quantity = quantity || product.quantity;
+    product.highlights = highlights.length ? highlights : product.highlights;
+
+    if (req.files && req.files.length > 0) {
+      const images = req.files.map((file) => ({
+        filename: file.filename,
+        filepath: `/uploads/${file.filename}`,
+      }));
+      product.images = images;
+    }
+
+    await product.save();
+
+    res.status(200).json({ success: true, message: "Product updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+exports.toggleListProduct = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    if (!productId) {
+      return res.status(400).send("Product id not found.");
+    }
+    const product = await ProductSchema.findById(productId);
+    if (!product) {
+      return res.status(404).send("Product not found.");
+    }
+
+    product.isListed = !product.isListed;
+    await product.save();
+
+    console.log("updated");
+    res.redirect("/admin/products");
+  } catch (error) {
+    console.log(error);
+    res.redirect("/admin/products");
+  }
+};
+
 
 // -----product management end------
 

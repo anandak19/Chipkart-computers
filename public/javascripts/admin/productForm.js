@@ -107,7 +107,7 @@ productForm.addEventListener("submit", (event) => {
   event.preventDefault();
 });
 
-const saveProductBtn = document.getElementById("saveProductBtn");
+
 const productNameError = document.getElementById("productNameError");
 const categoryError = document.getElementById("categoryError");
 const brandNameError = document.getElementById("brandNameError");
@@ -121,83 +121,106 @@ const imageError = document.getElementById("imageError");
 
 
 // form input validation method 
-
-
-
-
-
-
-
-// API call to save the product details with images to server
-saveProductBtn.addEventListener("click", async () => {
-  const productNameValue = productName.value.trim();
-  const highlightValues = Array.from(highlights)
-    .map((input) => input.value.trim())
-    .filter((value) => value !== "");
-
+const validateProductForm = (highlightValues) => {
   // Product Name Validation
-  if (!productNameValue || productNameValue.length < 3) {
-      productNameError.textContent = 'Please enter a valid product name';
-      return;
+  if (!productName.value.trim() || productName.value.trim().length < 3) {
+    productNameError.textContent = 'Please enter a valid product name';
+    return false;
   } else {
-      productNameError.textContent = '';
+    productNameError.textContent = '';
   }
 
   // Category Validation
   if (!category.value || category.value === '') {
-      categoryError.textContent = 'Please choose a category name';
-      return;
+    categoryError.textContent = 'Please choose a category name';
+    return false;
   } else {
-      categoryError.textContent = '';
+    categoryError.textContent = '';
   }
 
   // Brand Name Validation
   if (!brandName.value.trim()) {
-      brandNameError.textContent = 'Please provide a brand name';
-      return;
+    brandNameError.textContent = 'Please provide a brand name';
+    return false;
   } else {
-      brandNameError.textContent = '';
+    brandNameError.textContent = '';
   }
 
   // MRP Validation
   if (!mrp.value || parseFloat(mrp.value.trim()) < 1) {
-      mrpError.textContent = 'Please provide a valid MRP';
-      return;
+    mrpError.textContent = 'Please provide a valid MRP';
+    return false;
   } else {
-      mrpError.textContent = '';
+    mrpError.textContent = '';
   }
 
   // Discount Validation
   if (!discount.value || parseFloat(discount.value) < 0) {
-      discountError.textContent = 'Please provide a valid discount';
-      return;
+    discountError.textContent = 'Please provide a valid discount';
+    return false;
   } else {
-      discountError.textContent = '';
+    discountError.textContent = '';
   }
 
   // Stock Count Validation
   if (!stockCount.value || parseInt(stockCount.value) < 0) {
-      stockCountError.textContent = 'Please provide a valid stock count';
-      return;
+    stockCountError.textContent = 'Please provide a valid stock count';
+    return false;
   } else {
-      stockCountError.textContent = '';
+    stockCountError.textContent = '';
   }
 
   // Highlights Validation
   if (highlightValues.length < 3) {
-      highlightsError.textContent = 'Minimum 3 highlights required';
-      return;
+    highlightsError.textContent = 'Minimum 3 highlights required';
+    return false;
   } else {
-      highlightsError.textContent = '';
+    highlightsError.textContent = '';
   }
 
   // Description Validation
   if (!description.value || description.value.trim().length < 15) {
-      descriptionError.textContent = 'Enter a description with more than 15 characters.';
-      return;
+    descriptionError.textContent = 'Enter a description with more than 15 characters.';
+    return false;
   } else {
-      descriptionError.textContent = '';
+    descriptionError.textContent = '';
   }
+
+  return true; // Return true if all validations pass
+};
+
+
+/*
+send the data without validating image is added or not.
+in server, validate image is added or not or the length of the image array in db is greater than or equal to 3
+*/
+
+/*
+
+if (croppedImages.length > 0) {
+  croppedImages.forEach((imageBlob, index) => {
+    formData.append(`images`, imageBlob, `cropped-image-${index + 1}.jpeg`);
+  });
+}
+
+*/
+const saveProductBtn = document.getElementById("saveProductBtn");
+const updateProductBtn = document.getElementById("updateProductBtn");
+
+
+// API call to save the new product details with images to server
+if (saveProductBtn) {
+saveProductBtn.addEventListener("click", async () => {
+  
+  const highlightValues = Array.from(highlights)
+    .map((input) => input.value.trim())
+    .filter((value) => value !== "");
+
+    const result = validateProductForm(highlightValues)
+    if (!result) {
+      return
+    }
+
 
   // Images Validation
   if (croppedImages.length < 4) {
@@ -213,7 +236,7 @@ saveProductBtn.addEventListener("click", async () => {
 
   // Create FormData
   const formData = new FormData();
-  formData.append("productName", productNameValue);
+  formData.append("productName", productName.value.trim());
   formData.append("categoryId", category.value);
   formData.append("brand", brandName.value.trim());
   formData.append("mrp", mrp.value.trim());
@@ -251,3 +274,66 @@ saveProductBtn.addEventListener("click", async () => {
     alert("Something went wrong");
   }
 });
+}
+
+
+// API call to update the product data 
+if (updateProductBtn) {
+  updateProductBtn.addEventListener("click", async () => {
+    console.log(window.productId)
+  
+    const highlightValues = Array.from(highlights)
+      .map((input) => input.value.trim())
+      .filter((value) => value !== "");
+  
+      const result = validateProductForm(highlightValues)
+      if (!result) {
+        return
+      }
+  
+
+    // Create FormData
+    const formData = new FormData();
+    formData.append("productName", productName.value.trim());
+    formData.append("categoryId", category.value);
+    formData.append("brand", brandName.value.trim());
+    formData.append("mrp", mrp.value.trim());
+    formData.append("discount", discount.value.trim());
+    formData.append("finalPrice", finalPrice.value);
+    formData.append("quantity", stockCount.value.trim());
+    formData.append("isFeatured", discount.value.trim());
+    formData.append("highlights", JSON.stringify(highlightValues));
+    formData.append("description", description.value);
+    if (croppedImages && croppedImages.length > 0) {
+      croppedImages.forEach((imageBlob, index) => {
+        formData.append("images", imageBlob, `cropped-image-${index + 1}.jpeg`);
+      });
+    }
+  
+    // Send Request to update
+    console.log(formData)
+
+    try { 
+      const res = await fetch(`/admin/products/edit/${window.productId}`, {
+        method: "POST",
+        body: formData,
+      });
+  
+      const data = await res.json();
+      if (data.success){
+        alert(data.message);
+        productForm.reset();
+        for (let i = 0; i < croppedImages.length; i++) {
+          document.getElementById(`image${i}`).removeAttribute('src');
+        }
+        croppedImages.length = 0
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong");
+    }
+  });
+}
+

@@ -42,7 +42,7 @@ const newProductValidations = async (req, res, next) => {
   }
 };
 
-const updateProductValidations = async (req, res) => {
+const updateProductValidations = async (req, res, next) => {
   try {
     const { productName, categoryId, brand, description } = req.body;
     const mrp = parseFloat(req.body.mrp);
@@ -61,15 +61,10 @@ const updateProductValidations = async (req, res) => {
       validateHiglights(highlights) ||
       validateDescription(description);
 
-    if (errorMessage) {
-      req.flash("errorMessage", errorMessage);
-      return res.redirect("/admin/products/new");
-    }
 
-    if (!req.files || req.files.length !== 4) {
-      req.flash("errorMessage", "Minimum 4 images required");
-      return res.redirect("/admin/products/new");
-    }
+      if (errorMessage) {
+        return res.json({success: false, message: errorMessage})
+      }
 
     return next();
   } catch (error) {

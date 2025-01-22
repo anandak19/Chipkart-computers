@@ -116,8 +116,12 @@
               <td><%= product.isFeatured ? 'Yes' : 'No' %></td>
               <td><%= product.isListed ? 'Yes' : 'No' %></td>
               <td>
+                <form action="/admin/products/toggle-listed/<%= product._id %>" method="post" style="display: inline">
+                <button class="btn <%= product.isListed ? 'btn-danger' : 'btn-success' %> btn-sm">
+                  <%= product.isListed ? 'Unlist' : 'List' %>
+                </button>
+              </form>
                 <a href="/admin/products/edit/<%= product._id %>" class="btn btn-primary btn-sm">Edit</a>
-                <button>Unlist</button>
               </td>
             </tr>
             <% }); %> <% } %>

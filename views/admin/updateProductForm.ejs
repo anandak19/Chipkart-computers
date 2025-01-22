@@ -238,7 +238,8 @@
               </div>
             </div>
             <div class="submit-btn">
-              <button id="saveProductBtn">Save</button>
+            <p></p>
+              <button id="updateProductBtn">Update and Save</button>
               <% if( errorMessage ) {%>
               <small class="text-danger"><%= errorMessage %></small>
               <% } %> <% if( successMessage ) {%>
@@ -256,6 +257,9 @@
       </div>
     </div>
 
+    <script>
+        window.productId = '<%= product._id %>';
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
     <script src="/javascripts/admin/productForm.js"></script>

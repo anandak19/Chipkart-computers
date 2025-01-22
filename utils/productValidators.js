@@ -27,20 +27,21 @@ const validateNewProductName = async (productName) => {
 };
 
 const validateProductName = async (productName) => {
-  if (!productName || productName.length < 2 || productName > 30) {
+  if (!productName || productName.length < 2 || productName.length > 30) {
     return "Product name must be between 2 and 30 characters long";
   }
   try {
-    const productCount = await ProductSchema.countDocuments({ productName });
-    if (productCount > 1) {
-      return "A product with same name exists, please try another name";
+    const productCount = await ProductSchema.countDocuments({ productName: productName });
+    if (productCount > 1) { 
+      return "A product with the same name exists, please try another name";
     }
     return null;
   } catch (error) {
-    console.log(error);
+    console.error("Error validating product name:", error);
     return "An error occurred while validating the product name";
   }
 };
+
 
 const validateCategory = async (categoryId) => {
   try {
@@ -59,7 +60,6 @@ const validateCategory = async (categoryId) => {
 };
 
 const validateBrand = (brand) => {
-    console.log(brand)
     if (!brand || brand.length < 2) {
         return 'Invalid brand name'
     }

@@ -2,7 +2,7 @@ const express = require('express')
 const { isAdminLogin } = require('../middlewares/adminAuth')
 const adminController = require("../controllers/adminController");
 const { upload } = require('../utils/multer');
-const { newProductValidations } = require('../middlewares/productValidation');
+const { newProductValidations, updateProductValidations } = require('../middlewares/productValidation');
 
 const router = express.Router()
 
@@ -20,6 +20,8 @@ router.get('/products', adminController.getProductManagement)
 router.get('/products/new', adminController.getProductForm)
 router.post('/products/new', upload.array('images'), newProductValidations, adminController.addNewProduct)
 router.get('/products/edit/:id', adminController.getEditProductForm)
+router.post('/products/edit/:id', upload.array('images'), updateProductValidations, adminController.postEditProductForm)
+router.post('/products/toggle-listed/:id', adminController.toggleListProduct)
 //category management
 // router.get('/categories', isAdminLogin, adminController.getCategoryManagement)
 router.get('/categories', adminController.getCategoryManagement)
