@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel</title>
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Font Awesome Icons -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Cropper.js CSS -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles/admin.css" />
+    <link rel="stylesheet" href="/styles/adminProducts.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h3 class="text-white text-center">Chipkart Admin</h3>
+      <a href="/admin"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a href="/admin/users"><i class="fas fa-users"></i> User Management</a>
+      <a href="/admin/products" class="sidebar-active"
+        ><i class="fas fa-cogs"></i> Product Management</a
+      >
+      <a href="/admin/categories"
+        ><i class="fas fa-tags"></i> Category Management</a
+      >
+      <a href="/admin/offers"><i class="fas fa-gift"></i> Offer Module</a>
+      <a href="/admin/orders"><i class="fas fa-box"></i> View Orders</a>
+      <a href="/admin/reports"
+        ><i class="fas fa-chart-line"></i> Sales Report</a
+      >
+      <a href="/admin/coupons"><i class="fas fa-gift"></i> Coupon Management</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-wrapper">
+      <!-- Navbar -->
+      <%- include("../partials/adminHeader") %>
+
+      <div class="main-content">
+        <!-- submit this form dynamically in the js with fech api, add images too  -->
+        <div class="form-wrapper">
+          <form id="productForm">
+            <!-- Small Inputs -->
+            <div class="small-inputs">
+              <div class="form-group">
+                <label for="productName">Product Name</label>
+                <input
+                  type="text"
+                  id="productName"
+                  placeholder="Product Name"
+                  value="<%= product.productName %>"
+                />
+                <small class="text-danger" id="productNameError"></small>
+              </div>
+              <div class="form-group">
+                <label for="category">Category</label>
+                <select id="category">
+                  <option value="">-Select Category-</option>
+                  <% categoryArray.forEach((category) => { %>
+                  <option value="<%= category.id %>" <%= category.id.toString() === product.categoryId ? 'selected': '' %>>
+                    <%= category.categoryName %>
+                  </option>
+                  <% }) %>
+                </select>
+                <small class="text-danger" id="categoryError"></small>
+              </div>
+              <div class="form-group">
+                <label for="brandName">Brand Name</label>
+                <input type="text" id="brandName" placeholder="Brand Name" value="<%= product.brand %>"/>
+                <small class="text-danger" id="brandNameError"></small>
+              </div>
+              <div class="form-group">
+                <label for="mrp">MRP</label>
+                <input type="number" id="mrp" placeholder="MRP" value="<%= product.mrp %>"/>
+                <small class="text-danger" id="mrpError"></small>
+              </div>
+              <div class="form-group">
+                <label for="discount">Discount (%)</label>
+                <input type="number" id="discount" placeholder="Discount (%)" value="<%= product.discount %>" />
+                <small class="text-danger" id="discountError"></small>
+              </div>
+              <div class="form-group">
+                <label for="finalPrice">Final Price</label>
+                <input
+                  type="number"
+                  id="finalPrice"
+                  placeholder="Final Price"
+                  value="<%= product.finalPrice %>"
+                  readonly
+                />
+                <small class="text-danger" id="finalPriceError"></small>
+              </div>
+              <div class="form-group">
+                <label for="stockCount">Stock Count</label>
+                <input
+                  type="number"
+                  id="stockCount"
+                  placeholder="Stock Count"
+                  value="<%= product.quantity %>"
+                />
+                <small class="text-danger" id="stockCountError"></small>
+              </div>
+              <div class="form-group">
+                <label for="feature">Feature this Item</label>
+                <select id="feature">
+                    <option value="false" <%= !product.isFeatured ? 'selected' : '' %>>No</option>
+                    <option value="true" <%= product.isFeatured ? 'selected' : '' %>>Yes</option>
+                  </select>
+                <small class="text-danger" id="featureError"></small>
+              </div>
+            </div>
+
+            <!-- Medium Inputs -->
+            <div class="medium-input">
+              <div class="form-group">
+                <label for="highlight1">Highlight 1</label>
+                <input
+                  type="text"
+                  id="highlight1"
+                  class="highlights"
+                  placeholder="Highlight 1"
+                  value="<%= product.highlights[0] %>"
+                />
+              </div>
+              <div class="form-group">
+                <label for="highlight2">Highlight 2</label>
+                <input
+                  type="text"
+                  id="highlight2"
+                  class="highlights"
+                  placeholder="Highlight 2"
+                  value="<%= product.highlights[1] %>"
+                />
+              </div>
+              <div class="form-group">
+                <label for="highlight3">Highlight 3</label>
+                <input
+                  type="text"
+                  id="highlight3"
+                  class="highlights"
+                  placeholder="Highlight 3"
+                  value="<%= product.highlights[2] %>"
+                />
+                <small class="text-danger" id="highlightsError"></small>
+              </div>
+              <div class="form-group">
+                <label for="highlight4">Highlight 4</label>
+                <input
+                  type="text"
+                  id="highlight4"
+                  class="highlights"
+                  placeholder="Highlight 4"
+                  value="<%= product.highlights[3] %>"
+                />
+              </div>
+            </div>
+
+            <!-- Large Input -->
+            <div class="large-input">
+              <div class="form-group">
+                <label for="description">Product Description</label>
+                <textarea
+                  id="description"
+                  placeholder="Product Description"
+                > <%= product.description %> </textarea>
+                <small class="text-danger" id="descriptionError"></small>
+              </div>
+            </div>
+
+            <!-- Product Image Section -->
+            <div class="product-image-section">
+              <div class="form-group image-group">
+                <p class="image-label">Add Primary Image</p>
+                <label class="image-box" for="imageA">
+                  <p>Choose an image</p>
+                  <img id="image0" alt="" src="<%= product.images[0].filepath %>" />
+                </label>
+                <input
+                  type="file"
+                  id="imageA"
+                  class="image-input"
+                  accept="image/*"
+                />
+                <small class="text-danger" id="imageError"></small>
+              </div>
+              <div class="form-group image-group">
+                <p class="image-label">Add Image 2</p>
+                <label class="image-box" for="imageB">
+                  <p>Choose an image</p>
+                  <img id="image1" alt="" src="<%= product.images[1].filepath %>" />
+                </label>
+                <input
+                  type="file"
+                  id="imageB"
+                  class="image-input"
+                  accept="image/*"
+                />
+              </div>
+              <div class="form-group image-group">
+                <p class="image-label">Add Image 3</p>
+                <label class="image-box" for="imageC">
+                  <p>Choose an image</p>
+                  <img id="image2" alt="" src="<%= product.images[2].filepath %>" />
+                </label>
+                <input
+                  type="file"
+                  id="imageC"
+                  class="image-input"
+                  accept="image/*"
+                />
+              </div>
+              <div class="form-group image-group">
+                <p class="image-label">Add Image 4</p>
+                <label class="image-box" for="imageD">
+                  <p>Choose an image</p>
+                  <img id="image3" alt="" src="<%= product.images[3].filepath %>"/>
+                </label>
+                <input
+                  type="file"
+                  id="imageD"
+                  class="image-input"
+                  accept="image/*"
+                />
+              </div>
+            </div>
+            <div class="submit-btn">
+              <button id="saveProductBtn">Save</button>
+              <% if( errorMessage ) {%>
+              <small class="text-danger"><%= errorMessage %></small>
+              <% } %> <% if( successMessage ) {%>
+              <small class="text-success"><%= successMessage %></small>
+              <% } %>
+            </div>
+          </form>
+          <div id="modal" class="modal">
+            <div class="modal-content">
+              <img id="image" src="" alt="" />
+              <button id="cropButton">Crop</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+    <script src="/javascripts/admin/productForm.js"></script>
+    <!-- Bootstrap JS and Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+  </body>
+</html>

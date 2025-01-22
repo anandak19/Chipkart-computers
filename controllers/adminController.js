@@ -1,5 +1,6 @@
 const UserSchema = require("../models/User");
 const CategoriesSchema = require("../models/Category");
+const ProductSchema = require("../models/Product");
 
 exports.getDashboard = (req, res) => {
   res.render("admin/dashbord", { title: "Admin Dashboard" });
@@ -84,30 +85,171 @@ exports.searchUser = async (req, res) => {
 // -----user management end------
 
 // -----product management start------
-exports.getProductManagement = (req, res) => {
-  /*
-  get all the products from the databse and return it as an arry
-  */
+exports.getProductManagement = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = 5;
+  const skip = (page - 1) * limit;
 
-  res.render("admin/productManagement", {
-    title: "Product Management",
-    searchQuery: "",
-  });
+  try {
+    const productsArray = await ProductSchema.aggregate([
+      {
+        $addFields: {
+          categoryIdObject: { $toObjectId: "$categoryId" },
+        },
+      },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "categoryIdObject",
+          foreignField: "_id",
+          as: "categoryDetails",
+        },
+      },
+      {
+        $unwind: "$categoryDetails",
+      },
+      {
+        $skip: skip,
+      },
+      {
+        $limit: limit,
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
+    const totalProducts = await ProductSchema.countDocuments();
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    res.render("admin/productManagement", {
+      title: "Product Management",
+      productsArray,
+      currentPage: page,
+      totalPages,
+      searchQuery: "",
+    });
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 exports.getProductForm = (req, res) => {
-  res.render("admin/productForm", { title: "Product Management - New" });
+  try {
+    CategoriesSchema.aggregate([
+      {
+        $match: {
+          isListed: true,
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          id: "$_id",
+          categoryName: 1,
+        },
+      },
+    ])
+      .then((categoryArray) => {
+        res.render("admin/productForm", {
+          title: "Product Management - New",
+          categoryArray,
+          errorMessage: req.flash("errorMessage"),
+          successMessage: req.flash("successMessage"),
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+        res.redirect("/admin/products");
+      });
+  } catch (error) {
+    console.log(error);
+    res.redirect("/admin/products");
+  }
 };
 
-exports.addNewProduct = (req, res) => {
-  /*
-  get the product details and validate the entered data
-  
-  */
+exports.addNewProduct = async (req, res) => {
+  try {
+    const { productName, categoryId, brand, description } = req.body;
+    const mrp = parseFloat(req.body.mrp);
+    const discount = parseFloat(req.body.discount);
+    const finalPrice = parseFloat(req.body.finalPrice);
+    const quantity = parseFloat(req.body.quantity);
+    const highlights = JSON.parse(req.body.highlights);
+
+    const images = req.files.map((file) => ({
+      filename: file.filename,
+      filepath: `/uploads/${file.filename}`,
+    }));
+
+    const newProduct = new ProductSchema({
+      productName,
+      categoryId,
+      brand,
+      description,
+      mrp,
+      discount,
+      finalPrice,
+      quantity,
+      highlights,
+      images,
+    });
+
+    await newProduct.save();
+    res
+      .status(200)
+      .json({ success: true, message: "Product added successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+exports.getEditProductForm = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    if (!productId) {
+      console.log("Id not found");
+      return res.redirect("/admin/products");
+    }
+    const product = await ProductSchema.findById(productId);
+    if (!product) {
+      console.log("product not found in database");
+      return res.redirect("/admin/products");
+    }
+
+    const categoryArray = await CategoriesSchema.aggregate([
+      {
+        $match: {
+          isListed: true,
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          id: "$_id",
+          categoryName: 1,
+        },
+      },
+    ]);
+
+    res.render("admin/updateProductForm", { 
+      title: "Product Management - Edit Product",
+      categoryArray,
+      product,
+      errorMessage: req.flash("errorMessage"),
+      successMessage: req.flash("successMessage"),
+    });
+    
+  } catch (error) {
+    console.log(error);
+    res.redirect("/admin/products");
+  }
 };
 
 // -----product management end------
 
+// -----category management start------
 exports.getCategoryManagement = async (req, res) => {
   try {
     // delete req.session.flash;
@@ -178,15 +320,15 @@ exports.toggleListCategory = async (req, res) => {
     category.isListed = !category.isListed;
     await category.save();
 
-    console.log("updated")
-    res.redirect('/admin/categories')
+    console.log("updated");
+    res.redirect("/admin/categories");
   } catch (error) {
-    console.log(error)
-    res.redirect('/admin/categories')
+    console.log(error);
+    res.redirect("/admin/categories");
   }
 };
 
-exports.getUpdateCategoryForm = async(req, res) => {
+exports.getUpdateCategoryForm = async (req, res) => {
   try {
     const categoryId = req.params.id;
     if (!categoryId) {
@@ -196,53 +338,50 @@ exports.getUpdateCategoryForm = async(req, res) => {
     if (!category) {
       return res.status(404).send("Category not found.");
     }
-    res.render('admin/formUpdateCategory', {
+    res.render("admin/formUpdateCategory", {
       title: "Category Management - Edit",
       errorMessage: req.flash("errorMessage"),
       successMessage: req.flash("successMessage"),
-      category
-    })
+      category,
+    });
   } catch (error) {
-    console.log(error)
-    res.redirect('/admin/categories')
+    console.log(error);
+    res.redirect("/admin/categories");
   }
 };
 
-exports.postUpdateCategoryForm = async(req, res) => {
-
+exports.postUpdateCategoryForm = async (req, res) => {
   try {
     const { id } = req.params;
-    if(!id) {
+    if (!id) {
       return res.redirect("/admin/categories");
     }
     const categoryName = req.body?.categoryName?.trim() || "";
     const isListed = req.body?.isListed;
-    const category = {categoryName, isListed, id}
-  
-  
+
     if (!categoryName || !isListed) {
       req.flash("errorMessage", "Please enter the values");
-      return res.redirect("/admin/categories/new");
+      return res.redirect(`/admin/categories/edit/${id}`);
     }
-  
-    const updatedCategory = await CategoriesSchema.findOneAndUpdate(
-      {_id: id}, {categoryName: categoryName, isListed: isListed}
-    )
 
+    const updatedCategory = await CategoriesSchema.findOneAndUpdate(
+      { _id: id },
+      { categoryName: categoryName, isListed: isListed },
+      { new: true }
+    );
+
+    if (!updatedCategory) {
+      return res.redirect(`/admin/categories`);
+    }
 
     req.flash("successMessage", "Category updated successfully");
-    res.redirect(`/admin/categories/edit/${id}`)
+    res.redirect(`/admin/categories/edit/${id}`);
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.redirect("/admin/categories");
   }
-
-
-
-
-
-
-}
+};
+// -----category management end------
 
 exports.getOfferModule = (req, res) => {
   res.render("admin/offerModule", { title: "Offer Module" });
