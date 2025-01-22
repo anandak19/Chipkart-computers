@@ -314,8 +314,6 @@ exports.toggleListProduct = async (req, res) => {
     res.redirect("/admin/products");
   }
 };
-
-
 // -----product management end------
 
 // -----category management start------

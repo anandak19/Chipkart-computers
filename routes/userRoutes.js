@@ -6,6 +6,7 @@ const { isLogin } = require('../middlewares/userAuth')
 const router = express.Router()
 
 router.get('/', userController.getHome)
+router.get('/products', userController.getProductsPage)
 
 // get user personal details page 
 router.get('/account', isLogin, userController.getAccount)
