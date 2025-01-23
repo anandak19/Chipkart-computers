@@ -1,81 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Products</title>
-    <%- include("../partials/head")  %>
-    <link rel="stylesheet" href="/styles/products.css">
-</head>
-<body>
-    <%- include("../partials/userHeader")  %>
+    <%- include("../partials/head") %>
+    <link rel="stylesheet" href="/styles/products.css" />
+  </head>
+  <body>
+    <%- include("../partials/userHeader") %>
 
     <div class="page-wrapper content-wrapper">
-        <div class="container">
-            <!-- Side Panel -->
-            <div class="side-panel">
-              <div class="category-section">
-                <h3>Shop by Category</h3>
-                <ul>
-                    <!-- loop this later  -->
-                    <% categoryArray.forEach((category) => { %>
-                        <li><%= category.categoryName %></li>
-                    <% }) %>
-                </ul>
-              </div>
-              <div>
-                <h3>Filters</h3>
-                <div class="filter">
-                  <label for="priceOrder">Price Order</label>
-                  <select id="priceOrder">
-                    <option value="low">Low to High</option>
-                    <option value="high">High to Low</option>
-                  </select>
-                </div>
-                <div class="filter">
-                  <label for="rating">Rating</label>
-                  <select id="rating">
-                    <option value="4">4 Stars & Up</option>
-                    <option value="3">3 Stars & Up</option>
-                    <option value="2">2 Stars & Up</option>
-                  </select>
-                </div>
-                <div class="filter">
-                  <label><input type="checkbox" /> Featured Products Only</label>
-                </div>
-                <div class="filter">
-                  <label><input type="checkbox" /> New Arrivals Only</label>
-                </div>
-                <div class="filter">
-                  <label><input type="checkbox" /> Popular Products Only</label>
-                </div>
-              </div>
+      <div class="container">
+        <!-- Side Panel -->
+        <div class="side-panel">
+          <div class="category-section">
+            <h3>Shop by Category</h3>
+            <ul id="categoryList">
+              <!-- loop this later  -->
+              <% categoryArray.forEach((category) => { %>
+              <li data-id="<%= category.id %>"><%= category.categoryName %></li>
+              <% }) %>
+            </ul>
+          </div>
+          <div>
+            <h3>Filters</h3>
+            <div class="filter">
+              <label for="priceOrder">Price Order</label>
+              <select id="priceOrder">
+                <option value="">Select</option>
+                <option value="asc">Low to High</option>
+                <option value="desc">High to Low</option>
+              </select>
             </div>
-        
-            <!-- Main Content -->
-            <div class="main-content">
-              <div class="top-bar">
-                <select>
-                  <option value="a-z">Sort by A-Z</option>
-                  <option value="z-a">Sort by Z-A</option>
-                </select>
-              </div>
-              <div class="product-grid">
-                <!-- Product Card Example -->
-                <div class="product-card">
-                  <img src="/images/sample-product.jpg" alt="Product 1" />
-                  <h4>Product 1</h4>
-                  <p>$10.99</p>
-                  <div class="product-actions">
-                    <button class="add-cart">Add Cart</button>
-                    <button class="wishlist">Wishlist</button>
-                  </div>
-                </div>
-              </div>
+            <div class="filter">
+              <label for="rating">Rating</label>
+              <select id="rating">
+                <option value="">Select</option>
+                <option value="4">4 Stars & Up</option>
+                <option value="3">3 Stars & Up</option>
+                <option value="2">2 Stars & Up</option>
+              </select>
+            </div>
+            <div class="filter">
+              <label><input type="checkbox" id="isFeatured" />Featured Products Only</label>
+            </div>
+            <div class="filter">
+              <label><input type="checkbox" id="isNew" />New Arrivals Only</label>
+            </div>
+            <div class="filter">
+              <label><input type="checkbox" id="isPopular" />Popular Products Only</label>
+            </div>
+            
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+          <div class="top-bar">
+            <div class="sort-filter">
+              <label for="sortBy">Sort By</label>
+              <select id="sortBy">
+                <option value="">Select</option>
+                <option value="a-z">Sort by A-Z</option>
+                <option value="z-a">Sort by Z-A</option>
+              </select>
             </div>
           </div>
+          <div class="product-grid" id="productList"></div>
+        </div>
+      </div>
     </div>
 
-    <%- include("../partials/userFooter")  %>
-</body>
+    <%- include("../partials/userFooter") %>
+
+    <script src="/javascripts/apiCalls/productPage.js"></script>
+  </body>
 </html>
