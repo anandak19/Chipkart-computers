@@ -34,6 +34,7 @@
     margin-bottom: 10px;
     font-size: 16px;
     padding: 6px;
+    cursor: pointer;
     transition: all 0.3s ease;
   }
   .side-panel ul li:hover {
@@ -81,24 +82,27 @@
   }
 
   .product-grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between; 
-    gap: 12px;   
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    padding: 16px;
+    box-sizing: border-box;
+    width: 100%;
   }
 
   .product-card {
-    flex: 0 0 calc((100% - 48px) / 5); 
-    max-width: calc((100% - 48px) / 5); 
-    box-sizing: border-box; 
+    background-color: #fff;
     border-radius: 5px;
-    overflow: hidden; 
-    border: 1px solid #ccc; 
-    padding: 4px;   
+    padding: 2px;
+    overflow: hidden;
+    border: 1px solid #ccc;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   .product-card-image{
     width: 100%;
+    padding: 4px;
     height: auto;
     overflow: hidden;
   }
@@ -192,4 +196,9 @@
 
   .product-actions .wishlist:active{
     background-color: #a86800;
+  }
+
+  .empty{
+    display: flex;
+    
   }

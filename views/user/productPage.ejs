@@ -43,15 +43,22 @@
               </select>
             </div>
             <div class="filter">
-              <label><input type="checkbox" id="isFeatured" />Featured Products Only</label>
+              <label
+                ><input type="checkbox" id="isFeatured" />Featured Products
+                Only</label
+              >
             </div>
             <div class="filter">
-              <label><input type="checkbox" id="isNew" />New Arrivals Only</label>
+              <label
+                ><input type="checkbox" id="isNew" />New Arrivals Only</label
+              >
             </div>
             <div class="filter">
-              <label><input type="checkbox" id="isPopular" />Popular Products Only</label>
+              <label
+                ><input type="checkbox" id="isPopular" />Popular Products
+                Only</label
+              >
             </div>
-            
           </div>
         </div>
 
@@ -66,8 +73,32 @@
                 <option value="z-a">Sort by Z-A</option>
               </select>
             </div>
+            <p id="resultCount"></p>
           </div>
-          <div class="product-grid" id="productList"></div>
+          <div class="product-grid" id="productList">
+            <div class="product-card">
+              <div class="product-card-image">
+                <img src="/images/default/default.jpg" alt="Loding.." />
+              </div>
+              <div class="product-card-details">
+                <h4>
+                  <a href="#">Loding..</a>
+                </h4>
+                <div class="price">
+                  <p class="selling-price">Loding..</p>
+                </div>
+              </div>
+              <div class="product-actions">
+                <button class="add-cart">Loding..</button>
+                <button class="wishlist">Loding..</button>
+              </div>
+            </div>
+          </div>
+          <!-- pagination  -->
+          <div class="pagination">
+            <button id="prevBtn">Prev</button>
+            <button id="nextBtn">Next</button>
+          </div>
         </div>
       </div>
     </div>
