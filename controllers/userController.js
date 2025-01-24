@@ -111,10 +111,10 @@ exports.getAvailableProducts = async (req, res) => {
     const total = productCount ? productCount.total : 0;
     const hasMore = skip + products.length < total;
 
-    console.log("filter is: ", filters);
-    console.log("sort is:", sort);
-    console.log("limit is:", limit);
-    console.log("skip is", skip);
+    // console.log("filter is: ", filters);
+    // console.log("sort is:", sort);
+    // console.log("limit is:", limit);
+    // console.log("skip is", skip);
 
     res.json({ products, total, hasMore });
   } catch (error) {
@@ -122,6 +122,12 @@ exports.getAvailableProducts = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+exports.getProductDetailsPage = (req, res) => {
+  res.render("user/productDetailPage");
+};
+
+
 
 exports.getAccount = (req, res) => {
   res.render("user/account");

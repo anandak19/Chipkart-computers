@@ -1,16 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Products</title>
-    <%- include("../partials/head")  %>
-</head>
-<body>
-    <%- include("../partials/userHeader")  %>
+    <%- include("../partials/head") %>
+    <link rel="stylesheet" href="/styles/productDetails.css" />
+  </head>
+  <body>
+    <%- include("../partials/userHeader") %>
 
-    prod dee
+    <div class="page-wrapper content-wrapper">
+      <div class="selected-product">
+        <div class="left-section">
+          <div class="small-images">
+            <div class="small-image">
+              <img src="/images/sample-product.jpg" alt="Product Image 1" />
+            </div>
+            <div class="small-image">
+              <img src="/images/sample-product.jpg" alt="Product Image 2" />
+            </div>
+            <div class="small-image">
+              <img src="/images/sample-product.jpg" alt="Product Image 3" />
+            </div>
+            <div class="small-image">
+              <img
+                src="/uploads/product-1737577205252.jpeg"
+                alt="Product Image 4"
+              />
+            </div>
+          </div>
 
-    <%- include("../partials/userFooter")  %>
-</body>
+          <div class="large-image">
+            <div
+              id="imageZoom"
+              style="
+                --url: url(/uploads/product-1737577205252.jpeg);
+                --zoom-x: 0%;
+                --zoom-y: 0%;
+                --display: none;
+              "
+            >
+              <img
+                src="/uploads/product-1737577205252.jpeg"
+                alt="Product Image"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="right-section">
+          <div class="breadcrumbs">Home > Category > Product Name</div>
+          <div class="product-info">
+            <h1 class="brand-name">Brand Name</h1>
+            <h2 class="product-name">Product Name</h2>
+            <div class="rating">★★★★☆ (4.5/5)</div>
+            <div class="price">
+              <span class="current-price">$199.99</span>
+              <span class="mrp">$249.99</span>
+            </div>
+            <p class="description">
+              This is the product description that explains the features and
+              specifications of the product in detail.
+            </p>
+            <div class="keypoints">
+              <ul>
+                <li>Key Feature 1</li>
+                <li>Key Feature 2</li>
+                <li>Key Feature 3</li>
+                <li>Key Feature 4</li>
+              </ul>
+            </div>
+            <div class="stock-availability">In Stock: 25 units</div>
+            <div class="buttons">
+              <button class="add-to-cart">Add to Cart</button>
+              <button class="buy-now">Buy Now</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <%- include("../partials/userFooter") %>
+
+    <script>
+      let imageZoom = document.getElementById("imageZoom");
+      imageZoom.addEventListener("mousemove", (event) => {
+        imageZoom.style.setProperty("--display", "block");
+        let pointer = {
+          x: (event.offsetX * 100) / imageZoom.offsetWidth,
+          y: (event.offsetY * 100) / imageZoom.offsetHeight,
+        };
+        imageZoom.style.setProperty("--zoom-x", pointer.x + "%");
+        imageZoom.style.setProperty("--zoom-y", pointer.y + "%");
+      });
+
+      imageZoom.addEventListener("mouseout", () => {
+        imageZoom.style.setProperty("--display", "none");
+      });
+    </script>
+  </body>
 </html>

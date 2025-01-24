@@ -39,7 +39,7 @@ const showProducts = (products, total, hasMore) => {
             </div>
             <div class="product-card-details">
               <h4>
-                <a href="#">${product.productName || 'Unnamed Product'}</a>
+                <a href="/products/${product._id}">${product.productName || 'Unnamed Product'}</a>
               </h4>
               <div class="price">
             <p class="selling-price">${product.finalPrice || 'N/A'}</p>
