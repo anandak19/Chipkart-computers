@@ -6,6 +6,7 @@
     <title>Products</title>
     <%- include("../partials/head") %>
     <link rel="stylesheet" href="/styles/productDetails.css" />
+    <link rel="stylesheet" href="/styles/home.css" />
   </head>
   <body>
     <%- include("../partials/userHeader") %>
@@ -14,65 +15,71 @@
       <div class="selected-product">
         <div class="left-section">
           <div class="small-images">
-            <div class="small-image">
-              <img src="/images/sample-product.jpg" alt="Product Image 1" />
-            </div>
-            <div class="small-image">
-              <img src="/images/sample-product.jpg" alt="Product Image 2" />
-            </div>
-            <div class="small-image">
-              <img src="/images/sample-product.jpg" alt="Product Image 3" />
-            </div>
-            <div class="small-image">
-              <img
-                src="/uploads/product-1737577205252.jpeg"
-                alt="Product Image 4"
-              />
-            </div>
+            <% product.images.forEach((image) => { %>
+              <div class="small-image">
+                <img src="<%= image.filepath %>" alt="Product Image" />
+              </div>
+            <% }); %>
+            
           </div>
 
           <div class="large-image">
             <div
               id="imageZoom"
               style="
-                --url: url(/uploads/product-1737577205252.jpeg);
+                --url: url(<%= product.images[0].filepath %>);
                 --zoom-x: 0%;
                 --zoom-y: 0%;
                 --display: none;
               "
             >
               <img
-                src="/uploads/product-1737577205252.jpeg"
+                src="<%= product.images[0].filepath %>"
                 alt="Product Image"
               />
+              <div class="wishlist-icon">
+                <i class="fa fa-heart"></i>
+              </div>
             </div>
           </div>
         </div>
 
         <div class="right-section">
-          <div class="breadcrumbs">Home > Category > Product Name</div>
+          <nav aria-label="breadcrumb" class="breadcrumb-nav">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="/">Home</a></li>
+              <li class="breadcrumb-item"><a href="/products">Product</a></li>
+              <li class="breadcrumb-item breadcrumb-last">
+                <a href=""><%= product.productName %></a>
+              </li>
+            </ol>
+          </nav>
           <div class="product-info">
-            <h1 class="brand-name">Brand Name</h1>
-            <h2 class="product-name">Product Name</h2>
-            <div class="rating">★★★★☆ (4.5/5)</div>
-            <div class="price">
-              <span class="current-price">$199.99</span>
-              <span class="mrp">$249.99</span>
+            <p class="brand-name"><%= product.brand %></p>
+            <h2 class="product-name"><%= product.productName %></h2>
+            <div class="rating">
+              <div class="rating-box">
+                <p>★<span>4.5</span></p>
+              </div>
+              <p class="count"><span>8</span>Reviews</p>
             </div>
+            <div class="price">
+              <span class="current-price">₹<%= product.finalPrice %></span>
+              <span class="mrp">₹<%= product.mrp %></span>
+            </div>
+            <p class="discount"><%= product.discount %>% Discount Applied</p>
 
-            <p class="description">
-              This is the product description that explains the features and
-              specifications of the product in detail.
-            </p>
+            <p class="description"><%= product.description %></p>
             <div class="keypoints">
               <ul>
-                <li>Key Feature 1</li>
-                <li>Key Feature 2</li>
-                <li>Key Feature 3</li>
-                <li>Key Feature 4</li>
+                <% product.highlights.forEach((highlight) => { %>
+                <li><%= highlight %></li>
+                <% }); %>
               </ul>
             </div>
-            <div class="stock-availability">In Stock: 25 units</div>
+            <div class="stock-availability">
+              In Stock: <%= product.quantity %> units
+            </div>
             <div class="buttons">
               <button class="add-to-cart">Add to Cart</button>
               <button class="buy-now">Buy Now</button>
@@ -80,24 +87,213 @@
           </div>
         </div>
       </div>
+
+      <!-- reviews  -->
+      <div class="product-reviews-section">
+        <div class="reviews-section-head">
+          <div class="review-head">
+            <h3>Ratings & Reviews</h3>
+            <a id="rateBtn" href="/products">Rate Product</a>
+          </div>
+          <div class="total-review">
+            <div class="total-review-overal">
+              <p class="overal"><span>4.5</span>★</p>
+              <p>1,01,750 Ratings & 7,670 Reviews</p>
+            </div>
+          </div>
+        </div>
+        <div class="reviews-content">
+          <div class="review-card">
+            <div class="card-head">
+              <div class="rating">
+                <div class="rating-box-small">
+                  <p>★<span>4.5</span></p>
+                </div>
+                <p class="auther">By<span>Anandan</span></p>
+              </div>
+            </div>
+            <div class="review-content">
+              <p>
+                If you want to make some files not tracked by git, you have to
+                create and add the filename in the .gitignore file. Never commit
+                unnecessary files, use .gitignore file for making those files
+                not tracked by git.
+              </p>
+            </div>
+          </div>
+
+          <div class="review-card">
+            <div class="card-head">
+              <div class="rating">
+                <div class="rating-box-small">
+                  <p>★<span>4.5</span></p>
+                </div>
+                <p class="auther">By<span>Anandan</span></p>
+              </div>
+            </div>
+            <div class="review-content">
+              <p>
+                If you want to make some files not tracked by git, you have to
+                create and add the filename in the .gitignore file. Never commit
+                unnecessary files, use .gitignore file for making those files
+                not tracked by git.
+              </p>
+            </div>
+          </div>
+
+          <div class="review-card">
+            <div class="card-head">
+              <div class="rating">
+                <div class="rating-box-small">
+                  <p>★<span>4.5</span></p>
+                </div>
+                <p class="auther">By<span>Anandan</span></p>
+              </div>
+            </div>
+            <div class="review-content">
+              <p>
+                If you want to make some files not tracked by git, you have to
+                create and add the filename in the .gitignore file. Never commit
+                unnecessary files, use .gitignore file for making those files
+                not tracked by git.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="paginators">
+          <button disabled>Prev</button>
+          <button>Next</button>
+        </div>
+      </div>
+
+      
+        <!-- related Products -->
+        <div class="page-section">
+          <div class="section-header">
+            <p>Related Products</p>
+            <hr class="header-line" />
+          </div>
+          <!-- products  -->
+          <div class="products">
+            <!-- Product Cards -->
+            <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <!-- dummy, delete this later  -->
+              <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <a href="/product/1" class="product-link">
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
+                  </div>
+                  <div class="product-details">
+                    <p>Product 1</p>
+                    <p>$100</p>
+                  </div>
+                </div>
+              </a>
+              <!-- dummy products end  -->
+              
+          </div>
+        </div>
     </div>
     <%- include("../partials/userFooter") %>
 
-    <script>
-      let imageZoom = document.getElementById("imageZoom");
-      imageZoom.addEventListener("mousemove", (event) => {
-        imageZoom.style.setProperty("--display", "block");
-        let pointer = {
-          x: (event.offsetX * 100) / imageZoom.offsetWidth,
-          y: (event.offsetY * 100) / imageZoom.offsetHeight,
-        };
-        imageZoom.style.setProperty("--zoom-x", pointer.x + "%");
-        imageZoom.style.setProperty("--zoom-y", pointer.y + "%");
-      });
-
-      imageZoom.addEventListener("mouseout", () => {
-        imageZoom.style.setProperty("--display", "none");
-      });
-    </script>
+    <script src="/javascripts/apiCalls/productDetailPage.js"></script>
   </body>
 </html>

@@ -123,10 +123,25 @@ exports.getAvailableProducts = async (req, res) => {
   }
 };
 
-exports.getProductDetailsPage = (req, res) => {
-  res.render("user/productDetailPage");
+// render the product details page with its detials 
+exports.getProductDetailsPage = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const product = await ProductSchema.findById(productId);
+
+    if (!product) {
+      return res.status(404).send("Product not found");
+    }
+    res.render("user/productDetailPage", { product });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send("Internal server error");
+  }
 };
 
+exports.getAddReviewForm = (req, res) => {
+  res.render("user/productDetailPage");
+};
 
 
 exports.getAccount = (req, res) => {

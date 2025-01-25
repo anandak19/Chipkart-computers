@@ -234,13 +234,13 @@
   display: flex;
   align-items: center;
   gap: 15px; 
-  margin-right: 20px; 
+  margin-right: 20px;
 }
 
 .promise-image img {
-  width: 40px; 
+  width: 40px;
   height: 40px;
-  object-fit: cover; 
+  object-fit: cover;
 }
 
 .promise-texts {
