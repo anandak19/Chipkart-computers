@@ -20,7 +20,8 @@ router.get('/products', adminController.getProductManagement)
 router.get('/products/new', adminController.getProductForm)
 router.post('/products/new', upload.array('images'), newProductValidations, adminController.addNewProduct)
 router.get('/products/edit/:id', adminController.getEditProductForm)
-router.post('/products/edit/:id', upload.array('images'), updateProductValidations, adminController.postEditProductForm)
+// newProductValidations should be use here - i just removed it form debuging
+router.post('/products/edit/:id', upload.array('images'), adminController.postEditProductForm)
 router.post('/products/toggle-listed/:id', adminController.toggleListProduct)
 //category management
 // router.get('/categories', isAdminLogin, adminController.getCategoryManagement)

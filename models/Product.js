@@ -14,7 +14,8 @@ const productSchema = new mongoose.Schema({
     isListed: { type: Boolean, required: true, default: true},
     images: [{
         filename: { type: String, required: true },
-        filepath: { type: String, required: true }
+        filepath: { type: String, required: true },
+        position: { type: Number, required: true },
     }]
 }, {timestamps: true});
 

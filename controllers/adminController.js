@@ -170,17 +170,20 @@ exports.getProductForm = (req, res) => {
 
 exports.addNewProduct = async (req, res) => {
   try {
-    const { productName, categoryId, brand, description } = req.body;
+    const { productName, categoryId, brand, description, positions } = req.body;
+    // console.log(req.body)
     const mrp = parseFloat(req.body.mrp);
     const discount = parseFloat(req.body.discount);
     const finalPrice = parseFloat(req.body.finalPrice);
     const quantity = parseFloat(req.body.quantity);
     const highlights = JSON.parse(req.body.highlights);
 
-    const images = req.files.map((file) => ({
+    const images = req.files.map((file, index) => ({
       filename: file.filename,
       filepath: `/uploads/${file.filename}`,
+      position: positions ? parseInt(positions[index], 10) : index + 1,
     }));
+    console.log(images);
 
     const newProduct = new ProductSchema({
       productName,
@@ -246,26 +249,35 @@ exports.getEditProductForm = async (req, res) => {
   }
 };
 
-// need update 
 exports.postEditProductForm = async (req, res) => {
   try {
     const productId = req.params.id;
     if (!productId) {
-      return res.status(400).json({ success: false, message: "Product ID is required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Product ID is required" });
     }
+    console.log("data from clint", req.body)
 
     const { productName, categoryId, brand, description } = req.body;
+    let { positions } = req.body;
     const mrp = parseFloat(req.body.mrp);
     const discount = parseFloat(req.body.discount);
     const finalPrice = parseFloat(req.body.finalPrice);
     const quantity = parseFloat(req.body.quantity);
-    const highlights = req.body.highlights ? JSON.parse(req.body.highlights) : [];
+    const isFeatured = req.body.isFeatured === "true"; 
+    const highlights = req.body.highlights
+      ? JSON.parse(req.body.highlights)
+      : [];
 
     const product = await ProductSchema.findById(productId);
     if (!product) {
-      return res.status(404).json({ success: false, message: "Product not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
     }
 
+    console.log(isFeatured)
     product.productName = productName || product.productName;
     product.categoryId = categoryId || product.categoryId;
     product.brand = brand || product.brand;
@@ -274,19 +286,45 @@ exports.postEditProductForm = async (req, res) => {
     product.discount = discount || product.discount;
     product.finalPrice = finalPrice || product.finalPrice;
     product.quantity = quantity || product.quantity;
+    product.isFeatured = isFeatured !== undefined && isFeatured !== null ? isFeatured : false;
     product.highlights = highlights.length ? highlights : product.highlights;
+    let newImages = [];
+    console.log(product.isFeatured)
+
+    if (positions) {
+      positions = positions
+        .filter(
+          (pos) =>
+            pos !== undefined && pos !== null && pos !== "" && !isNaN(pos)
+        )
+        .map((pos) => parseInt(pos));
+    }
 
     if (req.files && req.files.length > 0) {
-      const images = req.files.map((file) => ({
+      // Loop through the uploaded files and create new image objects
+      newImages = req.files.map((file, index) => ({
         filename: file.filename,
         filepath: `/uploads/${file.filename}`,
+        position: positions ? positions[index] : index + 1,
       }));
-      product.images = images;
+    }
+
+    // updating images
+    if (positions) {
+      newImages.forEach((newImage) => {
+        product.images.forEach((existingImage, index) => {
+          if (newImage.position === existingImage.position) {
+            product.images[index] = newImage;
+          }
+        });
+      });
     }
 
     await product.save();
-
-    res.status(200).json({ success: true, message: "Product updated successfully" });
+    console.log("updated product: ", product)
+    res
+      .status(200)
+      .json({ success: true, message: "Product updated successfully" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Server error" });
