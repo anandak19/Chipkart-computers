@@ -5,6 +5,7 @@ const { upload } = require('../utils/multer');
 const { newProductValidations, updateProductValidations } = require('../middlewares/productValidation');
 
 const router = express.Router()
+// const router = express()
 
 
 router.get('/', isAdminLogin, adminController.getDashboard)

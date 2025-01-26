@@ -4,16 +4,57 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Add review</title>
+    <link rel="stylesheet" href="/styles/productDetails.css" />
     <%- include("../partials/head") %>
   </head>
   <body>
     <%- include("../partials/userHeader") %>
 
     <div class="page-wrapper content-wrapper">
-        <h1>Add new revew</h1>
+      <div class="review-wrapper">
+        <div class="review-header">
+          <div class="review-title">
+            <h2>Ratings & Reviews</h2>
+          </div>
+          <div class="review-product">
+            <div class="product-details">
+              <p class="p-name"><%= product.productName %></p>
+            </div>
+            <div class="product-image">
+              <img src="<%= product.images[0].filepath%>" alt="" />
+            </div>
+          </div>
+        </div>
+
+        <div class="review-form-wrapper">
+          <div class="rating-container">
+            <p>Rate this product</p>
+            <div class="starts">
+              <span class="star" data-value="1" title="Very bad">&#9733;</span>
+              <span class="star" data-value="2" title="Bad">&#9733;</span>
+              <span class="star" data-value="3" title="Good">&#9733;</span>
+              <span class="star" data-value="4" title="Very Good">&#9733;</span>
+              <span class="star" data-value="5" title="Excellent">&#9733;</span>
+            </div>
+            <small class="text-danger" id="ratingError"></small>
+          </div>
+        
+           <div class="review-text">
+             <p>Review this product</p>
+             <textarea id="reviewText" placeholder="Description..." maxlength="500" class="mt-2"></textarea>
+             <small class="text-danger" id="reviewError"></small>
+           </div>
+        
+          <button id="submitReview" class="mt-3">Submit Review</button>
+        </div>
+      </div>
+
     </div>
 
     <%- include("../partials/userFooter") %>
-
+    <script>
+      window.productId = "<%- product._id.toString() %>";
+    </script>
+    <script src="/javascripts/validations/reviewValidation.js"></script>
   </body>
 </html>

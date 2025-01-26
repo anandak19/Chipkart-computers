@@ -123,7 +123,7 @@ exports.getAvailableProducts = async (req, res) => {
   }
 };
 
-// render the product details page with its detials 
+// render the product details page with its detials
 exports.getProductDetailsPage = async (req, res) => {
   try {
     const productId = req.params.id;
@@ -139,8 +139,65 @@ exports.getProductDetailsPage = async (req, res) => {
   }
 };
 
-exports.getAddReviewForm = (req, res) => {
-  res.render("user/productDetailPage");
+exports.getAddReviewForm = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    console.log("Product ID for review:", productId);
+    if (!productId) {
+      return res.status(404).send("Id not found");
+    }
+
+    const productDetails = await ProductSchema.aggregate([
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(productId),
+        },
+      },
+      {
+        $project: {
+          productName: 1,
+          images: { $slice: ["$images", 1] },
+        },
+      },
+      {
+        $unwind: '$_id'
+      }
+    ]);
+
+    if (!productDetails) {
+      console.log("Product not found for review");
+      return res.status(404).send("Product not found");
+    }
+
+    const product = productDetails[0] || null;
+
+    res.render("user/addReview", { product });
+  } catch (error) {
+    console.error("Error loading review form:", error);
+    return res.status(500).send("Internal server error");
+  }
+};
+
+
+// update need 
+exports.postAddReviewForm = async(req, res) => {
+
+
+  console.log(req.productId)
+  console.log("now we wil post it")
+
+  try {
+    const { rating, review } = req.body;
+
+    // we need a code to check if the user has alrady given the review 
+    /*
+    tasks
+    create a new review object with rating and review 
+    */
+    
+  } catch (error) {
+    
+  }
 };
 
 

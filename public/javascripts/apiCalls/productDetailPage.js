@@ -29,3 +29,9 @@ smallImages.forEach((smallImage) => {
     })
 })
 
+const rateBtn = document.getElementById('rateBtn')
+
+rateBtn.addEventListener('click', ()=>{
+  alert(window.productId)
+  window.location.href = `/products/${window.productId}/review`
+})

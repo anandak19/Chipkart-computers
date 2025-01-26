@@ -8,6 +8,7 @@ const {
   validateDescription,
   validateProductName,
 } = require("../utils/productValidators");
+const ProductSchema = require("../models/Product")
 
 const newProductValidations = async (req, res, next) => {
   try {
@@ -42,6 +43,9 @@ const newProductValidations = async (req, res, next) => {
   }
 };
 
+
+
+
 const updateProductValidations = async (req, res, next) => {
   try {
     const { productName, categoryId, brand, description } = req.body;
@@ -73,4 +77,26 @@ const updateProductValidations = async (req, res, next) => {
   }
 };
 
-module.exports = { newProductValidations, updateProductValidations };
+// validate product and send json res , if validated product id is avail in req.productId
+const validateProduct = async (req, res, next) => {
+  try {
+    console.log("body", req.body )
+    const productId = req.params.id;
+    if (!productId) {
+      console.log("Id not found")
+      return res.status(404).send("Id not found");
+    }
+    const product = await ProductSchema.findById(productId)
+    if (!product) {
+      console.log("Product not found")
+      return res.status(404).send("Product not found");
+    }
+    console.log("Product validatation passed")
+    req.productId = product._id
+    return next()
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+module.exports = { newProductValidations, updateProductValidations, validateProduct };

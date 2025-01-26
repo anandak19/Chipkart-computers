@@ -15,12 +15,14 @@
       <div class="selected-product">
         <div class="left-section">
           <div class="small-images">
-            <% product.images.forEach((image) => { %>
-              <div class="small-image">
-                <img src="<%= image.filepath %>" alt="Product Image" />
-              </div>
-            <% }); %>
-            
+            <% if(product && product.images) { %> <%
+            product.images.forEach((image) => { %>
+            <div class="small-image">
+              <img src="<%= image.filepath %>" alt="Product Image" />
+            </div>
+            <% }); %> <% } else { %>
+            <p>No images available.</p>
+            <% } %>
           </div>
 
           <div class="large-image">
@@ -93,7 +95,7 @@
         <div class="reviews-section-head">
           <div class="review-head">
             <h3>Ratings & Reviews</h3>
-            <a id="rateBtn" href="/products">Rate Product</a>
+            <button id="rateBtn">Rate Product</button>
           </div>
           <div class="total-review">
             <div class="total-review-overal">
@@ -166,134 +168,165 @@
         </div>
       </div>
 
-      
-        <!-- related Products -->
-        <div class="page-section">
-          <div class="section-header">
-            <p>Related Products</p>
-            <hr class="header-line" />
-          </div>
-          <!-- products  -->
-          <div class="products">
-            <!-- Product Cards -->
-            <a href="/product/1" class="product-link">
-                <div class="product-card">
-                  <div class="product-image">
-                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
-                  </div>
-                  <div class="product-details">
-                    <p>Product 1</p>
-                    <p>$100</p>
-                  </div>
-                </div>
-              </a>
-              <!-- dummy, delete this later  -->
-              <a href="/product/1" class="product-link">
-                <div class="product-card">
-                  <div class="product-image">
-                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
-                  </div>
-                  <div class="product-details">
-                    <p>Product 1</p>
-                    <p>$100</p>
-                  </div>
-                </div>
-              </a>
-              <a href="/product/1" class="product-link">
-                <div class="product-card">
-                  <div class="product-image">
-                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
-                  </div>
-                  <div class="product-details">
-                    <p>Product 1</p>
-                    <p>$100</p>
-                  </div>
-                </div>
-              </a>
-              <a href="/product/1" class="product-link">
-                <div class="product-card">
-                  <div class="product-image">
-                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
-                  </div>
-                  <div class="product-details">
-                    <p>Product 1</p>
-                    <p>$100</p>
-                  </div>
-                </div>
-              </a>
-              <a href="/product/1" class="product-link">
-                <div class="product-card">
-                  <div class="product-image">
-                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
-                  </div>
-                  <div class="product-details">
-                    <p>Product 1</p>
-                    <p>$100</p>
-                  </div>
-                </div>
-              </a>
-              <a href="/product/1" class="product-link">
-                <div class="product-card">
-                  <div class="product-image">
-                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
-                  </div>
-                  <div class="product-details">
-                    <p>Product 1</p>
-                    <p>$100</p>
-                  </div>
-                </div>
-              </a>
-              <a href="/product/1" class="product-link">
-                <div class="product-card">
-                  <div class="product-image">
-                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
-                  </div>
-                  <div class="product-details">
-                    <p>Product 1</p>
-                    <p>$100</p>
-                  </div>
-                </div>
-              </a>
-              <a href="/product/1" class="product-link">
-                <div class="product-card">
-                  <div class="product-image">
-                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
-                  </div>
-                  <div class="product-details">
-                    <p>Product 1</p>
-                    <p>$100</p>
-                  </div>
-                </div>
-              </a>
-              <a href="/product/1" class="product-link">
-                <div class="product-card">
-                  <div class="product-image">
-                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
-                  </div>
-                  <div class="product-details">
-                    <p>Product 1</p>
-                    <p>$100</p>
-                  </div>
-                </div>
-              </a>
-              <a href="/product/1" class="product-link">
-                <div class="product-card">
-                  <div class="product-image">
-                    <img src="/images/home-images/Sample-product-image.png" alt="Product 1">
-                  </div>
-                  <div class="product-details">
-                    <p>Product 1</p>
-                    <p>$100</p>
-                  </div>
-                </div>
-              </a>
-              <!-- dummy products end  -->
-              
-          </div>
+      <!-- related Products -->
+      <div class="page-section">
+        <div class="section-header">
+          <p>Related Products</p>
+          <hr class="header-line" />
         </div>
+        <!-- products  -->
+        <div class="products">
+          <!-- Product Cards -->
+          <a href="/product/1" class="product-link">
+            <div class="product-card">
+              <div class="product-image">
+                <img
+                  src="/images/home-images/Sample-product-image.png"
+                  alt="Product 1"
+                />
+              </div>
+              <div class="product-details">
+                <p>Product 1</p>
+                <p>$100</p>
+              </div>
+            </div>
+          </a>
+          <!-- dummy, delete this later  -->
+          <a href="/product/1" class="product-link">
+            <div class="product-card">
+              <div class="product-image">
+                <img
+                  src="/images/home-images/Sample-product-image.png"
+                  alt="Product 1"
+                />
+              </div>
+              <div class="product-details">
+                <p>Product 1</p>
+                <p>$100</p>
+              </div>
+            </div>
+          </a>
+          <a href="/product/1" class="product-link">
+            <div class="product-card">
+              <div class="product-image">
+                <img
+                  src="/images/home-images/Sample-product-image.png"
+                  alt="Product 1"
+                />
+              </div>
+              <div class="product-details">
+                <p>Product 1</p>
+                <p>$100</p>
+              </div>
+            </div>
+          </a>
+          <a href="/product/1" class="product-link">
+            <div class="product-card">
+              <div class="product-image">
+                <img
+                  src="/images/home-images/Sample-product-image.png"
+                  alt="Product 1"
+                />
+              </div>
+              <div class="product-details">
+                <p>Product 1</p>
+                <p>$100</p>
+              </div>
+            </div>
+          </a>
+          <a href="/product/1" class="product-link">
+            <div class="product-card">
+              <div class="product-image">
+                <img
+                  src="/images/home-images/Sample-product-image.png"
+                  alt="Product 1"
+                />
+              </div>
+              <div class="product-details">
+                <p>Product 1</p>
+                <p>$100</p>
+              </div>
+            </div>
+          </a>
+          <a href="/product/1" class="product-link">
+            <div class="product-card">
+              <div class="product-image">
+                <img
+                  src="/images/home-images/Sample-product-image.png"
+                  alt="Product 1"
+                />
+              </div>
+              <div class="product-details">
+                <p>Product 1</p>
+                <p>$100</p>
+              </div>
+            </div>
+          </a>
+          <a href="/product/1" class="product-link">
+            <div class="product-card">
+              <div class="product-image">
+                <img
+                  src="/images/home-images/Sample-product-image.png"
+                  alt="Product 1"
+                />
+              </div>
+              <div class="product-details">
+                <p>Product 1</p>
+                <p>$100</p>
+              </div>
+            </div>
+          </a>
+          <a href="/product/1" class="product-link">
+            <div class="product-card">
+              <div class="product-image">
+                <img
+                  src="/images/home-images/Sample-product-image.png"
+                  alt="Product 1"
+                />
+              </div>
+              <div class="product-details">
+                <p>Product 1</p>
+                <p>$100</p>
+              </div>
+            </div>
+          </a>
+          <a href="/product/1" class="product-link">
+            <div class="product-card">
+              <div class="product-image">
+                <img
+                  src="/images/home-images/Sample-product-image.png"
+                  alt="Product 1"
+                />
+              </div>
+              <div class="product-details">
+                <p>Product 1</p>
+                <p>$100</p>
+              </div>
+            </div>
+          </a>
+          <a href="/product/1" class="product-link">
+            <div class="product-card">
+              <div class="product-image">
+                <img
+                  src="/images/home-images/Sample-product-image.png"
+                  alt="Product 1"
+                />
+              </div>
+              <div class="product-details">
+                <p>Product 1</p>
+                <p>$100</p>
+              </div>
+            </div>
+          </a>
+          <!-- dummy products end  -->
+        </div>
+      </div>
     </div>
     <%- include("../partials/userFooter") %>
 
+    <script>
+      window.productId = "<%- product._id.toString() %>";
+    </script>
     <script src="/javascripts/apiCalls/productDetailPage.js"></script>
   </body>
 </html>
