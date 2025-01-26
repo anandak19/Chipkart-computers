@@ -35,16 +35,33 @@ const isVerified = async (req, res, next) => {
 };
 
 // check if the user is login 
-const isLogin = (req, res, next) => {
-  const userEmail = req?.session?.userEmail;
-  const isGoogleLogin = req?.isAuthenticated?.() || false;
+const isLogin = async (req, res, next) => {
+  try {
+    const userEmail = req?.session?.userEmail;
+    const isLogin = req?.session?.isLogin;
+    const userId = req?.session?.userId;
 
-  if (!userEmail && !isGoogleLogin) {
-    console.log("isLogin middleware: User is not logged in (email and Google auth both invalid).");
-    return res.redirect('/login');
+    // Check if session data exists
+    if (!userEmail || !isLogin || !userId) {
+      console.log("isLogin middleware: User is not logged in.");
+      return res.redirect('/login');
+    }
+
+    // Verify the user exists in the database
+    const user = await User.findById(userId);
+    if (!user || user.email !== userEmail) {
+      console.log("isLogin middleware: User not found in database or email mismatch.");
+      return res.redirect('/login');
+    }
+
+    console.log("isLogin middleware: User is logged in and exists in the database.");
+    return next();
+  } catch (error) {
+    console.error("isLogin middleware: Error occurred:", error.message);
+    return res.status(500).send("Internal Server Error");
   }
-  return next();
 };
+
 
 
 

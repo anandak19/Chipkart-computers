@@ -4,10 +4,10 @@ const { Schema } = mongoose;
 
 const UserReviewsSchema = new Schema(
   {
-    ProductId: { type: String, required: true },
-    UserId: { type: String, required: true },
-    ReviewText: { type: String, default: null },
-    Rating: { type: Number, required: true },
+    productId: { type: String, required: true },
+    userId: { type: String, required: true },
+    review: { type: String, default: null },
+    rating: { type: Number, required: true },
   },
   {
     timestamps: true,
@@ -15,5 +15,4 @@ const UserReviewsSchema = new Schema(
 );
 
 const UserReviews = mongoose.model("UserReviews", UserReviewsSchema);
-
 module.exports = UserReviews;

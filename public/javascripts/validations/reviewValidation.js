@@ -44,11 +44,8 @@ document.addEventListener("DOMContentLoaded", () => {
         review: reviewText,
       };
 
-
-
       try {
-        console.log(window.productId);
-        const res = await fetch(`/products/${window.productId}/review`, {
+        const res = await fetch(`/products/${window.productId}/review/new`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -56,8 +53,8 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(formData),
         });
 
-
-        // const data = await res.json();
+        const data = await res.json();
+        alert("Review added successfully");
       } catch (error) {
         console.log(error);
       }

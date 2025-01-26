@@ -15,8 +15,7 @@ imageZoom.addEventListener("mouseout", () => {
   imageZoom.style.setProperty("--display", "none");
 });
 
-
-// to change imagez on hover 
+// to change imagez on hover
 let smallImages = document.querySelectorAll(".small-image img");
 let mainImageDiv = document.querySelector("#imageZoom");
 let mainImage = document.querySelector("#imageZoom img");
@@ -32,6 +31,5 @@ smallImages.forEach((smallImage) => {
 const rateBtn = document.getElementById('rateBtn')
 
 rateBtn.addEventListener('click', ()=>{
-  alert(window.productId)
-  window.location.href = `/products/${window.productId}/review`
+  window.location.href = `/products/${window.productId}/review/new`
 })

@@ -151,9 +151,13 @@ exports.registerGoogleUser = async (req, res) =>{
       newUser = new UserSchema({
         name, email, isVerified: true, 
       })
-      await newUser.save();
+      const user = await newUser.save();
       console.log('New user saved to the database:', user);
     }
+
+    req.session.userEmail = user.email;
+    req.session.isLogin = true
+    req.session.userId = user._id;
 
     return res.redirect('/account');
 
@@ -207,6 +211,7 @@ exports.postUserLogin = async (req, res) => {
     }
 
     req.session.userEmail = user.email;
+    req.session.isLogin = true
     req.session.userId = user._id;
 
     return res.redirect("/");

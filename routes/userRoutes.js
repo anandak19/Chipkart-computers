@@ -18,9 +18,9 @@ router.get('/products/p', userController.getAvailableProducts)
 // api to get product details page 
 router.get('/products/:id', userController.getProductDetailsPage)
 // render add review page 
-router.get('/products/:id/review', userController.getAddReviewForm)
+router.get('/products/:id/review/new', isLogin, userController.getAddReviewForm)
 // check if the user was already given review 
-router.post('/products/:id/review',validateProduct, validateNewReview, userController.postAddReviewForm)
+router.post('/products/:id/review', isLogin, validateProduct, validateNewReview, userController.postAddReviewForm)
 // router.post('/products/review', validateNewReview)
 
 

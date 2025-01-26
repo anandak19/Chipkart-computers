@@ -1,5 +1,6 @@
 const CategoriesSchema = require("../models/Category");
 const ProductSchema = require("../models/Product");
+const UserReviewsSchema = require("../models/UserReview")
 const mongoose = require("mongoose");
 
 exports.getHome = (req, res) => {
@@ -180,25 +181,44 @@ exports.getAddReviewForm = async (req, res) => {
 
 
 // update need 
-exports.postAddReviewForm = async(req, res) => {
-
-
-  console.log(req.productId)
-  console.log("now we wil post it")
+exports.postAddReviewForm = async (req, res) => {
+  console.log("Product ID:", req.params.id);
+  console.log("Attempting to post a review");
 
   try {
     const { rating, review } = req.body;
+    const userId = req.session?.userId;
+    const productId = req.params?.id;
 
-    // we need a code to check if the user has alrady given the review 
-    /*
-    tasks
-    create a new review object with rating and review 
-    */
-    
+    if (!userId || !productId) {
+      return res.status(400).json({ message: "Invalid user or product information" });
+    }
+
+    if (!rating || !review) {
+      return res.status(400).json({ message: "Rating and review are required" });
+    }
+
+    const newReview = new UserReviewsSchema({
+      productId,
+      userId,
+      review,
+      rating,
+    });
+
+    const savedReview = await newReview.save();
+    console.log(savedReview)
+
+    if (savedReview) {
+      return res.status(201).json({ message: "Review saved successfully", review: savedReview });
+    } else {
+      return res.status(500).json({ message: "Failed to save the review" });
+    }
   } catch (error) {
-    
+    console.error("Error while saving review:", error);
+    return res.status(500).json({ message: "An error occurred while posting the review", error: error.message });
   }
 };
+
 
 
 exports.getAccount = (req, res) => {
