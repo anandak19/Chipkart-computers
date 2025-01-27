@@ -100,6 +100,8 @@ const showRelatedProducts = (products) => {
       `;
       relatedProductsDiv.insertAdjacentHTML("beforeend", productCard)
     });
+  }else{
+    relatedProductsDiv.innerHTML = "No related products to show";
   }
 };
 

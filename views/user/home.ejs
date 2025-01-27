@@ -138,52 +138,8 @@
             <hr class="header-line" />
           </div>
           <!-- products  -->
-          <div class="products">
-            <!-- Product Cards -->
-            <a href="/product/1" class="product-link">
-              <div class="product-card">
-                <div class="product-image">
-                  <img
-                    src="/images/home-images/Sample-product-image.png"
-                    alt="Product 1"
-                  />
-                </div>
-                <div class="card-product-details">
-                  <div class="product-brand">
-                    <p class="card-product-brand">Product 1</p>
-                    <p class="card-product-name">Product Name with one line only coverd</p>
-                  </div>
-                  <div class="card-product-prices">
-                    <p class="card-product-price">$100</p>
-                    <p class="card-product-discount">5% Off</p>
-                  </div>
-  
-                </div>
-              </div>
-            </a>
-              <!-- dummy, delete this later  -->
-              <a href="/product/1" class="product-link">
-                <div class="product-card">
-                  <div class="product-image">
-                    <img
-                      src="/images/home-images/Sample-product-image.png"
-                      alt="Product 1"
-                    />
-                  </div>
-                  <div class="card-product-details">
-                    <div class="product-brand">
-                      <p class="card-product-brand">Product 1</p>
-                      <p class="card-product-name">Product Name with one line only coverd</p>
-                    </div>
-                    <div class="card-product-prices">
-                      <p class="card-product-price">$100</p>
-                      <p class="card-product-discount">5% Off</p>
-                    </div>
-    
-                  </div>
-                </div>
-              </a>
-              
+          <div class="products" id="featuredProducts">
+              Looding...
           </div>
         </div>
 
@@ -247,58 +203,13 @@
               <hr class="header-line" />
             </div>
             <!-- products  -->
-            <div class="products">
-              <!-- Product Cards -->
-              <a href="/product/1" class="product-link">
-                <div class="product-card">
-                  <div class="product-image">
-                    <img
-                      src="/images/home-images/Sample-product-image.png"
-                      alt="Product 1"
-                    />
-                  </div>
-                  <div class="card-product-details">
-                    <div class="product-brand">
-                      <p class="card-product-brand">Product 1</p>
-                      <p class="card-product-name">Product Name with one line only coverd</p>
-                    </div>
-                    <div class="card-product-prices">
-                      <p class="card-product-price">$100</p>
-                      <p class="card-product-discount">5% Off</p>
-                    </div>
-    
-                  </div>
-                </div>
-              </a>
-                <!-- dummy, delete this later  -->
-                <a href="/product/1" class="product-link">
-                  <div class="product-card">
-                    <div class="product-image">
-                      <img
-                        src="/images/home-images/Sample-product-image.png"
-                        alt="Product 1"
-                      />
-                    </div>
-                    <div class="card-product-details">
-                      <div class="product-brand">
-                        <p class="card-product-brand">Product 1</p>
-                        <p class="card-product-name">Product Name with one line only coverd</p>
-                      </div>
-                      <div class="card-product-prices">
-                        <p class="card-product-price">$100</p>
-                        <p class="card-product-discount">5% Off</p>
-                      </div>
-      
-                    </div>
-                  </div>
-                </a>
-                <!-- dummy products end  -->
-                
+            <div class="products" id="latestProducts">         
             </div>
           </div>
       </div>
     </div>
 
     <%- include("../partials/userFooter") %>
+    <script src="/javascripts/apiCalls/home.js"></script>
   </body>
 </html>

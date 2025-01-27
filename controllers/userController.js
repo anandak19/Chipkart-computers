@@ -9,6 +9,56 @@ exports.getHome = (req, res) => {
   res.render("user/home");
 };
 
+exports.getFeaturedProducts = async(req, res) => {
+  try {
+    /*
+    find the products that are listed and featured is true
+    return the all the products
+    */
+    const featuredProducts = await ProductSchema.find({
+    isListed: true, 
+    isFeatured: true
+    })
+
+    res.status(200).json({
+      success: true,
+      data: featuredProducts
+    })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while fetching featured products'
+    });
+  }
+};
+
+// get latest products 
+exports.getLatestProducts = async(req, res) => {
+  try {
+    /*
+    find the products that are listed
+    sort the product based on createdAt : -1
+    limit the count of products to 10
+    return the the products
+    */
+    const latestProducts = await ProductSchema.find({
+    isListed: true
+    }).sort({createdAt: -1}).limit(10)
+
+    res.status(200).json({
+      success: true,
+      data: latestProducts
+    })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while fetching latest products'
+    });
+  }
+};
+
 // get all products page
 exports.getProductsPage = async (req, res) => {
   try {
@@ -187,6 +237,7 @@ exports.postAddReviewForm = async (req, res) => {
   console.log("Attempting to post a review");
 
   try {
+    console.log(req.body)
     const { rating, review } = req.body;
     const userId = req.session?.userId;
     const productId = req.params?.id;
@@ -321,7 +372,7 @@ exports.getRelatedProducts = async (req, res) => {
     const { categoryId } = currentProduct;
 
     const relatedProducts = await ProductSchema.find({
-      categoryId, _id: {$ne: currentProduct._id}
+      categoryId, _id: {$ne: currentProduct._id}, isListed: true
     }).limit(10)
 
     res.status(200).json({

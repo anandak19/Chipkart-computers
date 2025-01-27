@@ -11,6 +11,10 @@ router.use(express.json())
 router.use(express.urlencoded({extended: true}))
 
 router.get('/', userController.getHome)
+// get featured products 
+router.get('/products/featured', userController.getFeaturedProducts)
+// get latest products 
+router.get('/products/latest', userController.getLatestProducts)
 // render all product page with Categories 
 router.get('/products', userController.getProductsPage)
 // api to get available products with optional filters and pagiantion 
@@ -19,8 +23,8 @@ router.get('/products/p', userController.getAvailableProducts)
 router.get('/products/:id', userController.getProductDetailsPage)
 // render add review page           isLogin,
 router.get('/products/:id/review/new', userController.getAddReviewForm)
-// check if the user was already given review 
-router.post('/products/:id/review', isLogin, validateProduct, validateNewReview, userController.postAddReviewForm)
+// check if the user was already given review -  TEST THIS ROUTE AFTER LOGIN IN !!
+router.post('/products/:id/review/new',isLogin, validateProduct, validateNewReview, userController.postAddReviewForm)
 // get all the reviews of a product 
 router.get('/products/:id/review', validateProduct, userController.getReviews)
 // get related products 
