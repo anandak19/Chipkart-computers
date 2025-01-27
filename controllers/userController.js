@@ -1,7 +1,9 @@
 const CategoriesSchema = require("../models/Category");
 const ProductSchema = require("../models/Product");
-const UserReviewsSchema = require("../models/UserReview")
+const UserReviewsSchema = require("../models/UserReview");
 const mongoose = require("mongoose");
+const { calculateAverageRating } = require("../utils/helper");
+const { ObjectId } = require("mongoose").Types;
 
 exports.getHome = (req, res) => {
   res.render("user/home");
@@ -161,8 +163,8 @@ exports.getAddReviewForm = async (req, res) => {
         },
       },
       {
-        $unwind: '$_id'
-      }
+        $unwind: "$_id",
+      },
     ]);
 
     if (!productDetails) {
@@ -179,8 +181,7 @@ exports.getAddReviewForm = async (req, res) => {
   }
 };
 
-
-// update need 
+// update need
 exports.postAddReviewForm = async (req, res) => {
   console.log("Product ID:", req.params.id);
   console.log("Attempting to post a review");
@@ -191,11 +192,15 @@ exports.postAddReviewForm = async (req, res) => {
     const productId = req.params?.id;
 
     if (!userId || !productId) {
-      return res.status(400).json({ message: "Invalid user or product information" });
+      return res
+        .status(400)
+        .json({ message: "Invalid user or product information" });
     }
 
     if (!rating || !review) {
-      return res.status(400).json({ message: "Rating and review are required" });
+      return res
+        .status(400)
+        .json({ message: "Rating and review are required" });
     }
 
     const newReview = new UserReviewsSchema({
@@ -206,20 +211,132 @@ exports.postAddReviewForm = async (req, res) => {
     });
 
     const savedReview = await newReview.save();
-    console.log(savedReview)
+    console.log(savedReview);
 
     if (savedReview) {
-      return res.status(201).json({ message: "Review saved successfully", review: savedReview });
+      return res
+        .status(201)
+        .json({ message: "Review saved successfully", review: savedReview });
     } else {
       return res.status(500).json({ message: "Failed to save the review" });
     }
   } catch (error) {
     console.error("Error while saving review:", error);
-    return res.status(500).json({ message: "An error occurred while posting the review", error: error.message });
+    return res.status(500).json({
+      message: "An error occurred while posting the review",
+      error: error.message,
+    });
   }
 };
 
+exports.getReviews = async (req, res) => {
+  /*
+  find the all the reviews of the product in reviews collections
+  if the reviews are found, return in the order of last added first
+  use pagination - 3 is the limit default page = 0
+  */
+  try {
+    console.log("finding revius of product id-- ", String(req.productId));
+    const { page = "0" } = req.query;
+    const pageNumber = parseInt(page, 10) || 0;
+    let limit = 3;
+    let skip = pageNumber * limit;
 
+    //268
+
+    // here , it will find the revies made by user by joining the users collection to get users name
+    const result = await UserReviewsSchema.aggregate([
+      {
+        $match: {
+          productId: String(req.productId),
+        },
+      },
+      {
+        $addFields: {
+          userIdAsObjectId: { $toObjectId: "$userId" },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userIdAsObjectId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: "$user",
+      },
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+      {
+        $facet: {
+          reviewCount: [{ $count: "total" }],
+          paginatedResults: [{ $skip: skip }, { $limit: limit }],
+        },
+      },
+    ]);
+
+    const reviewCount = result[0]?.reviewCount[0]?.total || 0;
+    const reviews = result[0]?.paginatedResults || [];
+    const hasMore = skip + reviews.length < reviewCount;
+
+    const averageRating = await calculateAverageRating(String(req.productId));
+
+    res.status(200).json({
+      status: "success",
+      message: "Data fetched successfully",
+      data: {
+        reviews,
+        totalReviews: reviewCount,
+        hasMore,
+        averageRating,
+      },
+    });
+  } catch (error) {
+    res.status(400).json(error);
+  }
+};
+
+exports.getRelatedProducts = async (req, res) => {
+  /*
+  find the product by its id from db
+  get the category of that product
+  find all the product with that category except the current product
+  limit the count to 10
+  return the related products
+  */
+
+  try {
+    const currentProduct = await ProductSchema.findById(req.productId);
+    if (!currentProduct) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
+    }
+
+    const { categoryId } = currentProduct;
+
+    const relatedProducts = await ProductSchema.find({
+      categoryId, _id: {$ne: currentProduct._id}
+    }).limit(10)
+
+    res.status(200).json({
+      success: true,
+      data: relatedProducts
+    })
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while fetching related products'
+    });
+  }
+};
 
 exports.getAccount = (req, res) => {
   res.render("user/account");

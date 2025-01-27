@@ -16,14 +16,14 @@
           <div class="review-title">
             <h2>Ratings & Reviews</h2>
           </div>
-          <div class="review-product">
-            <div class="product-details">
-              <p class="p-name"><%= product.productName %></p>
+            <div class="review-product">
+              <div class="product-details product">
+                <p class="p-name"><%= product.productName %></p>
+              </div>
+              <div class="review-product-image product">
+                <img src="<%= product.images[0].filepath%>" alt="" />
+              </div>
             </div>
-            <div class="product-image">
-              <img src="<%= product.images[0].filepath%>" alt="" />
-            </div>
-          </div>
         </div>
 
         <div class="review-form-wrapper">

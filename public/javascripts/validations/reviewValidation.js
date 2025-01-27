@@ -66,3 +66,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   reviewText.addEventListener("input", () => (reviewError.innerText = ""));
 });
+
+
+const productLink = document.querySelectorAll('.product')
+productLink.forEach((link) => {
+  link.addEventListener("click", ()=>{
+    window.location.href = `/products/${window.productId}`
+  })
+})

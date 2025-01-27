@@ -98,73 +98,15 @@
             <button id="rateBtn">Rate Product</button>
           </div>
           <div class="total-review">
-            <div class="total-review-overal">
-              <p class="overal"><span>4.5</span>★</p>
-              <p>1,01,750 Ratings & 7,670 Reviews</p>
+            <div class="total-review-overal" id="averageRating">
+              <p class="overal">Nothing to show</p>
             </div>
           </div>
         </div>
-        <div class="reviews-content">
-          <div class="review-card">
-            <div class="card-head">
-              <div class="rating">
-                <div class="rating-box-small">
-                  <p>★<span>4.5</span></p>
-                </div>
-                <p class="auther">By<span>Anandan</span></p>
-              </div>
-            </div>
-            <div class="review-content">
-              <p>
-                If you want to make some files not tracked by git, you have to
-                create and add the filename in the .gitignore file. Never commit
-                unnecessary files, use .gitignore file for making those files
-                not tracked by git.
-              </p>
-            </div>
-          </div>
-
-          <div class="review-card">
-            <div class="card-head">
-              <div class="rating">
-                <div class="rating-box-small">
-                  <p>★<span>4.5</span></p>
-                </div>
-                <p class="auther">By<span>Anandan</span></p>
-              </div>
-            </div>
-            <div class="review-content">
-              <p>
-                If you want to make some files not tracked by git, you have to
-                create and add the filename in the .gitignore file. Never commit
-                unnecessary files, use .gitignore file for making those files
-                not tracked by git.
-              </p>
-            </div>
-          </div>
-
-          <div class="review-card">
-            <div class="card-head">
-              <div class="rating">
-                <div class="rating-box-small">
-                  <p>★<span>4.5</span></p>
-                </div>
-                <p class="auther">By<span>Anandan</span></p>
-              </div>
-            </div>
-            <div class="review-content">
-              <p>
-                If you want to make some files not tracked by git, you have to
-                create and add the filename in the .gitignore file. Never commit
-                unnecessary files, use .gitignore file for making those files
-                not tracked by git.
-              </p>
-            </div>
-          </div>
-        </div>
+        <div class="reviews-content" id="reviewsContainer"></div>
         <div class="paginators">
-          <button disabled>Prev</button>
-          <button>Next</button>
+          <button disabled id="prevBtn">Prev</button>
+          <button id="nxtBtn">Next</button>
         </div>
       </div>
 
@@ -175,150 +117,29 @@
           <hr class="header-line" />
         </div>
         <!-- products  -->
-        <div class="products">
+        <div class="products" id="relatedProductsDiv">
           <!-- Product Cards -->
           <a href="/product/1" class="product-link">
             <div class="product-card">
               <div class="product-image">
                 <img
-                  src="/images/home-images/Sample-product-image.png"
+                  src="/images/default/default.jpg"
                   alt="Product 1"
                 />
               </div>
-              <div class="product-details">
-                <p>Product 1</p>
-                <p>$100</p>
+              <div class="card-product-details">
+                <div class="product-brand">
+                  <p class="card-product-brand">Product 1</p>
+                  <p class="card-product-name">Product Name with one line only coverd</p>
+                </div>
+                <div class="card-product-prices">
+                  <p class="card-product-price">$100</p>
+                  <p class="card-product-discount">5% Off</p>
+                </div>
               </div>
             </div>
           </a>
-          <!-- dummy, delete this later  -->
-          <a href="/product/1" class="product-link">
-            <div class="product-card">
-              <div class="product-image">
-                <img
-                  src="/images/home-images/Sample-product-image.png"
-                  alt="Product 1"
-                />
-              </div>
-              <div class="product-details">
-                <p>Product 1</p>
-                <p>$100</p>
-              </div>
-            </div>
-          </a>
-          <a href="/product/1" class="product-link">
-            <div class="product-card">
-              <div class="product-image">
-                <img
-                  src="/images/home-images/Sample-product-image.png"
-                  alt="Product 1"
-                />
-              </div>
-              <div class="product-details">
-                <p>Product 1</p>
-                <p>$100</p>
-              </div>
-            </div>
-          </a>
-          <a href="/product/1" class="product-link">
-            <div class="product-card">
-              <div class="product-image">
-                <img
-                  src="/images/home-images/Sample-product-image.png"
-                  alt="Product 1"
-                />
-              </div>
-              <div class="product-details">
-                <p>Product 1</p>
-                <p>$100</p>
-              </div>
-            </div>
-          </a>
-          <a href="/product/1" class="product-link">
-            <div class="product-card">
-              <div class="product-image">
-                <img
-                  src="/images/home-images/Sample-product-image.png"
-                  alt="Product 1"
-                />
-              </div>
-              <div class="product-details">
-                <p>Product 1</p>
-                <p>$100</p>
-              </div>
-            </div>
-          </a>
-          <a href="/product/1" class="product-link">
-            <div class="product-card">
-              <div class="product-image">
-                <img
-                  src="/images/home-images/Sample-product-image.png"
-                  alt="Product 1"
-                />
-              </div>
-              <div class="product-details">
-                <p>Product 1</p>
-                <p>$100</p>
-              </div>
-            </div>
-          </a>
-          <a href="/product/1" class="product-link">
-            <div class="product-card">
-              <div class="product-image">
-                <img
-                  src="/images/home-images/Sample-product-image.png"
-                  alt="Product 1"
-                />
-              </div>
-              <div class="product-details">
-                <p>Product 1</p>
-                <p>$100</p>
-              </div>
-            </div>
-          </a>
-          <a href="/product/1" class="product-link">
-            <div class="product-card">
-              <div class="product-image">
-                <img
-                  src="/images/home-images/Sample-product-image.png"
-                  alt="Product 1"
-                />
-              </div>
-              <div class="product-details">
-                <p>Product 1</p>
-                <p>$100</p>
-              </div>
-            </div>
-          </a>
-          <a href="/product/1" class="product-link">
-            <div class="product-card">
-              <div class="product-image">
-                <img
-                  src="/images/home-images/Sample-product-image.png"
-                  alt="Product 1"
-                />
-              </div>
-              <div class="product-details">
-                <p>Product 1</p>
-                <p>$100</p>
-              </div>
-            </div>
-          </a>
-          <a href="/product/1" class="product-link">
-            <div class="product-card">
-              <div class="product-image">
-                <img
-                  src="/images/home-images/Sample-product-image.png"
-                  alt="Product 1"
-                />
-              </div>
-              <div class="product-details">
-                <p>Product 1</p>
-                <p>$100</p>
-              </div>
-            </div>
-          </a>
-          <!-- dummy products end  -->
+
         </div>
       </div>
     </div>

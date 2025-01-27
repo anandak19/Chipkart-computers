@@ -182,6 +182,7 @@
 .product-card {
   flex: 0 0 auto;
   width: 200px;
+  padding: 8px;
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -191,7 +192,7 @@
 }
 
 .product-card:hover {
-  transform: scale(1.05);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.267);
 }
 
 /* Product Image */
@@ -201,26 +202,56 @@
 }
 
 /* Product Details */
-.product-details {
-  padding: 10px;
+.card-product-details {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 14px;
+  padding: 12px;
+}
+
+.product-brand{
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+}
+
+.card-product-brand{
+  font-weight: 600;
   font-size: 14px;
   color: #333;
 }
 
-.product-details p:first-child {
+
+.card-product-name {
   font-weight: bold;
-  white-space: nowrap; 
-  overflow: hidden; 
-  text-overflow: ellipsis; 
-  display: block; 
-  max-width: 100%; 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  max-width: 100%;
+  color: #333333;
+}
+
+.card-product-prices{
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #333;
+}
+
+.card-product-price{
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.card-product-discount{
+  color: #007e26;
+  font-weight: 500;
 }
 
 
-.product-details p:last-child {
-  color: #007bff;
-  font-weight: bold;
-}
+
 
 /* promise ribbon  */
 .promise-ribbon {

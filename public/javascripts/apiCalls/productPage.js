@@ -31,7 +31,7 @@ const showProducts = (products, total, hasMore) => {
       const imageUrl =
         product.images && product.images.length > 0
           ? product.images[0].filepath
-          : "path/to/default-image.jpg";
+          : "/images/default/default.jpg";
       const productCard = `
           <div class="product-card">
             <div class="product-card-image">

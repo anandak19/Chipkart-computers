@@ -78,6 +78,7 @@ const updateProductValidations = async (req, res, next) => {
 };
 
 // validate product and send json res , if validated product id is avail in req.productId
+// check if the product is present, check if the product is in db, 
 const validateProduct = async (req, res, next) => {
   try {
     console.log("body", req.body )

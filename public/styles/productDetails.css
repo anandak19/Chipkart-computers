@@ -155,7 +155,7 @@
 }
 
 .product-name {
-  font-size: 24px;
+  font-size: 22px;
   color: #333333;
   font-weight: 500;
   margin: 8px 0;
@@ -185,12 +185,12 @@
   font-size: 16px;
 }
 .rating-box span {
-  font-size: 18px;
+  font-size: 14px;
 }
 
 .rating .count {
   color: #7b7b7b;
-  margin-left: 16px;
+  margin-left: 14px;
   display: flex;
   gap: 4px;
 }
@@ -202,7 +202,7 @@
 
 .current-price {
   font-weight: bold;
-  font-size: 24px;
+  font-size: 22px;
   color: #333;
   margin-right: 10px;
 }
@@ -215,12 +215,12 @@
 .discount {
   margin: 6px 0;
   color: #378f3c;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
 }
 
 .description {
-  font-size: 16px;
+  font-size: 14px;
   color: #555;
   margin-bottom: 20px;
 }
@@ -229,6 +229,7 @@
   list-style-type: disc;
   padding-left: 20px;
   margin-bottom: 20px;
+  font-size: 14px;
 }
 
 .stock-availability {
@@ -283,6 +284,7 @@
 .product-reviews-section {
   border: 1px solid;
   padding: 24px;
+  margin: 48px 0;
 }
 
 .review-head {
@@ -427,6 +429,7 @@
 .product-details {
   width: 200px;
   padding-right: 6px;
+  cursor: pointer;
 }
 
 .review-product {
@@ -442,13 +445,14 @@
   text-overflow: ellipsis;
 }
 
-.product-image {
+.review-product-image {
   width: 88px;
   height: 88px;
   overflow: hidden;
+  cursor: pointer;
 }
 
-.product-image img {
+.review-product-image img {
   width: 100%;
   height: auto;
   object-fit: cover;

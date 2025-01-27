@@ -17,11 +17,15 @@ router.get('/products', userController.getProductsPage)
 router.get('/products/p', userController.getAvailableProducts)
 // api to get product details page 
 router.get('/products/:id', userController.getProductDetailsPage)
-// render add review page 
-router.get('/products/:id/review/new', isLogin, userController.getAddReviewForm)
+// render add review page           isLogin,
+router.get('/products/:id/review/new', userController.getAddReviewForm)
 // check if the user was already given review 
 router.post('/products/:id/review', isLogin, validateProduct, validateNewReview, userController.postAddReviewForm)
-// router.post('/products/review', validateNewReview)
+// get all the reviews of a product 
+router.get('/products/:id/review', validateProduct, userController.getReviews)
+// get related products 
+router.get('/products/:id/related', validateProduct, userController.getRelatedProducts)
+
 
 
 // get user personal details page 
