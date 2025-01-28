@@ -1,4 +1,4 @@
-const User = require("../models/User"); // Adjust the path to your User model
+const User = require("../models/User");
 
 // check if the user is varified 
 const isVerified = async (req, res, next) => {
@@ -63,6 +63,28 @@ const isLogin = async (req, res, next) => {
 };
 
 
+// this code shoduld be changed to set another one 
+const getUser = async (req, res, next) => {
+  try {
+    const userId = req.session.userId 
+    if (!userId) {
+      return res.status(404).json({ message: 'Session Invalid' });
+    }
+    console.log(`User ID: ${userId}`);
+    
+    const user = await User.findById(userId); 
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
 
 
 
@@ -76,4 +98,4 @@ const isLogout = (req, res, next) => {
   }
 };
 
-module.exports = {isVerified, isLogin, isLogout};
+module.exports = {isVerified, isLogin, isLogout, getUser};

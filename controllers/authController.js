@@ -6,8 +6,8 @@ const bcrypt = require('bcrypt')
 // Geting signup page
 exports.getUserSignup = (req, res) => {
   console.log("Session userEmail:", req.session.userEmail);
-  if (req.session.userEmail) {
-    res.redirect("/signup/varify");
+  if (req.session.userEmail && req.session.userId) {
+    res.redirect(`/varify-otp/${req.session.userId}`);
   } else {
     res.render("user/signup", {
       name: req.body.name || "",
@@ -19,25 +19,31 @@ exports.getUserSignup = (req, res) => {
 };
 
 // posting signup for varification
-exports.otpVarify = async (req, res) => {
+exports.startOtpVerification = async (req, res) => {
+  /*
+  generate the otp and send to user
+  if send succss, respond to req as succesfull
+
+  */
+
   try {
     let name, email;
-
-    // Check if name and email exist in the request body
-    if (req.body && req.body.name && req.body.email) {
-      ({ name, email } = req.body);
-    } else if (req.session && req.session.userEmail) {
-      email = req.session.userEmail;
+    if (req.user) {
+      email = req.user.email
+      name = req.user.name
     }
+    console.log("Started otp sending")
 
     // If no email is provided, return an error
     if (!email) {
-      req.flash("errorMessage", "Failed to send OTP, please try again.");
-      return res.redirect("/signup");
+      return res.status(400).json({
+        success: false,
+        message: 'No email found in request',
+      });
     }
 
-    console.log(email, name);
 
+    // make this code a separate utility later 
     const otp = Math.floor(1000 + Math.random() * 9000);
     const currentTime = new Date();
     const otpExpires = new Date(currentTime.getTime() + 60 * 1000);
@@ -47,10 +53,14 @@ exports.otpVarify = async (req, res) => {
 
     // Send the OTP email
     sendEmail(name, email, subject, text, async (error, response) => {
+      // if error in sending the otp 
       if (error) {
         console.log("Email sending failed:", error);
-        req.flash("error", "Failed to send OTP! Please try again");
-        return res.redirect("/signup/varify");
+        return res.status(500).json({
+          status: 'error',
+          success: false,
+          message: 'Failed to send OTP! Please try again.'
+        });
       }
       console.log(response);
 
@@ -69,8 +79,19 @@ exports.otpVarify = async (req, res) => {
         // If the user was found and the update was successful
         if (result.modifiedCount > 0) {
           console.log("OTP and expiration time updated successfully");
-          req.flash("success", "Enter the OTP send to to your email");
-          return res.redirect("/signup/varify");
+
+          req.session.userEmail = req.user.email
+          req.session.isVerified = false
+          req.session.userId = req.user._id
+
+   
+          return res.status(200).json({
+            status: 'success',
+            message: 'OTP Send Successfully',
+            redirectUrl: `/varify-otp/${String(req.user._id)}`
+          })
+
+
         } else {
           console.log("User not found or update failed", result);
           return res.status(404).send("User not found or update failed");
@@ -85,6 +106,99 @@ exports.otpVarify = async (req, res) => {
     return res.status(500).send("An internal server error occurred");
   }
 };
+
+
+// resend new otp / this will be reset later 
+exports.resendOtp = async (req, res) => {
+  /*
+  generate the otp and send to user
+  if send succss, respond to req as succesfull
+
+  */
+
+  try {
+    let name, email;
+    if (req.user) {
+      email = req.user.email
+      name = req.user.name
+    }
+
+    // If no email is provided, return an error
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'No email found in request',
+      });
+    }
+
+
+    // make this code a separate utility later 
+    const otp = Math.floor(1000 + Math.random() * 9000);
+    const currentTime = new Date();
+    const otpExpires = new Date(currentTime.getTime() + 60 * 1000);
+
+    const subject = "Your OTP Code";
+    const text = otp.toString();
+
+    // Send the OTP email
+    sendEmail(name, email, subject, text, async (error, response) => {
+      // if error in sending the otp 
+      if (error) {
+        console.log("Email sending failed:", error);
+        return res.status(500).json({
+          status: 'error',
+          success: false,
+          message: 'Failed to send OTP! Please try again.'
+        });
+      }
+      console.log(response);
+
+      // Update the user's OTP and expiration time in the database
+      try {
+        const result = await UserSchema.updateOne(
+          { email },
+          {
+            $set: {
+              otp,
+              otpExpires,
+            },
+          }
+        );
+
+        // If the user was found and the update was successful
+        if (result.modifiedCount > 0) {
+          console.log("OTP and expiration time updated successfully");
+
+          req.session.userEmail = req.user.email
+          req.session.isVerified = false
+          req.session.userId = req.user._id
+
+   
+          return res.status(200).json({
+            status: 'success',
+            message: 'OTP Send Successfully',
+            redirectUrl: `/varify-otp/${String(req.user._id)}`
+          })
+
+
+        } else {
+          console.log("User not found or update failed", result);
+          return res.status(404).send("User not found or update failed");
+        }
+      } catch (dbError) {
+        console.error("Database error:", dbError);
+        return res.status(500).send("Internal server error while updating OTP");
+      }
+    });
+  } catch (error) {
+    console.error("An error occurred:", error);
+    return res.status(500).send("An internal server error occurred");
+  }
+};
+
+
+
+
 
 // get the otp  page
 exports.getVerify = async (req, res) => {

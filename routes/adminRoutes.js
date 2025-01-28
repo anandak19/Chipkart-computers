@@ -33,10 +33,18 @@ router.post('/categories/edit/:id', adminController.postUpdateCategoryForm)
 router.get('/categories/new', adminController.getCategoryForm)
 router.post('/categories/new', adminController.postCategoryForm)
 // offer management 
+// render the offer page 
 router.get('/offers', isAdminLogin, adminController.getOfferModule)
+// render the order page to the admin
 router.get('/orders', isAdminLogin, adminController.getOrderManagement)
+// render the sales report page 
 router.get('/reports', isAdminLogin, adminController.getSalesReport)
+// render the coupen management page 
 router.get('/coupons', isAdminLogin, adminController.getCouponManagement)
+
+/*
+optional  we need banner management page
+*/
 
 
 
