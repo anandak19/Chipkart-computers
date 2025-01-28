@@ -19,16 +19,14 @@ const signupValidations = async (req, res, next) => {
       (await validateEmail(email)) ||
       (await validatePassword(password, confirmPassword));
 
-      // render the signup page with input error alert 
     if (alertMessage) {
-      return res.render("user/signup", {
-        name,
-        phoneNumber,
-        email,
-        errorMessage: alertMessage
+      return res.status(400).json({
+        success: false,
+        message: alertMessage,
       });
     }
 
+    console.log("End of signup validation")
     password = await bcrypt.hash(password, 10);
 
     // save the user to database 
@@ -36,6 +34,7 @@ const signupValidations = async (req, res, next) => {
     await newUser.save()
     req.session.userEmail = email;
     req.session.isVerified = false;
+    // add user id to session too 
     return next()
   } catch (error) {
     console.log(error);

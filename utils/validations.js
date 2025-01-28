@@ -3,7 +3,7 @@ const UserSchema = require("../models/User");
 const nameRegex = /^[a-zA-Z\s]+$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phoneNumberRegex = /^(\+\d{1,3}[- ]?)?\d{10}$/;
-const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{4,}$/;
+const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[^\s]{4,}$/;
 
 const validateName = (fullName) => {
   if (
