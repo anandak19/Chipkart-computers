@@ -82,6 +82,7 @@ exports.startOtpVerification = async (req, res) => {
           req.session.userEmail = req.user.email;
           req.session.isVerified = false;
           req.session.userId = req.user._id;
+          req.session.isLogin = true;
 
           return res.status(200).json({
             status: "success",
@@ -205,7 +206,7 @@ exports.validateOtp = async (req, res) => {
     if (!email) {
       return res.status(400).json({
         success: false,
-        message: "Signup or login is required",
+        message: "Login is required",
         redirect: true, 
         redirectUrl: "/signup",
       });

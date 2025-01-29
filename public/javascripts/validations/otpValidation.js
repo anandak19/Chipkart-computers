@@ -81,6 +81,10 @@ otpBoxes.forEach((box, index) => {
   });
 });
 
+
+const successMessage = document.getElementById('successMessage')
+const errorMessage = document.getElementById('errorMessage')
+
 //   on submiting the otp form
 document.getElementById("otp-form").addEventListener("submit", function (e) {
   // we need to submit this otp with fetch api and show the status for the user, 
@@ -93,7 +97,6 @@ document.getElementById("otp-form").addEventListener("submit", function (e) {
   const otp4 = document.getElementById("otp4").value;
 
   const otp = otp1 + otp2 + otp3 + otp4;
-  alert(otp)
 
 
 
@@ -105,14 +108,17 @@ document.getElementById("otp-form").addEventListener("submit", function (e) {
   .then(response => response.json())
   .then(data => {
     if(data.redirect){
-      // show the messag to user 
-      alert(data.message)
+      successMessage.innerText = data.message
+      successMessage.classList.remove('d-none')
+      errorMessage.classList.add('d-none')
       setTimeout(() => {
         localStorage.removeItem("otpStartTime");
         window.location.replace(data.redirectUrl);
       }, 2000);
     }else{
-      alert(data.message)
+      successMessage.classList.add('d-none')
+      errorMessage.classList.remove('d-none')
+      errorMessage.innerText = data.message
     }
   }).catch(error => console.error("Error:", error));
   

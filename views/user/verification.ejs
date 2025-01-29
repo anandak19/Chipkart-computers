@@ -15,11 +15,13 @@
         <h1 class="text-center">Email Verification</h1>
         <form action="/varify-otp" method="POST" id="otp-form">
           <div class="form-group otp-container">
-            <% if (successMessage) { %>
-            <div class="alert text-success text-center">
-              <%= successMessage %>
+            <div class="alert alert-success text-center py-1 px-2 d-none" id="successMessage" role="alert">
+              
             </div>
-            <% } %>
+            
+            <div class="alert alert-danger text-center py-1 px-2 d-none" id="errorMessage" role="alert">
+              
+            </div>
             <label for="otp">Enter the OTP here</label>
             <div class="otp-timer text-muted"><span id="timer"> </span></div>
             <div class="otp-input-group">
@@ -60,9 +62,6 @@
                 required
               />
             </div>
-            <% if (errorMessage) { %>
-            <div class="text-danger error-message"><%= errorMessage %></div>
-            <% } %>
           </div>
           <button
             type="submit"
@@ -74,7 +73,8 @@
         <button
           id="resendOtpBtn"
           class="btn btn-primary mt-4 btn-sm"
-          type="submit">
+          type="submit"
+        >
           Resend OTP
         </button>
       </div>

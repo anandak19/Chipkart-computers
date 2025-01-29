@@ -20,8 +20,8 @@ router.get('/auth/google/callback', passport.authenticate('google', {failureRedi
 router.get("/signup", authController.getUserSignup);
 // users data is saved to db in signup validation itself 
 router.post("/signup", signupValidations, authController.startOtpVerification);
-// otp varification page    isVerified
-router.get("/varify-otp/:id", authController.getVerify);
+// otp varification page    
+router.get("/varify-otp/:id",isVerified, authController.getVerify);
 router.post("/varify-otp", authController.validateOtp);
 router.get("/resend-otp", getUser, authController.startOtpVerification);
 
