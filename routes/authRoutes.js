@@ -22,8 +22,7 @@ router.get("/signup", authController.getUserSignup);
 router.post("/signup", signupValidations, authController.startOtpVerification);
 // otp varification page    isVerified
 router.get("/varify-otp/:id", authController.getVerify);
-router.post("/varify-otp/:id", authController.validateOtp);
-// THIS CALL BACK NEED UPDATION
+router.post("/varify-otp", authController.validateOtp);
 router.get("/resend-otp", getUser, authController.startOtpVerification);
 
 // // admin auth

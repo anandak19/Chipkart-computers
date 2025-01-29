@@ -83,17 +83,38 @@ otpBoxes.forEach((box, index) => {
 
 //   on submiting the otp form
 document.getElementById("otp-form").addEventListener("submit", function (e) {
+  // we need to submit this otp with fetch api and show the status for the user, 
+  // also make a 2 sec timer to say the varification is success, and redireing the user 
+  // if the no email is found in the db , db will send a redirect url to signup page 
+  e.preventDefault()
   const otp1 = document.getElementById("otp1").value;
   const otp2 = document.getElementById("otp2").value;
   const otp3 = document.getElementById("otp3").value;
   const otp4 = document.getElementById("otp4").value;
 
   const otp = otp1 + otp2 + otp3 + otp4;
+  alert(otp)
 
-  const otpInput = document.createElement("input");
-  otpInput.type = "hidden";
-  otpInput.name = "otp";
-  otpInput.value = otp;
 
-  this.appendChild(otpInput);
+
+  fetch('/varify-otp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ otp })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if(data.redirect){
+      // show the messag to user 
+      alert(data.message)
+      setTimeout(() => {
+        localStorage.removeItem("otpStartTime");
+        window.location.replace(data.redirectUrl);
+      }, 2000);
+    }else{
+      alert(data.message)
+    }
+  }).catch(error => console.error("Error:", error));
+  
+
 });
