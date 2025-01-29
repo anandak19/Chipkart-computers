@@ -207,7 +207,7 @@ exports.validateOtp = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Login is required",
-        redirect: true, 
+        redirect: true,
         redirectUrl: "/signup",
       });
     }
@@ -249,13 +249,13 @@ exports.validateOtp = async (req, res) => {
     console.log("Is verified:", req.session.isVerified);
     await user.save();
 
-    return res.status(200).json({  // Changed from 400 to 200
+    return res.status(200).json({
+      // Changed from 400 to 200
       success: true,
       message: "Verification successful!",
       redirect: true,
       redirectUrl: "/",
     });
-
   } catch (error) {
     console.error("Error during OTP verification:", error);
 
@@ -266,7 +266,6 @@ exports.validateOtp = async (req, res) => {
     });
   }
 };
-
 
 // register the user using google auth
 exports.registerGoogleUser = async (req, res) => {
@@ -324,10 +323,14 @@ exports.postUserLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log("Started login process for email:", email);
+
     // Check if email and password are provided
     if (!email || !password) {
-      req.flash("errorMessage", "Email and password are required.");
-      return res.redirect("/login");
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required.",
+      });
     }
 
     // Find user by email
@@ -335,26 +338,37 @@ exports.postUserLogin = async (req, res) => {
 
     // Check if the user exists
     if (!user) {
-      req.flash("errorMessage", "You dont have account with us.");
-      return res.redirect("/login");
+      return res.status(400).json({
+        success: false,
+        message: "You dont have account with us, Signup first!",
+      });
     }
 
     // Compare the provided password with the stored password in the database
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      req.flash("errorMessage", "Wrong password.");
-      req.flash("email", email);
-      return res.redirect("/login");
+      return res.status(400).json({
+        success: false,
+        message: "Wrong password.",
+      });
     }
 
     req.session.userEmail = user.email;
     req.session.isLogin = true;
     req.session.userId = user._id;
 
-    return res.redirect("/");
+    res.status(200).json({
+      success: true,
+      message: "Login Successfull",
+    });
+
+    /*
+    login api updated, now update the api call in clint 
+    update this api name too 
+    */
   } catch (error) {
     console.error("Error in login:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ success: true, error: "Internal server error" });
   }
 };
 
