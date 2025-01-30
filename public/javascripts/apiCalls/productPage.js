@@ -34,6 +34,7 @@ const showProducts = (products, total, hasMore) => {
         product.images && product.images.length > 0
           ? product.images[0].filepath
           : "/images/default/default.jpg";
+          const rating = product.averageRating === 0 ? "0" : product.averageRating.toFixed(1);
       const productCard = `
           <div class="product-card">
             <div class="product-card-image">
@@ -45,16 +46,27 @@ const showProducts = (products, total, hasMore) => {
               <h4>
                 <a href="/products/${product._id}">${
         product.productName || "Unnamed Product"
-      }</a>
+            }</a>
               </h4>
-              <div class="price">
-            <p class="selling-price">${product.finalPrice || "N/A"}</p>
-            <p class="actual-price">${product.mrp || "N/A"}</p>
+              <div class="rating-price">
+                <div class="price">
+                  <p class="selling-price">₹${product.finalPrice || "N/A"}</p>
+                  <p class="actual-price">₹${product.mrp || "N/A"}</p>
+                </div>
+                <div class="item-rating">
+                    <span>&#9733; ${rating}</span>
+                </div>
               </div>
             </div>
             <div class="product-actions">
-              <button class="add-cart">Add Cart</button>
-              <button class="wishlist">Wishlist</button>
+            ${
+              product.quantity === 0
+              ? `<button class="out-of-stock" disabled>Out of Stock</button>`
+              : `<button class="add-cart">Add Cart</button>`
+            }
+              <span class="wishlist-icon" data-wishlisted="false">
+                <i class="fa-regular fa-heart"></i>
+              </span>
             </div>
           </div>
         `;
@@ -64,11 +76,17 @@ const showProducts = (products, total, hasMore) => {
   }
 };
 
+// // wishlited icon 
+// {/* <i class="fa-solid fa-heart"></i> */}
+// setAttribute("data-wishlisted", "true"); 
+// classList.add("wishlisted");
+
 // on page load method
 async function fetchProducts() {
   try {
     const response = await fetch("/products/p");
     const { products, total, hasMore } = await response.json();
+    console.log(products[0])
 
     showProducts(products, total, hasMore);
   } catch (error) {

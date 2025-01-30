@@ -14,6 +14,7 @@ exports.getUserSignup = (req, res) => {
       email: req.body.email || "",
       phoneNumber: req.body.phoneNumber || "",
       errorMessage: req.flash("errorMessage"),
+      isAuth: true
     });
   }
 };
@@ -314,6 +315,7 @@ exports.getUserLogin = (req, res) => {
     res.render("user/login", {
       email: req.flash("email") || "",
       errorMessage: req.flash("errorMessage"),
+      isAuth: true
     });
   }
 };

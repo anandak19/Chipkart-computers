@@ -16,21 +16,26 @@
             </a>
         </div>
 
-        <div class="user-side">
-            <a href="/account" class="account" >
-                <img src="/images/icons/User.png" alt="">
-                <p>Account</p>
-            </a>
+        <% var isAuth = typeof isAuth !== "undefined" ? isAuth : false; %>
 
-            <div class="user-collection">
-                <a href="" class="wishlist">
-                    <img src="/images/icons/Heart-white.png" alt="">
+        <% if (!isAuth) { %>
+            <div class="user-side">
+                <a href="/account" class="account">
+                    <img src="/images/icons/User.png" alt="">
+                    <p>Account</p>
                 </a>
-                <a href="" class="cart">
-                    <img src="/images/icons/ShoppingCart-white.png" alt="">
-                </a>
+          
+                <div class="user-collection">
+                    <a href="" class="wishlist">
+                        <img src="/images/icons/Heart-white.png" alt="">
+                    </a>
+                    <a href="" class="cart">
+                        <img src="/images/icons/ShoppingCart-white.png" alt="">
+                    </a>
+                </div>
             </div>
-        </div>
+          <% } %>
+          
 
 
     </div>
@@ -43,10 +48,22 @@
         </div>
         <div class="nav-links">
             <ul>
-                <li><a href="">HOME</a></li>
+                <li><a href="/">HOME</a></li>
+                <% if (!isAuth) { %>
                 <li><a href="">My Orders</a></li>
+                <% } %>
                 <li><a href="/products">ALL PRODUCTS</a></li>
             </ul>
         </div>
     </nav>
+    <div class="category-dropdown">
+        <ul class="category-list">
+          <li><a href="/products">Laptops</a></li>
+          <li><a href="/products">PC Components</a></li>
+          <li><a href="/products">Pre Built PC</a></li>
+          <li><a href="/products">Gaming Gears</a></li>
+          <li><a href="/products">Accessories</a></li>
+        </ul>
+      </div>
+      
 </header>

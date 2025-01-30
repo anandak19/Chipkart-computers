@@ -79,12 +79,19 @@
                 <% }); %>
               </ul>
             </div>
-            <div class="stock-availability">
-              In Stock: <%= product.quantity %> units
+            <div class="stock-availability <%= product.quantity === 0 ? 'text-danger' : '' %>">
+              <%= product.quantity === 0 ? 'Out of Stock' : `In Stock: ${product.quantity} units` %>
             </div>
+            
             <div class="buttons">
-              <button class="add-to-cart">Add to Cart</button>
-              <button class="buy-now">Buy Now</button>
+              <% if (product.quantity > 0) { %>
+                <button class="add-to-cart">Add to Cart</button>
+                <button class="buy-now">Buy Now</button>
+              <% } else { %>
+                <button class="bg-dark" style="cursor: not-allowed;" disabled>Out of Stock</button>
+              <% } %>
+              
+              
             </div>
           </div>
         </div>
