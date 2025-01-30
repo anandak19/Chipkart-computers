@@ -9,32 +9,32 @@ exports.getHome = (req, res) => {
   res.render("user/home");
 };
 
-exports.getFeaturedProducts = async(req, res) => {
+exports.getFeaturedProducts = async (req, res) => {
   try {
     /*
     find the products that are listed and featured is true
     return the all the products
     */
     const featuredProducts = await ProductSchema.find({
-    isListed: true, 
-    isFeatured: true
-    })
+      isListed: true,
+      isFeatured: true,
+    });
 
     res.status(200).json({
       success: true,
-      data: featuredProducts
-    })
+      data: featuredProducts,
+    });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).json({
       success: false,
-      message: 'An error occurred while fetching featured products'
+      message: "An error occurred while fetching featured products",
     });
   }
 };
 
-// get latest products 
-exports.getLatestProducts = async(req, res) => {
+// get latest products
+exports.getLatestProducts = async (req, res) => {
   try {
     /*
     find the products that are listed
@@ -43,18 +43,20 @@ exports.getLatestProducts = async(req, res) => {
     return the the products
     */
     const latestProducts = await ProductSchema.find({
-    isListed: true
-    }).sort({createdAt: -1}).limit(10)
+      isListed: true,
+    })
+      .sort({ createdAt: -1 })
+      .limit(10);
 
     res.status(200).json({
       success: true,
-      data: latestProducts
-    })
+      data: latestProducts,
+    });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).json({
       success: false,
-      message: 'An error occurred while fetching latest products'
+      message: "An error occurred while fetching latest products",
     });
   }
 };
@@ -97,9 +99,8 @@ exports.getAvailableProducts = async (req, res) => {
 
     const { page = "0" } = req.query;
     const pageNumber = parseInt(page, 10) || 0;
-    console.log(typeof pageNumber);
 
-    let limit = 2;
+    let limit = 5;
     let skip = pageNumber * limit;
 
     if (isFeatured) {
@@ -114,24 +115,21 @@ exports.getAvailableProducts = async (req, res) => {
     if (priceOrder) {
       sort.finalPrice = priceOrder === "desc" ? -1 : 1;
     }
-    // Default -  sort my product name in asc----------------
+    // sort by name of product
     if (sortBy === "a-z") {
       sort.productNameLower = 1;
     } else if (sortBy == "z-a") {
       sort.productNameLower = -1;
     }
 
+    // if new products only is asked
     if (isNew) {
       sort.createdAt = 1;
       limit = 10;
       skip = 0;
     }
 
-    // Need to perform lookup with review collection for this
-    // if (ratingsAbove) {
-    //   filters.ratings = { $gte: Number(ratingsAbove) }
-    // }
-
+    // --declare the pipeline
     const pipeline = [
       {
         $match: filters,
@@ -139,9 +137,59 @@ exports.getAvailableProducts = async (req, res) => {
       {
         $addFields: {
           productNameLower: { $toLower: "$productName" },
+          productIdStr: { $toString: "$_id" },
         },
       },
     ];
+
+    // -- to join with the review collection
+    pipeline.push({
+      $lookup: {
+        from: "userreviews",
+        localField: "productIdStr",
+        foreignField: "productId",
+        as: "productReviews",
+      },
+    });
+
+    // --to find the avarage rating
+    pipeline.push({
+      $addFields: {
+        averageRating: {
+          $cond: {
+            if: { $gt: [{ $size: "$productReviews" }, 0] },
+            then: {
+              $divide: [
+                { $sum: "$productReviews.rating" },
+                { $size: "$productReviews" },
+              ],
+            },
+            else: 0,
+          },
+        },
+      },
+    });
+
+    // --to remove unnessasary fields
+    pipeline.push({
+      $project: {
+        _id: 1,
+        productReviews: 0,
+        productIdStr: 0,
+        description: 0,
+        highlights: 0,
+      },
+    });
+
+    // if ratings above is asked
+    if (ratingsAbove) {
+      const rating = parseFloat(ratingsAbove);
+      pipeline.push({
+        $match: {
+          averageRating: { $gt: rating },
+        },
+      });
+    }
 
     if (sort && Object.keys(sort).length > 0) {
       pipeline.push({
@@ -158,6 +206,153 @@ exports.getAvailableProducts = async (req, res) => {
     });
 
     const result = await ProductSchema.aggregate(pipeline);
+
+    const productCount = result[0].productCount[0];
+    const products = result[0].paginatedResults;
+
+    const total = productCount ? productCount.total : 0;
+    const hasMore = skip + products.length < total;
+
+    // console.log("filter is: ", filters);
+    // console.log("sort is:", sort);
+    // console.log("limit is:", limit);
+    // console.log("skip is", skip);
+
+    res.json({ products, total, hasMore });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// WORKING..
+exports.getAvailableProducts2 = async (req, res) => {
+  try {
+    const { categoryId, priceOrder, ratingsAbove, sortBy, search } = req.query;
+    console.log(search);
+
+    const filters = { isListed: true };
+    const sort = {};
+    let pipeline = [];
+
+    let { isFeatured, isNew } = req.query;
+    isFeatured = isFeatured === "true";
+    isNew = isNew === "true";
+
+    const { page = "0" } = req.query;
+    const pageNumber = parseInt(page, 10) || 0;
+
+    let limit = 5;
+    let skip = pageNumber * limit;
+
+    if (isFeatured) {
+      filters.isFeatured = isFeatured;
+    }
+
+    // filter by category id
+    if (categoryId) {
+      filters.categoryId = categoryId;
+    }
+    // Default - sort price in ascending----------------
+    if (priceOrder) {
+      sort.finalPrice = priceOrder === "desc" ? -1 : 1;
+    }
+    // sort by name of product
+    if (sortBy === "a-z") {
+      sort.productNameLower = 1;
+    } else if (sortBy == "z-a") {
+      sort.productNameLower = -1;
+    }
+
+    // if new products only is asked
+    if (isNew) {
+      sort.createdAt = 1;
+      limit = 10;
+      skip = 0;
+    }
+
+    if (search) {
+      const query = search.trim();
+      pipeline.push({
+        $match: { $text: { $search: search } },
+      });
+    }
+    pipeline.push({
+      $match: filters,
+    });
+
+    pipeline.push({
+      $addFields: {
+        productNameLower: { $toLower: "$productName" },
+        productIdStr: { $toString: "$_id" },
+      },
+    });
+
+    // -- to join with the review collection
+    pipeline.push({
+      $lookup: {
+        from: "userreviews",
+        localField: "productIdStr",
+        foreignField: "productId",
+        as: "productReviews",
+      },
+    });
+
+    // --to find the avarage rating
+    pipeline.push({
+      $addFields: {
+        averageRating: {
+          $cond: {
+            if: { $gt: [{ $size: "$productReviews" }, 0] },
+            then: {
+              $divide: [
+                { $sum: "$productReviews.rating" },
+                { $size: "$productReviews" },
+              ],
+            },
+            else: 0,
+          },
+        },
+      },
+    });
+
+    // --to remove unnessasary fields
+    pipeline.push({
+      $project: {
+        _id: 1,
+        productReviews: 0,
+        productIdStr: 0,
+        description: 0,
+        highlights: 0,
+      },
+    });
+
+    // if ratings above is asked
+    if (ratingsAbove) {
+      const rating = parseFloat(ratingsAbove);
+      pipeline.push({
+        $match: {
+          averageRating: { $gt: rating },
+        },
+      });
+    }
+
+    if (sort && Object.keys(sort).length > 0) {
+      pipeline.push({
+        $sort: sort,
+      });
+    }
+
+    // Add skip and limit stages for pagination
+    pipeline.push({
+      $facet: {
+        productCount: [{ $count: "total" }],
+        paginatedResults: [{ $skip: skip }, { $limit: limit }],
+      },
+    });
+
+    const result = await ProductSchema.aggregate(pipeline);
+
     const productCount = result[0].productCount[0];
     const products = result[0].paginatedResults;
 
@@ -237,7 +432,7 @@ exports.postAddReviewForm = async (req, res) => {
   console.log("Attempting to post a review");
 
   try {
-    console.log(req.body)
+    console.log(req.body);
     const { rating, review } = req.body;
     const userId = req.session?.userId;
     const productId = req.params?.id;
@@ -372,23 +567,20 @@ exports.getRelatedProducts = async (req, res) => {
     const { categoryId } = currentProduct;
 
     const relatedProducts = await ProductSchema.find({
-      categoryId, _id: {$ne: currentProduct._id}, isListed: true
-    }).limit(10)
+      categoryId,
+      _id: { $ne: currentProduct._id },
+      isListed: true,
+    }).limit(10);
 
     res.status(200).json({
       success: true,
-      data: relatedProducts
-    })
-
+      data: relatedProducts,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({
       success: false,
-      message: 'An error occurred while fetching related products'
+      message: "An error occurred while fetching related products",
     });
   }
-};
-
-exports.getAccount = (req, res) => {
-  res.render("user/account");
 };

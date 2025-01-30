@@ -249,6 +249,8 @@ exports.getEditProductForm = async (req, res) => {
   }
 };
 
+
+// we need to update the clint side code coz, after succsfull the old data is shoing , we need to refesh the page or redierct the user 
 exports.postEditProductForm = async (req, res) => {
   try {
     const productId = req.params.id;
@@ -277,17 +279,37 @@ exports.postEditProductForm = async (req, res) => {
         .json({ success: false, message: "Product not found" });
     }
 
-    console.log(isFeatured)
-    product.productName = productName || product.productName;
-    product.categoryId = categoryId || product.categoryId;
-    product.brand = brand || product.brand;
-    product.description = description || product.description;
-    product.mrp = mrp || product.mrp;
-    product.discount = discount || product.discount;
-    product.finalPrice = finalPrice || product.finalPrice;
-    product.quantity = quantity || product.quantity;
-    product.isFeatured = isFeatured !== undefined && isFeatured !== null ? isFeatured : false;
-    product.highlights = highlights.length ? highlights : product.highlights;
+    if (productName !== undefined && productName !== null) {
+      product.productName = productName;
+    }
+    if (categoryId !== undefined && categoryId !== null) {
+      product.categoryId = categoryId;
+    }
+    if (brand !== undefined && brand !== null) {
+      product.brand = brand;
+    }
+    if (description !== undefined && description !== null) {
+      product.description = description;
+    }
+    if (mrp !== undefined && mrp !== null) {
+      product.mrp = mrp;
+    }
+    if (discount !== undefined && discount !== null) {
+      product.discount = discount;
+    }
+    if (finalPrice !== undefined && finalPrice !== null) {
+      product.finalPrice = finalPrice;
+    }
+    if (quantity !== undefined && quantity !== null) {
+      product.quantity = quantity;
+    }
+    if (isFeatured !== undefined && isFeatured !== null) {
+      product.isFeatured = isFeatured;
+    }
+    if (Array.isArray(highlights) && highlights.length > 0) {
+      product.highlights = highlights;
+    }
+    
     let newImages = [];
     console.log(product.isFeatured)
 
@@ -468,6 +490,17 @@ exports.postUpdateCategoryForm = async (req, res) => {
       req.flash("errorMessage", "Please enter the values");
       return res.redirect(`/admin/categories/edit/${id}`);
     }
+
+    const existingCategory = await CategoriesSchema.findOne({
+      categoryName,
+      _id: { $ne: id },
+    });
+
+    if (existingCategory) {
+      req.flash("errorMessage", "Category with same name exists. Please try another name");
+      return res.redirect(`/admin/categories/edit/${id}`);
+    }
+    
 
     const updatedCategory = await CategoriesSchema.findOneAndUpdate(
       { _id: id },

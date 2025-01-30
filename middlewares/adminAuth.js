@@ -1,3 +1,6 @@
+const UserSchema = require('../models/User')
+
+
 const isAdminLoginSubmitted = (req, res, next) => {
     if (req.session.isLogin) {
         res.render('admin/dashbord')
@@ -6,12 +9,20 @@ const isAdminLoginSubmitted = (req, res, next) => {
     }
 }
 
-const isAdminLogin = (req, res, next) => {
+const isAdminLogin = async(req, res, next) => {
     const isAdminLogin = req?.session?.isLogin || false;
+    const adminId = req?.session?.adminId || false;
     console.log(isAdminLogin)
-    if (!isAdminLogin) {
+    if (!isAdminLogin || !adminId) {
         return res.redirect('/admin/login');
     }
+
+    const admin = await UserSchema.findById(adminId)
+    if (!admin.isAdmin) {
+        console.log("This person is not admin")
+        return res.redirect('/admin/login')
+    }
+
     return next()
 }
 

@@ -5,20 +5,18 @@ const { upload } = require('../utils/multer');
 const { newProductValidations, updateProductValidations } = require('../middlewares/productValidation');
 
 const router = express.Router()
-// const router = express()
 
 
 router.get('/', isAdminLogin, adminController.getDashboard)
-// router.get('/users', isAdminLogin, adminController.getUserManagement)
-router.get('/users', adminController.getUserManagement)
-router.post('/users/toggle-block/:id', adminController.toggleBlockUser)
-router.get('/users/search', adminController.searchUser)
+router.get('/users', isAdminLogin,  adminController.getUserManagement)
+// use http response and request , and remove this isAdminLogin from non-get apis
+router.post('/users/toggle-block/:id',isAdminLogin, adminController.toggleBlockUser)
+router.get('/users/search',isAdminLogin, adminController.searchUser)
 // user manaement end  
 
 // product management 
-// router.get('/products', isAdminLogin, adminController.getProductManagement)
-router.get('/products', adminController.getProductManagement)
-router.get('/products/new', adminController.getProductForm)
+router.get('/products', isAdminLogin,  adminController.getProductManagement)
+router.get('/products/new',isAdminLogin, adminController.getProductForm)
 router.post('/products/new', upload.array('images'), newProductValidations, adminController.addNewProduct)
 router.get('/products/edit/:id', adminController.getEditProductForm)
 // newProductValidations should be use here - i just removed it form debuging

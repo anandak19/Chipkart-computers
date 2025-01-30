@@ -451,6 +451,7 @@ exports.postAdminLogin = async (req, res) => {
 
     req.session.isLogin = true;
     req.session.email = admin.email;
+    req.session.adminId = admin._id
     res.redirect("/admin");
   } catch (error) {
     console.log(error);

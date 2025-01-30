@@ -8,6 +8,8 @@ const categoryList = document.getElementById("categoryList");
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 const resultCount = document.getElementById("resultCount");
+const searchBox = document.getElementById("searchBox");
+const searchBtn = document.getElementById("searchBtn");
 
 let categoryId;
 let page = 0;
@@ -35,15 +37,19 @@ const showProducts = (products, total, hasMore) => {
       const productCard = `
           <div class="product-card">
             <div class="product-card-image">
-              <img src="${imageUrl}" alt="${product.productName || 'Default Product'}" />
+              <img src="${imageUrl}" alt="${
+        product.productName || "Default Product"
+      }" />
             </div>
             <div class="product-card-details">
               <h4>
-                <a href="/products/${product._id}">${product.productName || 'Unnamed Product'}</a>
+                <a href="/products/${product._id}">${
+        product.productName || "Unnamed Product"
+      }</a>
               </h4>
               <div class="price">
-            <p class="selling-price">${product.finalPrice || 'N/A'}</p>
-            <p class="actual-price">${product.mrp || 'N/A'}</p>
+            <p class="selling-price">${product.finalPrice || "N/A"}</p>
+            <p class="actual-price">${product.mrp || "N/A"}</p>
               </div>
             </div>
             <div class="product-actions">
@@ -73,20 +79,20 @@ async function fetchProducts() {
 document.addEventListener("DOMContentLoaded", fetchProducts);
 
 // Function to get selected filters
+const filters = {};
 const getFilters = () => {
-  const filters = {};
-
   if (priceOrder.value) filters.priceOrder = priceOrder.value;
   if (sortBy.value) filters.sortBy = sortBy.value;
   if (rating.value) filters.ratingsAbove = rating.value;
   if (isFeaturedCheckbox.checked) filters.isFeatured = true;
   if (isNewCheckbox.checked) filters.isNew = true;
-  if (isPopularCheckbox.checked) filters.isPopular = true;
+  if (isPopularCheckbox.checked) filters.ratingsAbove = 4;
   if (categoryId) {
     filters.categoryId = categoryId;
   }
   filters.page = page;
 
+  console.log(filters);
   return filters;
 };
 
@@ -100,7 +106,6 @@ const applyFilters = async () => {
   try {
     const response = await fetch(`/products/p?${queryString}`);
     const { products, total, hasMore } = await response.json();
-    console.log(products);
 
     showProducts(products, total, hasMore);
   } catch (error) {
@@ -110,12 +115,45 @@ const applyFilters = async () => {
 };
 
 // event listeners to filters
-priceOrder.addEventListener("change", applyFilters);
-rating.addEventListener("change", applyFilters);
-sortBy.addEventListener("change", applyFilters);
-isFeaturedCheckbox.addEventListener("change", applyFilters);
-isNewCheckbox.addEventListener("change", applyFilters);
-isPopularCheckbox.addEventListener("change", applyFilters);
+// for price order 
+priceOrder.addEventListener("change", () => {
+  if (priceOrder.value.trim() === "") {
+    delete filters.priceOrder;
+  }
+  applyFilters();
+});
+
+// for rating 
+rating.addEventListener("change", ()=>{
+  if (rating.value.trim() === "") {
+    delete filters.ratingsAbove;
+  }
+  applyFilters();
+});
+
+// for sort 
+sortBy.addEventListener("change", () => {
+  delete filters.sortBy
+  applyFilters()
+});
+
+// for is featured 
+isFeaturedCheckbox.addEventListener("change", ()=> {
+  delete filters.isFeatured
+  applyFilters()
+});
+
+// for is new check box 
+isNewCheckbox.addEventListener("change", () => {
+  delete filters.isNew
+  applyFilters()
+});
+
+// for is popular 
+isPopularCheckbox.addEventListener("change", () => {
+  delete filters.ratingsAbove
+  applyFilters()
+});
 // event listeners to categories
 categoryList.addEventListener("click", async (event) => {
   if (event.target.tagName === "LI") {
@@ -130,6 +168,22 @@ categoryList.addEventListener("click", async (event) => {
 
     applyFilters();
   }
+});
+
+// for search box input 
+searchBox.addEventListener("input", () => {
+  if (searchBox.value.trim() === "") {
+    console.log("removed search")
+    delete filters.search;
+  } else {
+    filters.search = searchBox.value;
+  }
+});
+
+searchBtn.addEventListener("click", () => {
+  delete filters.search;
+  filters.search = searchBox.value;
+  applyFilters();
 });
 
 nextBtn.addEventListener("click", () => {
