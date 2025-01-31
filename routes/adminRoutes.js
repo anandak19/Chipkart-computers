@@ -25,6 +25,7 @@ router.post('/products/toggle-listed/:id', adminController.toggleListProduct)
 //category management
 // router.get('/categories', isAdminLogin, adminController.getCategoryManagement)
 router.get('/categories', adminController.getCategoryManagement)
+router.get('/categories/all', adminController.getCategories)
 router.post('/categories/toggle-listed/:id', adminController.toggleListCategory)
 router.get('/categories/edit/:id', adminController.getUpdateCategoryForm)
 router.post('/categories/edit/:id', adminController.postUpdateCategoryForm)

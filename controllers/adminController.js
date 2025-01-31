@@ -394,6 +394,33 @@ exports.getCategoryManagement = async (req, res) => {
   }
 };
 
+exports.getCategories = async (req, res) => {
+  try {
+    const searchQuery = req.query.search || ""; 
+
+    let filter = {};
+    if (searchQuery) {
+      filter = { categoryName: { $regex: searchQuery, $options: "i" } };  
+    }
+
+    const categoriesArray = await CategoriesSchema.find(filter);
+
+    res.status(200).json({
+      success: true,
+      message: "Categories fetched successfully",
+      data: categoriesArray,
+    });
+  } catch (error) {
+    console.error(error);
+    
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+
 exports.getCategoryForm = (req, res) => {
   res.render("admin/formCategory", {
     title: "Category Management - New",

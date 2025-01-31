@@ -97,6 +97,27 @@ body {
 
 
 /* search  */
+.search-box{
+  display: flex;
+  justify-content: space-between;
+}
+
+.reset-btn{
+  display: flex;
+  align-items: center;
+}
+
+.reset-btn a{
+  border: 1px solid;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 16px;
+  color: #ffffff;
+  border-radius: 6px;
+  background-color: #157347;
+  text-decoration: none;
+}
+
 .search-form {
   display: flex;
   align-items: center;
@@ -109,6 +130,7 @@ body {
   padding: 4px;
   font-size: 16px;
   border: 2px solid #ccc;
+  border-radius: 4px;
   border-radius: 4px;
   outline: none;
   transition: border-color 0.3s;
@@ -183,7 +205,26 @@ body {
     padding: 4px 12px;
   }
   
-  
+  #resetBtn {
+    background-color: #4CAF50; 
+    color: white; 
+    padding: 4px 12px; 
+    border: none; 
+    border-radius: 4px; 
+    font-size: 14px; 
+    cursor: pointer; 
+    transition: background-color 0.3s ease;  
+}
+
+#resetBtn:hover {
+    background-color: #45a049;  
+}
+
+#resetBtn:focus {
+    outline: none; 
+}
+
+
 
 
 /* Add custom media queries for responsiveness */
