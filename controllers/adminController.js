@@ -7,8 +7,8 @@ exports.getDashboard = (req, res) => {
 };
 
 // -----user management start------
-// render all users
-exports.getUserManagement = async (req, res) => {
+// render user management page
+exports.getUserManagementPage = async (req, res) => {
   try {
     const usersArray = await UserSchema.find();
     console.log(usersArray);
@@ -22,29 +22,96 @@ exports.getUserManagement = async (req, res) => {
   }
 };
 
-// block a user
-exports.toggleBlockUser = async (req, res) => {
+// returns all users with pagination, or the searched user
+// BUG: when applying serach the other users data is also coming in the array of result 
+exports.getUsers = async (req, res) => {
   try {
-    const userId = req.params.id;
+    const { search } = req.query;
+    const page = parseInt(req.query.page) || 0;
+    const limit = 5; //make this to 5 later
+    const skip = page * limit;
+    const pipeline = [];
 
-    if (!userId) {
-      return res.status(400).send("User ID is required.");
+    if (search) {
+      const query = search.trim();
+      pipeline.push({
+        $match: {
+          $text: { $search: query },
+        },
+      });
     }
 
-    const user = await UserSchema.findById(userId);
+    pipeline.push({
+      $match: { isAdmin: false },
+    });
 
-    if (!user) {
-      return res.status(404).send("User not found.");
-    }
+    pipeline.push({
+      $facet: {
+        usersCount: [{ $count: "total" }],
+        paginatedResult: [{ $skip: skip }, { $limit: limit }],
+      },
+    });
 
-    user.isBlocked = !user.isBlocked;
-    await user.save();
-    res.redirect("/admin/users");
+    const result = await UserSchema.aggregate(pipeline);
+
+    const totalUsers = result[0]?.usersCount[0]?.total || 0;
+    console.log(result[0]);
+    const users = result[0]?.paginatedResult;
+    const hasMore = skip + users.length < totalUsers;
+
+    res.status(200).json({
+      success: true,
+      message: "Users fetched successfully",
+      totalUsers,
+      users,
+      hasMore,
+    });
   } catch (error) {
-    console.error("Error toggling block status:", error);
-    return res.status(500).send("An error occurred while updating the user.");
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
+
+// block/unblock a user
+/*
+user id is needed in the params and reson is needed for blocking only
+if the user.isBlocked is true it will unblock the user and set the block reson to empty
+if the user.isBlocked is false , then user will get blocked and reson will be saved
+*/
+exports.toggleBlockUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await UserSchema.findById(id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.isBlocked) {
+      user.isBlocked = false;
+      user.blockReason = "";
+    } else {
+      const { reason } = req.body;
+      if (!reason) {
+        return res.status(400).json({ message: "No reason provided, blocking failed" });
+      }
+      user.isBlocked = true;
+      user.blockReason = reason;
+    }
+
+    await user.save();
+    res.status(200).json({ 
+      message: `User ${user.isBlocked ? "blocked" : "unblocked"} successfully`, 
+      isBlocked: user.isBlocked 
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 
 // search a user
 exports.searchUser = async (req, res) => {
@@ -151,6 +218,7 @@ exports.getProductForm = (req, res) => {
       },
     ])
       .then((categoryArray) => {
+        console.log(categoryArray);
         res.render("admin/productForm", {
           title: "Product Management - New",
           categoryArray,
@@ -249,8 +317,7 @@ exports.getEditProductForm = async (req, res) => {
   }
 };
 
-
-// we need to update the clint side code coz, after succsfull the old data is shoing , we need to refesh the page or redierct the user 
+// we need to update the clint side code coz, after succsfull the old data is shoing , we need to refesh the page or redierct the user
 exports.postEditProductForm = async (req, res) => {
   try {
     const productId = req.params.id;
@@ -259,7 +326,7 @@ exports.postEditProductForm = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Product ID is required" });
     }
-    console.log("data from clint", req.body)
+    console.log("data from clint", req.body);
 
     const { productName, categoryId, brand, description } = req.body;
     let { positions } = req.body;
@@ -267,7 +334,7 @@ exports.postEditProductForm = async (req, res) => {
     const discount = parseFloat(req.body.discount);
     const finalPrice = parseFloat(req.body.finalPrice);
     const quantity = parseFloat(req.body.quantity);
-    const isFeatured = req.body.isFeatured === "true"; 
+    const isFeatured = req.body.isFeatured === "true";
     const highlights = req.body.highlights
       ? JSON.parse(req.body.highlights)
       : [];
@@ -309,9 +376,9 @@ exports.postEditProductForm = async (req, res) => {
     if (Array.isArray(highlights) && highlights.length > 0) {
       product.highlights = highlights;
     }
-    
+
     let newImages = [];
-    console.log(product.isFeatured)
+    console.log(product.isFeatured);
 
     if (positions) {
       positions = positions
@@ -343,7 +410,7 @@ exports.postEditProductForm = async (req, res) => {
     }
 
     await product.save();
-    console.log("updated product: ", product)
+    console.log("updated product: ", product);
     res
       .status(200)
       .json({ success: true, message: "Product updated successfully" });
@@ -396,11 +463,11 @@ exports.getCategoryManagement = async (req, res) => {
 
 exports.getCategories = async (req, res) => {
   try {
-    const searchQuery = req.query.search || ""; 
+    const searchQuery = req.query.search || "";
 
     let filter = {};
     if (searchQuery) {
-      filter = { categoryName: { $regex: searchQuery, $options: "i" } };  
+      filter = { categoryName: { $regex: searchQuery, $options: "i" } };
     }
 
     const categoriesArray = await CategoriesSchema.find(filter);
@@ -412,7 +479,7 @@ exports.getCategories = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    
+
     res.status(500).json({
       success: false,
       message: "Internal Server Error",
@@ -524,10 +591,12 @@ exports.postUpdateCategoryForm = async (req, res) => {
     });
 
     if (existingCategory) {
-      req.flash("errorMessage", "Category with same name exists. Please try another name");
+      req.flash(
+        "errorMessage",
+        "Category with same name exists. Please try another name"
+      );
       return res.redirect(`/admin/categories/edit/${id}`);
     }
-    
 
     const updatedCategory = await CategoriesSchema.findOneAndUpdate(
       { _id: id },

@@ -421,6 +421,7 @@ exports.getAdminLogin = (req, res) => {
   res.render("admin/login", {
     email: req.flash("email") || "",
     errorMessage: req.flash("errorMessage") || "",
+    title: 'Admin'
   });
 };
 

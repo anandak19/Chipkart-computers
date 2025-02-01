@@ -8,22 +8,23 @@ const router = express.Router()
 
 
 router.get('/', isAdminLogin, adminController.getDashboard)
-router.get('/users', isAdminLogin,  adminController.getUserManagement)
+// user management start 
+// -- isAdminLogin will come here
+router.get('/users', adminController.getUserManagementPage)
+router.get('/users/all', adminController.getUsers)
 // use http response and request , and remove this isAdminLogin from non-get apis
-router.post('/users/toggle-block/:id',isAdminLogin, adminController.toggleBlockUser)
-router.get('/users/search',isAdminLogin, adminController.searchUser)
+router.patch('/users/toggle-block/:id', adminController.toggleBlockUser)
+router.get('/users/search', adminController.searchUser)
 // user manaement end  
 
 // product management 
-router.get('/products', isAdminLogin,  adminController.getProductManagement)
-router.get('/products/new',isAdminLogin, adminController.getProductForm)
+router.get('/products',  adminController.getProductManagement)
+router.get('/products/new', adminController.getProductForm) 
 router.post('/products/new', upload.array('images'), newProductValidations, adminController.addNewProduct)
 router.get('/products/edit/:id', adminController.getEditProductForm)
-// newProductValidations should be use here - i just removed it form debuging
 router.post('/products/edit/:id', upload.array('images'), adminController.postEditProductForm)
 router.post('/products/toggle-listed/:id', adminController.toggleListProduct)
 //category management
-// router.get('/categories', isAdminLogin, adminController.getCategoryManagement)
 router.get('/categories', adminController.getCategoryManagement)
 router.get('/categories/all', adminController.getCategories)
 router.post('/categories/toggle-listed/:id', adminController.toggleListCategory)

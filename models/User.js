@@ -11,6 +11,7 @@ const UsersSchema = new Schema({
   otpExpires: { type: Date, default:null }, 
   isVerified: { type: Boolean, required: true, default: false  },
   isBlocked: { type: Boolean, required: true, default: false  },
+  blockReason: { type: String, default: null  },
   isAdmin: { type: Boolean, required: true, default: false  },
 },
 {

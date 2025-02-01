@@ -267,7 +267,7 @@ exports.getAvailableProducts2 = async (req, res) => {
     // if new products only is asked
     if (isNew) {
       sort.createdAt = 1;
-      limit = 10;
+      limit = 5;
       skip = 0;
     }
 
