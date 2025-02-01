@@ -4,11 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Signup</title>
-    <%- include("../partials/head") %>
+    <%- include("../../partials/head") %>
     <link rel="stylesheet" href="/styles/authForm.css" />
   </head>
   <body>
-    <%- include("../partials/userHeader") %>
+    <%- include("../../partials/userHeader") %>
 
     <div class="form-wrapper page-wrapper">
       <div class="form-container">
@@ -22,7 +22,6 @@
               id="name"
               name="name"
               value="<%= name || '' %>"
-              required
             />
             <p id="nameAlert" class="input-alert"></p>
           </div>
@@ -35,7 +34,6 @@
               id="phoneNumber"
               name="phoneNumber"
               value="<%= phoneNumber || '' %>"
-              required
             />
             <p id="phoneAlert" class="input-alert"></p>
           </div>
@@ -48,7 +46,6 @@
               id="email"
               name="email"
               value="<%= email || '' %>"
-              required
             />
             <p id="emailAlert" class="input-alert"></p>
           </div>
@@ -60,7 +57,6 @@
               class="form-control underline-input"
               id="password"
               name="password"
-              required
             />
             <p id="passwordAlert" class="input-alert"></p>
           </div>
@@ -72,7 +68,6 @@
               class="form-control underline-input"
               id="confirmPassword"
               name="confirmPassword"
-              required
             />
             <p id="confirmPasswordAlert" class="input-alert"></p>
           </div>
@@ -95,7 +90,7 @@
       </div>
     </div>
 
-    <%- include("../partials/userFooter") %>
+    <%- include("../../partials/userFooter") %>
     <script src="/javascripts/validations/signupValidation.js"></script>
   </body>
 </html>

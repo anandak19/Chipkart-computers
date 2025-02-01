@@ -26,6 +26,10 @@ router.get("/varify-otp/:id",isVerified, authController.getVerify);
 router.post("/varify-otp", authController.validateOtp);
 router.get("/resend-otp", getUser, authController.startOtpVerification);
 
+// forgot password 
+router.get("/forgot-password", authController.getForgotPassword)
+router.post("/forgot-password", authController.postForgotPassword)
+
 // // admin auth
 router.get('/admin/login', isAdminLoginSubmitted, authController.getAdminLogin)
 router.post('/admin/login', authController.postAdminLogin)

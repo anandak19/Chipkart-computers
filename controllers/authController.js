@@ -9,12 +9,12 @@ exports.getUserSignup = (req, res) => {
   if (req.session.userEmail && req.session.userId) {
     res.redirect(`/varify-otp/${req.session.userId}`);
   } else {
-    res.render("user/signup", {
+    res.render("user/auth/signup", {
       name: req.body.name || "",
       email: req.body.email || "",
       phoneNumber: req.body.phoneNumber || "",
       errorMessage: req.flash("errorMessage"),
-      isAuth: true
+      isAuth: true,
     });
   }
 };
@@ -191,7 +191,7 @@ exports.resendOtp = async (req, res) => {
 
 // get the otp  page
 exports.getVerify = async (req, res) => {
-  return res.render("user/verification", {
+  return res.render("user/auth/verification", {
     successMessage: req.flash("success"),
     errorMessage: req.flash("error"),
   });
@@ -312,10 +312,10 @@ exports.getUserLogin = (req, res) => {
     res.redirect("/");
   } else {
     req.session.userEmail = false;
-    res.render("user/login", {
+    res.render("user/auth/login", {
       email: req.flash("email") || "",
       errorMessage: req.flash("errorMessage"),
-      isAuth: true
+      isAuth: true,
     });
   }
 };
@@ -370,7 +370,9 @@ exports.postUserLogin = async (req, res) => {
     */
   } catch (error) {
     console.error("Error in login:", error);
-    return res.status(500).json({ success: true, error: "Internal server error" });
+    return res
+      .status(500)
+      .json({ success: true, error: "Internal server error" });
   }
 };
 
@@ -421,7 +423,7 @@ exports.getAdminLogin = (req, res) => {
   res.render("admin/login", {
     email: req.flash("email") || "",
     errorMessage: req.flash("errorMessage") || "",
-    title: 'Admin'
+    title: "Admin",
   });
 };
 
@@ -454,11 +456,44 @@ exports.postAdminLogin = async (req, res) => {
 
     req.session.isLogin = true;
     req.session.email = admin.email;
-    req.session.adminId = admin._id
+    req.session.adminId = admin._id;
     res.redirect("/admin");
   } catch (error) {
     console.log(error);
     req.flash("errorMessage", "Server error");
     return res.redirect("/admin/login");
+  }
+};
+
+// to get Forgotpassord ------------------working
+exports.getForgotPassword = async (req, res) => {
+  return res.render("user/auth/forgotPassword", {
+    isAuth: true,
+  });
+};
+
+// post forgot password form 
+exports.postForgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({error: 'Email is needed'})
+    }
+
+    const user = await UserSchema.findOne({ email })
+
+    if(!user) {
+      return res.status(400).json({error: 'Email not found'})
+    }
+
+    // we dont need to require cripto since it is inbuilt now 
+    // write code to create a tockn link and send to users email, 
+
+
+    res.status(200).json({message: 'Check yor email for password reset link'})
+    
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({error: 'Internal server error'})
   }
 };

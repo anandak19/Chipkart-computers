@@ -23,7 +23,7 @@ exports.getUserManagementPage = async (req, res) => {
 };
 
 // returns all users with pagination, or the searched user
-// BUG: when applying serach the other users data is also coming in the array of result 
+// BUG: when applying serach the other users data is also coming in the array of result
 exports.getUsers = async (req, res) => {
   try {
     const { search } = req.query;
@@ -96,22 +96,23 @@ exports.toggleBlockUser = async (req, res) => {
     } else {
       const { reason } = req.body;
       if (!reason) {
-        return res.status(400).json({ message: "No reason provided, blocking failed" });
+        return res
+          .status(400)
+          .json({ message: "No reason provided, blocking failed" });
       }
       user.isBlocked = true;
       user.blockReason = reason;
     }
 
     await user.save();
-    res.status(200).json({ 
-      message: `User ${user.isBlocked ? "blocked" : "unblocked"} successfully`, 
-      isBlocked: user.isBlocked 
+    res.status(200).json({
+      message: `User ${user.isBlocked ? "blocked" : "unblocked"} successfully`,
+      isBlocked: user.isBlocked,
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 
 // search a user
 exports.searchUser = async (req, res) => {
@@ -506,7 +507,9 @@ exports.postCategoryForm = async (req, res) => {
       return res.redirect("/admin/categories/new");
     }
 
-    const existingCategory = await CategoriesSchema.findOne({ categoryName });
+    const existingCategory = await CategoriesSchema.findOne({
+      categoryName: { $regex: new RegExp("^" + categoryName + "$", "i") },
+    });
     if (existingCategory) {
       console.log(existingCategory);
       req.flash(
@@ -586,7 +589,7 @@ exports.postUpdateCategoryForm = async (req, res) => {
     }
 
     const existingCategory = await CategoriesSchema.findOne({
-      categoryName,
+      categoryName: { $regex: new RegExp("^"+categoryName+"$", "i")},
       _id: { $ne: id },
     });
 

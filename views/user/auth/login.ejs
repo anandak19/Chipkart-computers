@@ -4,11 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login</title>
-    <%- include("../partials/head") %>
+    <%- include("../../partials/head") %>
     <link rel="stylesheet" href="/styles/authForm.css" />
   </head>
   <body>
-    <%- include("../partials/userHeader") %>
+    <%- include("../../partials/userHeader") %>
+
 
     <div class="form-wrapper page-wrapper">
       <div class="form-container">
@@ -22,7 +23,6 @@
               id="email"
               name="email"
               value="<%= email || '' %>"
-              required
             />
             <small class="text-danger" id="emailError"></small>
           </div>
@@ -34,7 +34,6 @@
               class="form-control underline-input"
               id="password"
               name="password"
-              required
             />
             <small class="text-danger" id="passwordError"></small>
           </div>
@@ -50,6 +49,7 @@
 
           <div class="link-text mt-4">
             <a href="/signup">Don't Have account? Signup</a>
+            <a href="/forgot-password">Forgot Password?</a>
           </div>
         </form>
 
@@ -64,7 +64,7 @@
       </div>
     </div>
 
-    <%- include("../partials/userFooter") %>
+    <%- include("../../partials/userFooter") %>
     <script src="/javascripts/validations/login.js"></script>
   </body>
 </html>

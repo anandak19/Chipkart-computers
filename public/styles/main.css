@@ -5,6 +5,7 @@ body {
 
 .page-wrapper{
   margin-top: 153px;
+  min-height: calc(100vh - 153px);
 }
 
 .content-wrapper{
