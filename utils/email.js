@@ -1,6 +1,7 @@
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
 
+// move pass to env later for security 
 const transporter = nodemailer.createTransport({
   service: "Gmail",
   auth: {
@@ -9,43 +10,25 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Sample function to send an email
-const sendEmail = (name = 'user', to, subject, text, callback) => {
-  const mailOptions = {
-    from: "brown8wolf@gmail.com",
-    to: to,
-    subject: subject,
-    html: `<p>Dear ${name},</p><p>Your OTP for verification is: <b>${text}</b></p><p>Regards,<br>Chipkart Computers</p>`,
-  };
+const sendEmailToUser = (to, html, subject) => {
+  return new Promise((resolve, reject) => {
+    const mailOptions = {
+      from: "brown8wolf@gmail.com",
+      to: to,
+      subject: subject,
+      html: html,
+    };
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.log(error);
-      return callback(error);
-    } else {
-      console.log("Email sent: " + info.response);
-      return callback(null, info.response);
-    }
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log("Error sending email in email js", error);
+        return reject(error);
+      } else {
+        console.log("Email send to user", info.response);
+        return resolve(info.response);
+      }
+    });
   });
 };
 
-const sendPasswordReset = (name = 'user', to, subject, resetLink, callback) => {
-  const mailOptions = {
-    from: "brown8wolf@gmail.com",
-    to: to,
-    subject: subject,
-    html: `<p>Dear ${name},</p><p>Click <a href="${resetLink}">here</a> to reset your password. The link will expire in 1 hour</p>Regards,<br>Chipkart Computers</p>`,
-  };
-
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.log(error);
-      return callback(error);
-    } else {
-      console.log("Email sent: " + info.response);
-      return callback(null, info.response);
-    }
-  });
-};
-
-module.exports = { sendEmail, sendPasswordReset };
+module.exports = { sendEmailToUser };

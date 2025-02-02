@@ -1,7 +1,8 @@
-const mongoose = require("mongoose");
 const UserSchema = require("../models/User");
-const { sendEmail } = require("../utils/email");
+const { sendEmailToUser } = require("../utils/email");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
+require("dotenv").config();
 
 // Geting signup page
 exports.getUserSignup = (req, res) => {
@@ -21,12 +22,6 @@ exports.getUserSignup = (req, res) => {
 
 // posting signup for varification
 exports.startOtpVerification = async (req, res) => {
-  /*
-  generate the otp and send to user
-  if send succss, respond to req as succesfull
-
-  */
-
   try {
     let name, email;
     if (req.user) {
@@ -43,89 +38,10 @@ exports.startOtpVerification = async (req, res) => {
       });
     }
 
-    // make this code a separate utility later
-    const otp = Math.floor(1000 + Math.random() * 9000);
-    const currentTime = new Date();
-    const otpExpires = new Date(currentTime.getTime() + 60 * 1000);
+    const user = await UserSchema.findOne({ email });
 
-    const subject = "Your OTP Code";
-    const text = otp.toString();
-
-    // Send the OTP email
-    sendEmail(name, email, subject, text, async (error, response) => {
-      // if error in sending the otp
-      if (error) {
-        console.log("Email sending failed:", error);
-        return res.status(500).json({
-          status: "error",
-          success: false,
-          message: "Failed to send OTP! Please try again.",
-        });
-      }
-      console.log(response);
-
-      // Update the user's OTP and expiration time in the database
-      try {
-        const result = await UserSchema.updateOne(
-          { email },
-          {
-            $set: {
-              otp,
-              otpExpires,
-            },
-          }
-        );
-
-        // If the user was found and the update was successful
-        if (result.modifiedCount > 0) {
-          console.log("OTP and expiration time updated successfully");
-
-          req.session.userEmail = req.user.email;
-          req.session.isVerified = false;
-          req.session.userId = req.user._id;
-          req.session.isLogin = true;
-
-          return res.status(200).json({
-            status: "success",
-            message: "OTP Send Successfully",
-            redirectUrl: `/varify-otp/${String(req.user._id)}`,
-          });
-        } else {
-          console.log("User not found or update failed", result);
-          return res.status(404).send("User not found or update failed");
-        }
-      } catch (dbError) {
-        console.error("Database error:", dbError);
-        return res.status(500).send("Internal server error while updating OTP");
-      }
-    });
-  } catch (error) {
-    console.error("An error occurred:", error);
-    return res.status(500).send("An internal server error occurred");
-  }
-};
-
-// resend new otp / this will be reset later
-exports.resendOtp = async (req, res) => {
-  /*
-  generate the otp and send to user
-  if send succss, respond to req as succesfull
-
-  */
-
-  try {
-    let name, email;
-    if (req.user) {
-      email = req.user.email;
-      name = req.user.name;
-    }
-
-    // If no email is provided, return an error
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "No email found in request",
-      });
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
     }
 
     // make this code a separate utility later
@@ -135,53 +51,23 @@ exports.resendOtp = async (req, res) => {
 
     const subject = "Your OTP Code";
     const text = otp.toString();
+    const html = `<p>Dear ${name},</p><p>Your OTP for verification is: <b>${text}</b></p><p>Regards,<br>Chipkart Computers</p>`;
 
-    // Send the OTP email
-    sendEmail(name, email, subject, text, async (error, response) => {
-      // if error in sending the otp
-      if (error) {
-        console.log("Email sending failed:", error);
-        return res.status(500).json({
-          status: "error",
-          success: false,
-          message: "Failed to send OTP! Please try again.",
-        });
-      }
-      console.log(response);
+    user.otp = otp;
+    user.otpExpires = otpExpires;
+    await user.save();
 
-      // Update the user's OTP and expiration time in the database
-      try {
-        const result = await UserSchema.updateOne(
-          { email },
-          {
-            $set: {
-              otp,
-              otpExpires,
-            },
-          }
-        );
+    await sendEmailToUser(user.email, html, subject);
 
-        // If the user was found and the update was successful
-        if (result.modifiedCount > 0) {
-          console.log("OTP and expiration time updated successfully");
+    req.session.userEmail = req.user.email;
+    req.session.isVerified = false;
+    req.session.userId = req.user._id;
+    req.session.isLogin = true;
 
-          req.session.userEmail = req.user.email;
-          req.session.isVerified = false;
-          req.session.userId = req.user._id;
-
-          return res.status(200).json({
-            status: "success",
-            message: "OTP Send Successfully",
-            redirectUrl: `/varify-otp/${String(req.user._id)}`,
-          });
-        } else {
-          console.log("User not found or update failed", result);
-          return res.status(404).send("User not found or update failed");
-        }
-      } catch (dbError) {
-        console.error("Database error:", dbError);
-        return res.status(500).send("Internal server error while updating OTP");
-      }
+    return res.status(200).json({
+      status: "success",
+      message: "OTP Send Successfully",
+      redirectUrl: `/varify-otp/${String(req.user._id)}`,
     });
   } catch (error) {
     console.error("An error occurred:", error);
@@ -472,28 +358,40 @@ exports.getForgotPassword = async (req, res) => {
   });
 };
 
-// post forgot password form 
+// post forgot password form
+// user will send a email in body
+// server varify email and user, create a token and save it in user with 1 hr expiration
+// send the reset link to usr in email 
 exports.postForgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) {
-      return res.status(400).json({error: 'Email is needed'})
+      return res.status(400).json({ error: "Email is needed" });
     }
 
-    const user = await UserSchema.findOne({ email })
+    const user = await UserSchema.findOne({ email });
 
-    if(!user) {
-      return res.status(400).json({error: 'Email not found'})
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
     }
 
-    // we dont need to require cripto since it is inbuilt now 
-    // write code to create a tockn link and send to users email, 
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    console.log(resetToken);
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now() + 3600000;
+    console.log(user);
 
+    const resetLink = `${process.env.BASE_URL}/reset-password/${resetToken}`;
+    const html = `<p>Dear ${user.name},</p><p>Click <a href="${resetLink}">here</a> to reset your password. The link will expire in 1 hour</p>Regards,<br>Chipkart Computers</p>`;
+    await user.save();
 
-    res.status(200).json({message: 'Check yor email for password reset link'})
-    
+    await sendEmailToUser(user.email, html, "Reset Password", resetLink);
+
+    res
+      .status(200)
+      .json({ message: "Check yor email for password reset link" });
   } catch (error) {
-    console.log(error)
-    return res.status(500).json({error: 'Internal server error'})
+    console.log(error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 };

@@ -13,6 +13,8 @@ const UsersSchema = new Schema({
   isBlocked: { type: Boolean, required: true, default: false  },
   blockReason: { type: String, default: null  },
   isAdmin: { type: Boolean, required: true, default: false  },
+  resetPasswordToken : { type: String, default: null },
+  resetPasswordExpires : { type: Date, default: null },
 },
 {
   timestamps: true,
