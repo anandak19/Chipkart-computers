@@ -2,6 +2,7 @@ const UserSchema = require("../models/User");
 const { sendEmailToUser } = require("../utils/email");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
+const { validatePassword } = require("../utils/validations");
 require("dotenv").config();
 
 // Geting signup page
@@ -355,13 +356,14 @@ exports.postAdminLogin = async (req, res) => {
 exports.getForgotPassword = async (req, res) => {
   return res.render("user/auth/forgotPassword", {
     isAuth: true,
+    errorMessage: req.flash("error")[0] || " ",
   });
 };
 
 // post forgot password form
 // user will send a email in body
 // server varify email and user, create a token and save it in user with 1 hr expiration
-// send the reset link to usr in email 
+// send the reset link to usr in email
 exports.postForgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -378,7 +380,7 @@ exports.postForgotPassword = async (req, res) => {
     const resetToken = crypto.randomBytes(32).toString("hex");
     console.log(resetToken);
     user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = Date.now() + 3600000;
+    user.resetPasswordExpires = Date.now() + 60 * 60 * 1000;
     console.log(user);
 
     const resetLink = `${process.env.BASE_URL}/reset-password/${resetToken}`;
@@ -387,11 +389,90 @@ exports.postForgotPassword = async (req, res) => {
 
     await sendEmailToUser(user.email, html, "Reset Password", resetLink);
 
+    req.session.isPasswordUpdated = false;
     res
       .status(200)
       .json({ message: "Check yor email for password reset link" });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// get new password form page
+exports.getNewPasswordPage = async (req, res) => {
+  console.log(req.session.isPasswordUpdated);
+  if (!req.session.isPasswordUpdated) {
+    try {
+      /*
+      get the token from the path params
+      varify the token and render the page to users
+      else redirect to email entering page
+      */
+      const { token } = req.params;
+
+      if (!token) {
+        console.log("Token missing");
+        req.flash("error", "Token not found, Please try again");
+        return res.redirect("/forgot-password");
+      }
+
+      const user = await UserSchema.findOne({
+        resetPasswordToken: token,
+        resetPasswordExpires: { $gt: Date.now() },
+      });
+
+      if (!user) {
+        console.log("Token expired");
+        req.flash("error", "Password reset link expired! Please try agin");
+        return res.redirect("/forgot-password");
+      }
+
+      return res.render("user/auth/newPassword", {
+        isAuth: true,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.redirect("/");
+    }
+  }
+};
+
+exports.postNewPassword = async (req, res) => {
+  // check if the user was alredy submited and changed the password
+
+  try {
+    const { token } = req.params;
+    const { password, confirmPassword } = req.body;
+    console.log(token);
+
+    if (!token) {
+      res.status(400).json({ error: "Token not found" });
+    }
+
+    const user = await UserSchema.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: "Invalid or expired token." });
+    }
+
+    const alertMessage = await validatePassword(password, confirmPassword);
+    if (alertMessage) {
+      res.status(400).json({ error: alertMessage });
+    }
+
+    user.password = await bcrypt.hash(password, 10);
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+
+    await user.save();
+
+    res.status(200).json({ message: "Password saved succesfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };

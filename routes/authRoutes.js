@@ -29,6 +29,9 @@ router.get("/resend-otp", getUser, authController.startOtpVerification);
 // forgot password 
 router.get("/forgot-password", authController.getForgotPassword)
 router.post("/forgot-password", authController.postForgotPassword)
+// new password 
+router.get("/reset-password/:token", authController.getNewPasswordPage)
+router.post("/reset-password/:token", authController.postNewPassword)
 
 // // admin auth
 router.get('/admin/login', isAdminLoginSubmitted, authController.getAdminLogin)
