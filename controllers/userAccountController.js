@@ -1,7 +1,120 @@
+const UserSchema = require("../models/User");
+const {
+  validateDob,
+  validateName,
+  validatePhoneNumber,
+  validateEmail,
+} = require("../utils/validations");
+
+// make a session validate middleware later that sends json response
+
+// PERSONAL DETAILS
 exports.getAccount = (req, res) => {
-  res.render("user/account");
+  res.render("user/account/userAccount", { currentPage: "account" });
 };
 
+// get users details
+exports.getUserDetails = async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+
+    const user = await UserSchema.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      dob: user.dob,
+    });
+  } catch (error) {
+    console.error("Error fetching user details:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// post updated users details
+exports.postUserDetails = async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const user = await UserSchema.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    let { name, email, phoneNumber, dob } = req.body;
+    if (!name || !email || !phoneNumber || !dob) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    name = name.trim();
+    email = email.trim();
+    phoneNumber = phoneNumber.trim();
+    dob = dob.trim();
+
+    let errorMessage = validateName(name) || validateDob(dob);
+    if (errorMessage) {
+      return res.status(400).json({ error: errorMessage });
+    }
+
+    let refresh = false;
+
+    if (user.email !== email) {
+      errorMessage = await validateEmail(email);
+      if (errorMessage) {
+        return res.status(400).json({ error: errorMessage });
+      }
+      refresh = true;
+    }
+
+    if (user.phoneNumber !== phoneNumber) {
+      errorMessage = await validatePhoneNumber(phoneNumber);
+      if (errorMessage) {
+        return res.status(400).json({ error: errorMessage });
+      }
+    }
+
+    user.name = name;
+    user.email = email;
+    user.phoneNumber = phoneNumber;
+    user.dob = dob;
+
+    await user.save();
+    console.log(user)
+
+    return res
+      .status(200)
+      .json({ message: "User details updated successfully", refresh });
+  } catch (error) {
+    console.error("Error fetching user details:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// DELIVERY ADDRESS
+exports.getAddresses = (req, res) => {
+  res.render("user/account/userAddress", { currentPage: "address" });
+};
+
+// ORDER HISTORY
+exports.getOrderHistory = (req, res) => {
+  res.render("user/account/orderHistory", { currentPage: "orders" });
+};
+
+// WALLET
+exports.getWallet = (req, res) => {
+  res.render("user/account/wallet", { currentPage: "wallet" });
+};
+
+// COUPONS
+exports.getCoupons = (req, res) => {
+  res.render("user/account/coupons", { currentPage: "coupons" });
+};
 
 /*
 --controllers i will have here

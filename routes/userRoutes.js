@@ -11,6 +11,11 @@ const router = express.Router()
 router.use(express.json())
 router.use(express.urlencoded({extended: true}))
 
+router.use((req, res, next) => {
+    res.locals.user = req.session.user || null
+    next()
+})
+
 router.get('/', userController.getHome)
 // get featured products 
 router.get('/products/featured', userController.getFeaturedProducts)
@@ -34,6 +39,15 @@ router.get('/products/:id/related', validateProduct, userController.getRelatedPr
 
 
 // ---user account based routes--- 
-router.get('/account', isLogin, userAccountController.getAccount)
+// isLogin middleware will come here 
+// personal details 
+router.get('/account',  userAccountController.getAccount)
+router.get('/account/user',  userAccountController.getUserDetails)
+router.post('/account/user',  userAccountController.postUserDetails)
+
+router.get('/account/address',  userAccountController.getAddresses)
+router.get('/account/orders',  userAccountController.getOrderHistory)
+router.get('/account/wallet',  userAccountController.getWallet)
+router.get('/account/coupons',  userAccountController.getCoupons)
 
 module.exports = router

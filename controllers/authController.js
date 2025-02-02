@@ -175,6 +175,12 @@ exports.registerGoogleUser = async (req, res) => {
       console.log("New user saved to the database:", user);
     }
 
+    req.session.user = {
+      email: user.email,
+      id: user._id, 
+      name: user.name
+    };
+
     req.session.userEmail = user.email;
     req.session.isLogin = true;
     req.session.userId = user._id;
@@ -242,9 +248,16 @@ exports.postUserLogin = async (req, res) => {
       });
     }
 
+    req.session.user = {
+      email: user.email,
+      id: user._id, 
+      name: user.name
+    };
+    // remove this from other routes and use the above object for the existing purpose 
     req.session.userEmail = user.email;
     req.session.isLogin = true;
     req.session.userId = user._id;
+
 
     res.status(200).json({
       success: true,
@@ -433,7 +446,8 @@ exports.getNewPasswordPage = async (req, res) => {
       });
     } catch (error) {
       console.log(error);
-      return res.redirect("/");
+      req.flash("error", "Internal server error! Try agin later");
+      return res.redirect("/forgot-password");
     }
   }
 };

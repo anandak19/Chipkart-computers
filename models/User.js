@@ -6,6 +6,7 @@ const UsersSchema = new Schema({
   name: { type: String, required: true },
   phoneNumber: { type: String, unique: true, default:null },
   email: { type: String, required: true, unique: true },
+  dob: { type: Date, default:null  },
   password: { type: String, default:null },
   otp: { type: String, default:null},
   otpExpires: { type: Date, default:null }, 

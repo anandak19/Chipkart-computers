@@ -12,6 +12,7 @@ const signupValidations = async (req, res, next) => {
     let { name, phoneNumber, email, password, confirmPassword } = req.body;
 
     console.log("body from signup form", req.body)
+
     // validate each entered input data 
     const alertMessage =
       (validateName(name)) ||

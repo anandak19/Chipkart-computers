@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Wallet</title>
+    <link rel="stylesheet" href="/styles/account.css" />
+    <%- include("../../partials/head") %>
+  </head>
+  <body>
+    <%- include("../../partials/userHeader") %>
+
+    <div class="account-wrapper page-wrapper">
+      <div class="content-wrapper profile-container">
+        <%- include("../../partials/userSidebar") %>
+
+        <div class="profile-data">
+          <h1>Welcome to your Wallet</h1>
+          <p>
+            Here you can manage your account information, update details, and
+            more.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <%- include("../../partials/userFooter") %>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+<div class="sidebar">
+  <div class="welcome-user">
+    <p>Hello</p>
+    <h5><%= user ? user.name : 'User' %></h5>
+  </div>
+    <ul>
+      <li><a href="/account" class="<%= currentPage === 'account' ? 'active': 'inactive' %>">Personal Details</a></li>
+      <li><a href="/account/address" class="<%= currentPage === 'address' ? 'active': 'inactive' %>">Delivery Address</a></li>
+      <li><a href="/account/orders" class="<%= currentPage === 'orders' ? 'active': 'inactive' %>">Order History</a></li>
+      <li><a href="/account/wallet" class="<%= currentPage === 'wallet' ? 'active': 'inactive' %>">My Wallet</a></li>
+      <li><a href="/account/coupons" class="<%= currentPage === 'coupons' ? 'active': 'inactive' %>">My Coupons</a></li>
+      <li><a href="/logout" class="logout-link">Logout</a></li>
+    </ul>
+  </div>

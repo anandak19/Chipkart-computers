@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Personal Details</title>
+    <link rel="stylesheet" href="/styles/account.css" />
+    <link rel="stylesheet" href="/styles/userPages/personalDetails.css" />
+    <%- include("../../partials/head") %>
+  </head>
+  <body>
+    <%- include("../../partials/userHeader") %>
+
+    <div class="account-wrapper page-wrapper">
+      <div class="content-wrapper profile-container">
+        <%- include("../../partials/userSidebar") %>
+
+        <div class="profile-data">
+          <div class="profie-content-wrapper">
+            <div class="personal-details">
+              <div class="personal-details-title">
+                <p class="page-title">Personal Details</p>
+                <button id="editBtn"><i class="fas fa-pen"></i> Edit</button>
+              </div>
+              <form class="personal-details-form">
+                <div class="form-inputs">
+                  <div class="form-group">
+                    <label for="name">Name</label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      placeholder="Enter your name"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="phone">Phone</label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      placeholder="Enter your phone number"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="email">Email</label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      placeholder="Enter your email"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="dob">Date of Birth</label>
+                    <input type="date" id="dob" name="dob" required />
+                  </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="detailsSaveBtn"><i class="fa-solid fa-floppy-disk"></i>Save</button>
+              </form>
+            </div>
+
+            <div class="personal-details mt-3">
+              <p class="page-title">Change Password</p>
+              <form class="change-password-form">
+                <div class="form-inputs">
+
+
+                <div class="form-group">
+                  <label>Old Password</label>
+                  <input
+                    type="password"
+                    id="oldPassword"
+                    placeholder="Enter old password"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label>New Password</label>
+                  <input
+                    type="password"
+                    id="newPassword"
+                    placeholder="Enter new password"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label>Confirm Password</label>
+                  <input
+                    type="password"
+                    id="newPassword"
+                    placeholder="Confirm new password"
+                  />
+                </div>
+
+              </div>
+              <button type="submit" class="submit-btn" id="passwordSaveBtn"><i class="fa-solid fa-floppy-disk"></i>Save</button>
+
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%- include("../../partials/userFooter") %>
+    <script src="/javascripts/user/personalDetails.js"></script>
+  </body>
+</html>
