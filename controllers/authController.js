@@ -3,6 +3,7 @@ const { sendEmailToUser } = require("../utils/email");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const { validatePassword } = require("../utils/validations");
+const logoutUser = require("../utils/logoutUser");
 require("dotenv").config();
 
 // Geting signup page
@@ -60,6 +61,12 @@ exports.startOtpVerification = async (req, res) => {
 
     await sendEmailToUser(user.email, html, subject);
 
+    req.session.user = {
+      email: user.email,
+      id: user._id, 
+      name: user.name
+    };
+    // remove the below code later 
     req.session.userEmail = req.user.email;
     req.session.isVerified = false;
     req.session.userId = req.user._id;
@@ -279,42 +286,18 @@ exports.postUserLogin = async (req, res) => {
 // logout user
 exports.logoutUser = async (req, res) => {
   try {
-    if (req.isAuthenticated && req.isAuthenticated()) {
-      // for google users
-      req.logout((err) => {
-        if (err) {
-          console.error("Error during logout:", err);
-          return res.status(500).send("An error occurred during logout.");
-        }
-        req.session.destroy((err) => {
-          if (err) {
-            console.error("Error while destroying session:", err);
-            return res
-              .status(500)
-              .send("An unexpected error occurred while logging out.");
-          }
-          res.clearCookie("connect.sid");
-          console.log("User logged out successfully.");
-          return res.redirect("/");
-        });
-      });
-    } else {
-      // for normal users
-      req.session.destroy((err) => {
-        if (err) {
-          console.error("Error while destroying session:", err);
-          return res.status(500).send("An unexpected error occurred.");
-        }
-        res.clearCookie("connect.sid");
-        console.log("Session destroyed for unauthenticated user.");
-        return res.redirect("/");
-      });
-    }
+    await logoutUser(req, res)
+
+    return res.redirect("/");
+
   } catch (error) {
-    console.error("Error in logoutUser:", error);
-    res.status(500).send("An unexpected error occurred.");
+    console.error("Logout Error:", error);
+    res.status(500).send({ message: error.message });
   }
 };
+
+
+
 
 // admin auth
 exports.getAdminLogin = (req, res) => {

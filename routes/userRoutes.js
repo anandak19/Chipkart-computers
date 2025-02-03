@@ -41,7 +41,7 @@ router.get('/products/:id/related', validateProduct, userController.getRelatedPr
 // ---user account based routes--- 
 // isLogin middleware will come here 
 // personal details 
-router.get('/account',  userAccountController.getAccount)
+router.get('/account',isLogin,  userAccountController.getAccount)
 router.get('/account/user',  userAccountController.getUserDetails)
 router.post('/account/user',  userAccountController.postUserDetails)
 

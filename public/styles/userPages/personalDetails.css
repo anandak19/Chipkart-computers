@@ -73,6 +73,12 @@ input {
   font-size: 14px;
 }
 
+input:read-only {
+  border: none;
+  outline: none;
+}
+
+
 .submit-btn {
   display: none;
   width: 10%;

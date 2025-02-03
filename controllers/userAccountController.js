@@ -1,4 +1,5 @@
 const UserSchema = require("../models/User");
+const logoutUser = require("../utils/logoutUser");
 const {
   validateDob,
   validateName,
@@ -9,6 +10,7 @@ const {
 // make a session validate middleware later that sends json response
 
 // PERSONAL DETAILS
+// render personal details page 
 exports.getAccount = (req, res) => {
   res.render("user/account/userAccount", { currentPage: "account" });
 };
@@ -24,11 +26,11 @@ exports.getUserDetails = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.json({
+    res.status(200).json({
       id: user._id,
       name: user.name,
       email: user.email,
-      phone: user.phone,
+      phoneNumber: user.phoneNumber,
       dob: user.dob,
     });
   } catch (error) {
@@ -42,6 +44,9 @@ exports.postUserDetails = async (req, res) => {
   try {
     const userId = req.session.user.id;
     const user = await UserSchema.findById(userId);
+    console.log("user id: ", userId)
+    console.log("Requested body: ", req.body)
+    console.log("requested user :", user)
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -59,6 +64,7 @@ exports.postUserDetails = async (req, res) => {
 
     let errorMessage = validateName(name) || validateDob(dob);
     if (errorMessage) {
+      console.log("Error in name or dob: ", errorMessage)
       return res.status(400).json({ error: errorMessage });
     }
 
@@ -67,6 +73,7 @@ exports.postUserDetails = async (req, res) => {
     if (user.email !== email) {
       errorMessage = await validateEmail(email);
       if (errorMessage) {
+        console.log("Error in email: ", errorMessage)
         return res.status(400).json({ error: errorMessage });
       }
       refresh = true;
@@ -75,6 +82,7 @@ exports.postUserDetails = async (req, res) => {
     if (user.phoneNumber !== phoneNumber) {
       errorMessage = await validatePhoneNumber(phoneNumber);
       if (errorMessage) {
+        console.log("Error in phone: ", errorMessage)
         return res.status(400).json({ error: errorMessage });
       }
     }
@@ -87,14 +95,28 @@ exports.postUserDetails = async (req, res) => {
     await user.save();
     console.log(user)
 
+    req.session.user = {
+      email: user.email,
+      id: user._id, 
+      name: user.name
+    };
+
+    if (refresh) {
+      await logoutUser(req, res)
+    }
+
+
     return res
       .status(200)
       .json({ message: "User details updated successfully", refresh });
   } catch (error) {
     console.error("Error fetching user details:", error);
     res.status(500).json({ message: "Internal server error" });
-  }
+  } 
 };
+
+// ------------------------------------ 
+
 
 // DELIVERY ADDRESS
 exports.getAddresses = (req, res) => {
