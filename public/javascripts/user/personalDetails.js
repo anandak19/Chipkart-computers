@@ -116,8 +116,8 @@ personalDetailsForm.addEventListener("submit", (e) => {
         if (!ok) {
           serverError.innerText = data.error || "Something went wrong";
         } else {
-          // add a custom toster message for succes here 
-          alert(data.message)
+          // add a custom toster message for succes here
+          alert(data.message);
           location.reload();
         }
       })
@@ -131,20 +131,81 @@ personalDetailsForm.addEventListener("submit", (e) => {
 // on page loaded, user data will be fetched
 document.addEventListener("DOMContentLoaded", getUserDetails);
 
-// ---------RESET PASSWORD 
+// ---------RESET PASSWORD
 
+const passwordForm = document.getElementById("passwordForm");
+const oldPassword = document.getElementById("oldPassword");
+const newPassword = document.getElementById("newPassword");
+const confirmPassword = document.getElementById("confirmPassword");
+const passwordSaveBtn = document.getElementById("passwordSaveBtn");
+// errors
+const oldPassError = document.getElementById("oldPassError");
+const newPassError = document.getElementById("newPassError");
+const confirmPassError = document.getElementById("confirmPassError");
+const passServerMsg = document.getElementById("passServerMsg");
 
+oldPassword.addEventListener("input", () => {
+  passwordSaveBtn.style.display = "flex";
+});
 
+passwordForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  let isValid = true;
 
+  oldPassError.innerText = "";
+  newPassError.innerText = "";
+  confirmPassError.innerText = "";
+  passServerMsg.innerText = "";
 
+  const oldPasswordInput = oldPassword.value.trim();
+  const newPasswordInput = newPassword.value.trim();
+  const confirmPasswordInput = confirmPassword.value.trim();
 
-/*
--for password change
-when user types old password, show save btn 
+  if (!oldPasswordInput) {
+    isValid = false;
+    oldPassError.innerText = "Enter your old password";
+  }
 
-on save btn click or form submit - 
-validate each field and validate new password format too
-// if the old password enterd by user is wrong , validate that from the server and send error message
-if all are valid save password - logout user from the server
-after successfull password reset relaod the page to redierct user to login page, since user have no session
-*/
+  if (!newPasswordInput || !passwordRegex.test(newPasswordInput)) {
+    isValid = false;
+    newPassError.innerText =
+      "Password must be at least 4 characters long and include at least one letter and one number.";
+  }
+
+  if (confirmPasswordInput !== newPasswordInput) {
+    isValid = false;
+    confirmPassError.innerText = "Password does not match";
+  }
+
+  if (isValid) {
+    try {
+      const body = {
+        oldPassword: oldPasswordInput,
+        newPassword: newPasswordInput,
+        confirmPassword: confirmPasswordInput,
+      };
+
+      const response = await fetch("/account/user/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(data.message);
+        passServerMsg.classList.remove("text-danger");
+        passServerMsg.classList.add("text-success");
+        passServerMsg.innerText = data.message;
+        setTimeout(() => {
+          location.reload();
+        }, 2000);
+      } else {
+        passServerMsg.innerText = data.error;
+      }
+    } catch (error) {
+      console.log("Error:", error);
+      alert("Somthing went wrong");
+    }
+  }
+});

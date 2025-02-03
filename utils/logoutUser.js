@@ -1,30 +1,35 @@
 const logoutUser = (req, res) => {
     return new Promise((resolve, reject) => {
         try {
-            // for google users 
+            // Handle logout for Google-authenticated users
             if (req.isAuthenticated && req.isAuthenticated()) {
                 req.logout((err) => {
-                    if(err){
-                        return reject({message: 'Error loging out google user', error:err})
+                    if (err) {
+                        return reject({ message: "Error logging out Google user", error: err });
                     }
-                })
+
+                    req.session.destroy((err) => {
+                        if (err) {
+                            return reject({ message: "Error destroying the session", error: err });
+                        }
+                        res.clearCookie("connect.sid");
+                        resolve({ message: "Session destroyed successfully." });
+                    });
+                });
+            } else {
+                // Regular user logout (without Google)
+                req.session.destroy((err) => {
+                    if (err) {
+                        return reject({ message: "Error destroying the session", error: err });
+                    }
+                    res.clearCookie("connect.sid");
+                    resolve({ message: "Session destroyed successfully." });
+                });
             }
-
-            // for google users and regular users 
-            req.session.destroy((err) => {
-                if (err) {
-                    return reject({ message: "Error while destorying the session", error: err })
-                }
-            })
-
-            // clear the session cookie 
-            res.clearCookie("connect.sid")
-            resolve({ message: "Session destroyed" });
-
         } catch (error) {
-            reject({ message: "An unexpected error occurred", error })
+            reject({ message: "An unexpected error occurred", error });
         }
-    })
-}
+    });
+};
 
-module.exports = logoutUser
+module.exports = logoutUser;

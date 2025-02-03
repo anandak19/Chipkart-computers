@@ -73,8 +73,13 @@
             </div>
 
             <div class="personal-details mt-3">
-              <p class="page-title">Change Password</p>
-              <form class="change-password-form">
+              <div class="personal-details-title">
+                <p class="page-title">Personal Details</p>
+                <button id="editBtn"><i class="fa-solid fa-floppy-disk"></i></button>
+              </div>
+              <small class="text-danger" id="passServerMsg"></small>
+
+              <form class="change-password-form" id="passwordForm">
                 <div class="form-inputs">
 
 
@@ -85,6 +90,7 @@
                     id="oldPassword"
                     placeholder="Enter old password"
                   />
+                  <small class="text-danger" id="oldPassError"></small>
                 </div>
 
                 <div class="form-group">
@@ -94,6 +100,7 @@
                     id="newPassword"
                     placeholder="Enter new password"
                   />
+                  <small class="text-danger" id="newPassError"></small>
                 </div>
 
                 <div class="form-group">
@@ -103,6 +110,7 @@
                     id="confirmPassword"
                     placeholder="Confirm new password"
                   />
+                  <small class="text-danger" id="confirmPassError"></small>
                 </div>
 
               </div>
