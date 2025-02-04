@@ -221,19 +221,142 @@ exports.deleteAddress = async (req, res) => {
 
     const { id } = req.params;
 
-    const result = await AddressSchema.deleteOne({ _id: id, userId: req.user._id });
+    const result = await AddressSchema.deleteOne({
+      _id: id,
+      userId: req.user._id,
+    });
 
     if (result.deletedCount === 1) {
-      return res.status(200).json({ message: 'Successfully deleted address.' });
-    }else{
-      return res.status(404).json({ error: "No documents matched the query. Deleted 0 documents.." });
+      return res.status(200).json({ message: "Successfully deleted address." });
+    } else {
+      return res.status(404).json({
+        error: "No documents matched the query. Deleted 0 documents..",
+      });
     }
-
   } catch (error) {
     console.error("Error deleting address:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+// save updated address
+exports.saveEditedAddress = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(404).json({ error: "User not found in request." });
+    }
+
+    const { id } = req.params;
+
+    const {
+      addressType,
+      fullName,
+      phoneNumber,
+      addressLine,
+      city,
+      state,
+      pincode,
+      country,
+      isDefault,
+    } = req.body;
+
+    let address = await AddressSchema.findOne({
+      _id: id,
+      userId: req.user._id,
+    });
+
+    if (!address) {
+      return res.status(404).json({ error: "Address not found." });
+    }
+
+    if (isDefault) {
+      await AddressSchema.updateMany(
+        { userId: req.user._id, isDefault: true },
+        { $set: { isDefault: false } }
+      );
+    }
+
+    // Update the address fields
+    address.addressType = addressType || address.addressType;
+    address.fullName = fullName || address.fullName;
+    address.phoneNumber = phoneNumber || address.phoneNumber;
+    address.addressLine = addressLine || address.addressLine;
+    address.city = city || address.city;
+    address.state = state || address.state;
+    address.pincode = pincode || address.pincode;
+    address.country = country || address.country;
+    address.isDefault = isDefault ?? address.isDefault;
+
+    await address.save();
+
+    return res.status(200).json({ message: "Address updated successfully" });
+  } catch (error) {
+    console.error("Error updating address:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// toggle adders default or not 
+exports.toggleAddress = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(404).json({ error: "User not found in request." });
+    }
+
+    const { id } = req.params;
+
+    let address = await AddressSchema.findOne({
+      _id: id,
+      userId: req.user._id,
+    });
+
+    if (!address) {
+      return res.status(404).json({ error: "Address not found." });
+    }
+
+    // If the current address is not default, find the existing default address and update it
+    if (!address.isDefault) {
+      await AddressSchema.updateMany(
+        { userId: req.user._id, isDefault: true },
+        { $set: { isDefault: false } }
+      );
+    }
+
+    // Toggle isDefault for the selected address
+    address.isDefault = !address.isDefault;
+
+    await address.save();
+
+    return res.status(200).json({
+      message: "Address updated successfully",
+    });
+  } catch (error) {
+    console.error("Error updating address:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
+
+
+
+// get all address of user 
+exports.getUsersAllAddress = async (req, res) => {
+  try {
+
+    if (!req.user) {
+      return res.status(404).json({ error: "User not found in request." });
+    }
+
+    const addressArray = await AddressSchema.find({userId: req.user._id})
+    
+    return res.status(200).json({ message: "Address fetched successfully", data: addressArray });
+  } catch (error) {
+    console.error("Error fetching address:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 
 // ORDER HISTORY
 exports.getOrderHistory = (req, res) => {
