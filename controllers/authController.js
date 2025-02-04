@@ -304,9 +304,9 @@ exports.getAdminLogin = (req, res) => {
   // if admin is logged in do not show this page
   req.session.isLogin = false;
   res.render("admin/login", {
+    title: "Admin",
     email: req.flash("email") || "",
     errorMessage: req.flash("errorMessage") || "",
-    title: "Admin",
   });
 };
 

@@ -137,19 +137,14 @@ const passwordForm = document.getElementById("passwordForm");
 const oldPassword = document.getElementById("oldPassword");
 const newPassword = document.getElementById("newPassword");
 const confirmPassword = document.getElementById("confirmPassword");
-const passwordSaveBtn = document.getElementById("passwordSaveBtn");
+const savePassBtn = document.getElementById("savePassBtn");
 // errors
 const oldPassError = document.getElementById("oldPassError");
 const newPassError = document.getElementById("newPassError");
 const confirmPassError = document.getElementById("confirmPassError");
 const passServerMsg = document.getElementById("passServerMsg");
 
-oldPassword.addEventListener("input", () => {
-  passwordSaveBtn.style.display = "flex";
-});
-
-passwordForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
+const savePassword = async () => {
   let isValid = true;
 
   oldPassError.innerText = "";
@@ -208,4 +203,11 @@ passwordForm.addEventListener("submit", async (e) => {
       alert("Somthing went wrong");
     }
   }
+};
+
+passwordForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  await savePassword()
 });
+
+savePassBtn.addEventListener("click", savePassword)

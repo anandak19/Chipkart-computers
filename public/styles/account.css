@@ -105,3 +105,18 @@
   box-shadow: -2px 4px 6px rgba(0, 0, 0, 0.1), 2px 4px 6px rgba(0, 0, 0, 0.1);  padding: 18px;
   border-radius: 12px;
 }
+
+.content-section {
+  border: 1px solid #ccc;
+  padding: 18px;
+  border-radius: 10px;
+}
+
+.account-title {
+  display: flex;
+  justify-content: space-between;
+}
+
+.page-title {
+  font-size: 1.2rem;
+}

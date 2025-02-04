@@ -36,6 +36,13 @@ const validatePhoneNumber = async (phoneNumber) => {
   }
 };
 
+const validateAddressPhoneNumber = (phoneNumber) => {
+  if (!phoneNumber || !phoneNumberRegex.test(phoneNumber)) {
+    return "Please enter a valid phone number";
+  }
+  return null
+}
+
 const validateUpdatedEmail = async (email) => {
   if (!email || !emailRegex.test(email)) {
     return "Please enter a valid email address";
@@ -67,6 +74,36 @@ const validateDob = (dob) => {
 
 }
 
+const validateAddressType = (addressType) => {
+  const validTypes = ["Home", "Work", "Other"];
+  
+  if (!validTypes.includes(addressType)) {
+    return "Please select a valid address type";
+  }
+
+  return null;
+};
+
+const validatePincode = (pincode) => {
+  const pincodeRegex = /^\d{4,10}$/; 
+
+  if (!pincodeRegex.test(pincode)) {
+    return "Please enter a valid pincode (4 to 10 digits).";
+  }
+
+  return null; 
+};
+
+const validateRequiredFields = (fields) => {
+  for(const [key, value] of Object.entries(fields)) {
+    if (!value || value.trim() === "") {
+      return `${key} id required`
+    }
+  }
+  return null
+}
+
+
 module.exports = {
   validateName,
   validateEmail,
@@ -74,4 +111,8 @@ module.exports = {
   validateUpdatedEmail,
   validatePassword,
   validateDob,
+  validateAddressType,
+  validateAddressPhoneNumber,
+  validatePincode,
+  validateRequiredFields,
 };

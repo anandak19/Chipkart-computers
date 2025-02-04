@@ -1,18 +1,4 @@
-.personal-details {
-  /* border: 1px solid; */
-  border: 1px solid #ccc;
-  padding: 18px;
-  border-radius: 10px;
-}
 
-.personal-details-title {
-  display: flex;
-  justify-content: space-between;
-}
-
-.page-title {
-  font-size: 1.2rem;
-}
 
 #editBtn {
   padding: 6px 12px;
@@ -78,17 +64,45 @@ input:read-only {
   outline: none;
 }
 
+/* new save btn  */
+
+#savePassBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  font-size: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+#savePassBtn:hover {
+  background-color: #0056b3;
+}
+
+#savePassBtn:active {
+  transform: scale(0.9);
+}
 
 .submit-btn {
   display: none;
   width: 10%;
   background-color: #007bff;
-  color: white;
+  color: #ffffff;
   border: none;
   border-radius: 5px;
   font-size: 16px;
   padding: 4px 6px;
   cursor: pointer;
+  align-items: center;
+  justify-content: center;
+
   transition: background-color 0.3s ease;
 }
 
@@ -100,8 +114,3 @@ input:read-only {
   background-color: #0056b3;
 }
 
-/* .change-password-form{
-    display: flex;
-    gap: 18px;
-    padding-top: 8px;
-} */

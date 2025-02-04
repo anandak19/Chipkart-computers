@@ -1,7 +1,7 @@
 const express = require('express')
 const userController = require('../controllers/userController')
 const userAccountController = require('../controllers/userAccountController')
-const { isLogin } = require('../middlewares/userAuth')
+const { isLogin, varifyLoginUserSession } = require('../middlewares/userAuth')
 const { validateProduct } = require('../middlewares/productValidation')
 const { validateNewReview } = require('../middlewares/review')
 
@@ -46,7 +46,12 @@ router.get('/account/user',  userAccountController.getUserDetails)
 router.post('/account/user',  userAccountController.postUserDetails)
 router.post('/account/user/password',  userAccountController.postChangePassword)
 
+// user address 
 router.get('/account/address',  userAccountController.getAddresses)
+router.get('/account/address/new',  userAccountController.getAddressForm)
+router.post('/account/address/new', varifyLoginUserSession,  userAccountController.addAddress)
+router.delete('/account/address/:id', varifyLoginUserSession,  userAccountController.deleteAddress)
+
 router.get('/account/orders',  userAccountController.getOrderHistory)
 router.get('/account/wallet',  userAccountController.getWallet)
 router.get('/account/coupons',  userAccountController.getCoupons)

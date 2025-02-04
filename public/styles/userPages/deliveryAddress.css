@@ -1,0 +1,112 @@
+.add-addressBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #007bff;
+  color: white;
+  padding: 4px 15px;
+  border-radius: 8px;
+  font-size: 16px;
+  text-decoration: none;
+  transition: 0.3s ease;
+}
+
+.add-addressBtn i {
+  font-size: 14px;
+}
+
+.add-addressBtn:hover {
+  background-color: #0056b3;
+}
+
+.delivery-address-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 20px 0;
+  max-width: 100%;
+}
+
+.address-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8f9fa;
+  padding: 15px;
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.address-content {
+  flex-grow: 1;
+  padding: 0 15px;
+}
+
+.address-content h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.address-content p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.active-btn,
+.inactive-btn {
+  padding: 4px 0;
+  width: 124px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.active-btn {
+  border: 1px solid #008000;
+  color: #ffffff;
+  background-color: #008000;
+}
+
+
+.inactive-btn {
+  border: 1px solid #8e8e8e;
+  color: #2f2f2f;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.actions a {
+  border: 1px solid #146cda;
+  background-color: #146cda;
+  text-decoration: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.actions a,
+.delete-btn {
+  color: white;
+  border: none;
+  height: 34px;
+  width: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.delete-btn {
+  background: #dc3545;
+}
+
+.delete-btn:hover {
+  background: #c82333;
+}

@@ -1,5 +1,6 @@
 const UserSchema = require("../models/User");
-const bcrypt = require('bcrypt')
+const AddressSchema = require("../models/Address");
+const bcrypt = require("bcrypt");
 const logoutUser = require("../utils/logoutUser");
 const {
   validateDob,
@@ -119,8 +120,8 @@ exports.postUserDetails = async (req, res) => {
 exports.postChangePassword = async (req, res) => {
   try {
     const userId = req.session.user.id;
-    const {oldPassword, newPassword, confirmPassword} = req.body
-    console.log("REq body: ", req.body)
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+    console.log("REq body: ", req.body);
     if (!oldPassword || !newPassword || !confirmPassword) {
       return res.status(400).json({ error: "All fields are required." });
     }
@@ -135,7 +136,7 @@ exports.postChangePassword = async (req, res) => {
       return res.status(400).json({ error: "Old password is incorrect." });
     }
 
-    const errorMessage = validatePassword(newPassword, confirmPassword)
+    const errorMessage = validatePassword(newPassword, confirmPassword);
 
     if (errorMessage) {
       return res.status(400).json({ error: errorMessage });
@@ -156,6 +157,82 @@ exports.postChangePassword = async (req, res) => {
 // DELIVERY ADDRESS
 exports.getAddresses = (req, res) => {
   res.render("user/account/userAddress", { currentPage: "address" });
+};
+
+exports.getAddressForm = (req, res) => {
+  res.render("user/account/newAddress", { currentPage: "address" });
+};
+
+// add new address
+exports.addAddress = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(404).json({ error: "User not found in request." });
+    }
+    const {
+      addressType,
+      fullName,
+      phoneNumber,
+      addressLine,
+      city,
+      state,
+      pincode,
+      country,
+      isDefault,
+    } = req.body;
+
+    if (isDefault) {
+      await AddressSchema.findOneAndUpdate(
+        { userId: req.user._id, isDefault: true },
+        { isDefault: false },
+        { new: true }
+      );
+    }
+
+    const newAddress = new AddressSchema({
+      addressType,
+      fullName,
+      phoneNumber,
+      addressLine,
+      city,
+      state,
+      pincode,
+      country,
+      isDefault,
+      userId: req.user._id,
+    });
+
+    await newAddress.save();
+
+    console.log(newAddress);
+    return res.status(200).json({ message: "Address added successfully" });
+  } catch (error) {
+    console.error("Error adding address:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// delete a address
+exports.deleteAddress = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(404).json({ error: "User not found in request." });
+    }
+
+    const { id } = req.params;
+
+    const result = await AddressSchema.deleteOne({ _id: id, userId: req.user._id });
+
+    if (result.deletedCount === 1) {
+      return res.status(200).json({ message: 'Successfully deleted address.' });
+    }else{
+      return res.status(404).json({ error: "No documents matched the query. Deleted 0 documents.." });
+    }
+
+  } catch (error) {
+    console.error("Error deleting address:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 };
 
 // ORDER HISTORY

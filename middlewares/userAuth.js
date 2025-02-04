@@ -86,8 +86,6 @@ const getUser = async (req, res, next) => {
   }
 };
 
-
-
 const isLogout = (req, res, next) => {
   if (req.session.userEmail || req.isAuthenticated()) {
     console.log("User already has an active session. Redirecting to home page.");
@@ -98,4 +96,26 @@ const isLogout = (req, res, next) => {
   }
 };
 
-module.exports = {isVerified, isLogin, isLogout, getUser};
+const varifyLoginUserSession = async (req, res, next) => {
+  try {
+    const loggedInUser = req.session.user
+    if (!loggedInUser) {
+      res.status(400).json({error: "Session expired"})
+    }
+    const user = await User.findById(loggedInUser.id)
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    req.user = user;
+
+    return next()
+    
+  } catch (error) {
+    console.error("Error verifying login user:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+module.exports = {isVerified, isLogin, isLogout, getUser, varifyLoginUserSession};
