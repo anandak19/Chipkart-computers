@@ -1,6 +1,7 @@
 const express = require('express')
 const userController = require('../controllers/userController')
 const userAccountController = require('../controllers/userAccountController')
+const userOrderController = require('../controllers/userOrderController')
 const { isLogin, varifyLoginUserSession } = require('../middlewares/userAuth')
 const { validateProduct } = require('../middlewares/productValidation')
 const { validateNewReview } = require('../middlewares/review')
@@ -43,23 +44,32 @@ router.get('/products/:id/related', validateProduct, userController.getRelatedPr
 // isLogin middleware will come here 
 // personal details 
 router.get('/account', isLogin,  userAccountController.getAccount)
-router.get('/account/user',  userAccountController.getUserDetails)
-router.post('/account/user',  userAccountController.postUserDetails)
-router.post('/account/user/password',  userAccountController.postChangePassword)
+router.get('/account/user', userAccountController.getUserDetails)
+router.post('/account/user', userAccountController.postUserDetails)
+router.post('/account/user/password', userAccountController.postChangePassword)
 
 // user address 
-router.get('/account/address',  userAccountController.getAddresses)
-router.get('/account/address/all', varifyLoginUserSession,   userAccountController.getUsersAllAddress)
-router.get('/account/address/new',  userAccountController.getAddressForm)
+router.get('/account/address', userAccountController.getAddresses)
+router.get('/account/address/all', varifyLoginUserSession, userAccountController.getUsersAllAddress)
+router.get('/account/address/new', userAccountController.getAddressForm)
 router.post('/account/address/new', varifyLoginUserSession, validateAddressFields, userAccountController.addAddress)
-router.delete('/account/address/:id', varifyLoginUserSession,  userAccountController.deleteAddress)
+router.delete('/account/address/:id', varifyLoginUserSession, userAccountController.deleteAddress)
 // get the edit page 
 router.get('/account/address/:id', varifyLoginUserSession)
-router.patch('/account/address/:id', varifyLoginUserSession, validateAddressFields,  userAccountController.saveEditedAddress)
-router.patch('/account/address/toogle/:id', varifyLoginUserSession,  userAccountController.toggleAddress)
+// clint side is not added 
+router.patch('/account/address/:id', varifyLoginUserSession, validateAddressFields, userAccountController.saveEditedAddress) // clint side is not completed
+router.patch('/account/address/toogle/:id', varifyLoginUserSession, userAccountController.toggleAddress)
 
-router.get('/account/orders',  userAccountController.getOrderHistory)
-router.get('/account/wallet',  userAccountController.getWallet)
-router.get('/account/coupons',  userAccountController.getCoupons)
+router.get('/account/orders', userAccountController.getOrderHistory)
+router.get('/account/wallet', userAccountController.getWallet)
+router.get('/account/coupons', userAccountController.getCoupons)
+
+// ORDER BASED ROUTES 
+router.get('/cart', userOrderController.getCartPage)
+router.get('/cart/all', userOrderController.getCartItems)
+// send products id in the body 
+router.post('/cart/add', varifyLoginUserSession, userOrderController.addItemToCart)
+router.patch('/cart/increase', varifyLoginUserSession, userOrderController.increaseCartItemQuantity)
+router.patch('/cart/decrease', varifyLoginUserSession, userOrderController.addItemToCart)
 
 module.exports = router

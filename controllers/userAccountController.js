@@ -336,10 +336,6 @@ exports.toggleAddress = async (req, res) => {
   }
 };
 
-
-
-
-
 // get all address of user 
 exports.getUsersAllAddress = async (req, res) => {
   try {

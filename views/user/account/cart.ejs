@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Cart</title>
+    <%- include("../../partials/head") %>
+    <link rel="stylesheet" href="/styles/userPages/cart.css">
+  </head>
+  <body>
+    <%- include("../../partials/userHeader") %>
+
+    <div class="page-wrapper">
+        <div class="content-wrapper">
+            <div class="container-fluid cart-page-container">
+                <h3 class="cart-title">user cart</h3>
+                <div class="main-content-container d-flex gap-4">
+                    <div class="cart-container flex-grow-1 overflow-auto content-area">
+                        <div class="cartItem-card d-flex align-items-center p-4">
+                            <div class="product-data d-flex align-items-center gap-4">
+                                <!-- Product Image -->
+                                <div class="cartItem-image">
+                                  <img src="/images/sample-product.jpg" alt="Product Image">
+                                </div>
+                                <!-- Product Details -->
+                                <div class="cartItem-details flex-grow-1">
+                                  <h5 class="cartItem-name">Product Name</h5>
+                                  <p class="cartItem-price">$25.00</p>
+                                </div>
+                            </div>
+                          
+                          
+                            <!-- Quantity Control -->
+                            <div class="cartItem-quantity">
+                              <button class="qty-btn">-</button>
+                              <span class="qty-value">1</span>
+                              <button class="qty-btn">+</button>
+                            </div>
+                          
+                            <!-- Total Price -->
+                            <div class="cartItem-total">
+                              <p>$25.00</p>
+                            </div>
+                          
+                            <!-- Delete Button -->
+                            <button class="cartItem-delete">
+                              <i class="fa-solid fa-trash"></i>
+                            </button>
+                          </div>
+                          
+                    </div>
+                    <div class="cart-total-container fixed-side">
+                        <h4>Cart Total</h4>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <%- include("../../partials/userFooter") %>
+  </body>
+</html>
