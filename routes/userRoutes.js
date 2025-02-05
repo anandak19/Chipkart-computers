@@ -70,6 +70,7 @@ router.get('/cart/all', userOrderController.getCartItems)
 // send products id in the body 
 router.post('/cart/add', varifyLoginUserSession, userOrderController.addItemToCart)
 router.patch('/cart/increase', varifyLoginUserSession, userOrderController.increaseCartItemQuantity)
-router.patch('/cart/decrease', varifyLoginUserSession, userOrderController.addItemToCart)
+router.patch('/cart/decrease', varifyLoginUserSession, userOrderController.decreaseCartItemQuantity)
+router.delete('/cart/remove', varifyLoginUserSession, userOrderController.deleteCartItem)
 
 module.exports = router

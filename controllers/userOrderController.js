@@ -3,7 +3,7 @@ const CartSchema = require("../models/Cart");
 const UserSchema = require("../models/User");
 const mongoose = require("mongoose");
 require("dotenv").config();
-const { decreaseProductQuantity } = require("../utils/productQtyManagement");
+const { decreaseProductQuantity, increaseProductQuantity } = require("../utils/productQtyManagement");
 
 const maxQty = Number(process.env.MAX_QTY);
 
@@ -173,6 +173,146 @@ exports.increaseCartItemQuantity = async (req, res) => {
     session.endSession();
   }
 };
+
+// to decrease the cart item quantity 
+exports.decreaseCartItemQuantity = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // repeater code --
+    if (!req.user) {
+      await session.abortTransaction();
+      return res.status(404).json({ error: "User not found in request." });
+    }
+
+    const { productId } = req.body;
+    const userId = req.user._id;
+
+    if (!productId) {
+      await session.abortTransaction();
+      return res.status(404).json({ error: "Product not found in request." });
+    }
+
+    // reperter code end
+    // find the cart of user
+    let cart = await CartSchema.findOne({ userId }).session(session);
+
+    if (!cart) {
+      await session.abortTransaction();
+      return res.status(404).json({ error: "User have no cart." });
+    }
+
+    // find the requested product from cart
+    const productIndex = cart.products.findIndex((p) =>
+      p.productId.equals(productId)
+    );
+
+    if (productIndex === -1) {
+      await session.abortTransaction();
+      return res
+        .status(404)
+        .json({
+          error:
+            "Product not founded in users cart! Add the product to cart first",
+        });
+    }
+
+    // check if the current quantity is greater than limit
+    if (cart.products[productIndex].quantity === 1) {
+      await session.abortTransaction();
+      return res
+        .status(404)
+        .json({ error: "Minimum 1 one quantity is needed. Try deleting the item to remove from cart" });
+    }
+
+    // decrement product quantity from db
+    const updatedProduct = await increaseProductQuantity(productId, session);
+    if (!updatedProduct) {
+      await session.abortTransaction();
+      return res
+        .status(400)
+        .json({ error: "Product not available or out of stock." });
+    }
+
+    cart.products[productIndex].quantity--
+
+    await cart.save({ session });
+
+    await session.commitTransaction();
+
+    return res.status(200).json({ message: "Product decremented" });
+  } catch (error) {
+    await session.abortTransaction();
+    console.log(error);
+    return res.status(500).json({ error: "Internal server error" });
+  } finally {
+    session.endSession();
+  }
+}
+
+// to remove a item from cart 
+exports.deleteCartItem = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // repeater code --
+    if (!req.user) {
+      await session.abortTransaction();
+      return res.status(404).json({ error: "User not found in request." });
+    }
+
+    const { productId } = req.body;
+    const userId = req.user._id;
+
+    if (!productId) {
+      await session.abortTransaction();
+      return res.status(404).json({ error: "Product not found in request." });
+    }
+
+    // reperter code end
+    // find the cart of user
+    let cart = await CartSchema.findOne({ userId }).session(session);
+
+    if (!cart) {
+      await session.abortTransaction();
+      return res.status(404).json({ error: "User have no cart." });
+    }
+
+    // find the requested product from cart
+    const productIndex = cart.products.findIndex((p) =>
+      p.productId.equals(productId)
+    );
+
+    if (productIndex !== -1) {
+      cart.products.splice(productIndex, 1);
+    }
+
+    // decrement product quantity from db
+    const updatedProduct = await increaseProductQuantity(productId, session);
+    if (!updatedProduct) {
+      await session.abortTransaction();
+      return res
+        .status(400)
+        .json({ error: "Product not available or out of stock." });
+    }
+
+
+
+    await cart.save({ session });
+
+    await session.commitTransaction();
+
+    return res.status(200).json({ message: "Product removed from cart" });
+  } catch (error) {
+    await session.abortTransaction();
+    console.log(error);
+    return res.status(500).json({ error: "Internal server error" });
+  } finally {
+    session.endSession();
+  }
+}
 
 /*
 --controllers
