@@ -85,7 +85,7 @@
             
             <div class="buttons">
               <% if (product.quantity > 0) { %>
-                <button class="add-to-cart">Add to Cart</button>
+                <button class="add-to-cart" onClick="addToCart('<%= product._id %>')">Add to Cart</button>
                 <button class="buy-now">Buy Now</button>
               <% } else { %>
                 <button class="bg-dark" style="cursor: not-allowed;" disabled>Out of Stock</button>
@@ -156,5 +156,6 @@
       window.productId = "<%- product._id.toString() %>";
     </script>
     <script src="/javascripts/apiCalls/productDetailPage.js"></script>
+    <script src="/javascripts/apiCalls/common.js"></script>
   </body>
 </html>

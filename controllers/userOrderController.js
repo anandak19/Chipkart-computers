@@ -3,7 +3,11 @@ const CartSchema = require("../models/Cart");
 const UserSchema = require("../models/User");
 const mongoose = require("mongoose");
 require("dotenv").config();
-const { decreaseProductQuantity, increaseProductQuantity } = require("../utils/productQtyManagement");
+const {
+  decreaseProductQuantity,
+  increaseProductQuantity,
+} = require("../utils/productQtyManagement");
+const { getUserCartItems } = require("../utils/cartManagement");
 
 const maxQty = Number(process.env.MAX_QTY);
 
@@ -11,7 +15,80 @@ exports.getCartPage = (req, res) => {
   res.render("user/account/cart");
 };
 
-exports.getCartItems = (req, res) => {};
+exports.getCartItems = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(404).json({ error: "User not found in request." });
+    }
+    const userId = req.user._id;
+    const { p } = req.query;
+    const page = Number(p) || 0;
+    const limit = 5;
+    const skip = page * limit;
+
+    console.log(userId);
+
+    /*
+    match the cart from db with userId
+    unwind the product array 
+    join with the product collection
+    */
+
+    const pipeline = [
+      {
+        $match: { userId: userId },
+      },
+      {
+        $unwind: "$products",
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "products.productId",
+          foreignField: "_id",
+          as: "productDetails",
+        },
+      },
+      {
+        $unwind: "$productDetails",
+      },
+      {
+        $project: {
+          _id: 1,
+          userId: 1,
+          "products.productId": 1,
+          "products.quantity": 1,
+          "products.name": "$productDetails.productName",
+          "products.price": "$productDetails.finalPrice",
+          "products.image": "$productDetails.images",
+          "products.subTotalPrice": {
+            $multiply: ["$productDetails.finalPrice", "$products.quantity"],
+          },
+        },
+      },
+      {
+        $facet: {
+          productCount: [{ $count: "total" }],
+          paginatedResult: [{ $skip: skip }, { $limit: limit }],
+        },
+      },
+    ];
+
+
+    const cart = await CartSchema.aggregate(pipeline);
+
+    const productCount = cart[0].productCount[0];
+    const products = cart[0]?.paginatedResult || [];
+
+    const total = productCount ? productCount.total : 0;
+    const hasMore = skip + products.length < total;
+
+    res.status(200).json({ products, total, hasMore });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 
 // to add an an item to cart, product quantity will decrese in products too
 exports.addItemToCart = async (req, res) => {
@@ -133,20 +210,18 @@ exports.increaseCartItemQuantity = async (req, res) => {
 
     if (productIndex === -1) {
       await session.abortTransaction();
-      return res
-        .status(404)
-        .json({
-          error:
-            "Product not founded in users cart! Add the product to cart first",
-        });
+      return res.status(404).json({
+        error:
+          "Product not founded in users cart! Add the product to cart first",
+      });
     }
 
     // check if the current quantity is greater than limit
     if (cart.products[productIndex].quantity >= maxQty) {
       await session.abortTransaction();
       return res
-        .status(404)
-        .json({ error: "User can add only upto 10 quantity of item" });
+        .status(400)
+        .json({ error: `User can add only upto ${maxQty} quantity of item` });
     }
 
     // decrement product quantity from db
@@ -174,7 +249,7 @@ exports.increaseCartItemQuantity = async (req, res) => {
   }
 };
 
-// to decrease the cart item quantity 
+// to decrease the cart item quantity
 exports.decreaseCartItemQuantity = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -210,20 +285,19 @@ exports.decreaseCartItemQuantity = async (req, res) => {
 
     if (productIndex === -1) {
       await session.abortTransaction();
-      return res
-        .status(404)
-        .json({
-          error:
-            "Product not founded in users cart! Add the product to cart first",
-        });
+      return res.status(404).json({
+        error:
+          "Product not founded in users cart! Add the product to cart first",
+      });
     }
 
     // check if the current quantity is greater than limit
     if (cart.products[productIndex].quantity === 1) {
       await session.abortTransaction();
-      return res
-        .status(404)
-        .json({ error: "Minimum 1 one quantity is needed. Try deleting the item to remove from cart" });
+      return res.status(404).json({
+        error:
+          "Minimum 1 one quantity is needed. Try deleting the item to remove from cart",
+      });
     }
 
     // decrement product quantity from db
@@ -235,7 +309,7 @@ exports.decreaseCartItemQuantity = async (req, res) => {
         .json({ error: "Product not available or out of stock." });
     }
 
-    cart.products[productIndex].quantity--
+    cart.products[productIndex].quantity--;
 
     await cart.save({ session });
 
@@ -249,9 +323,9 @@ exports.decreaseCartItemQuantity = async (req, res) => {
   } finally {
     session.endSession();
   }
-}
+};
 
-// to remove a item from cart 
+// to remove a item from cart
 exports.deleteCartItem = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -298,8 +372,6 @@ exports.deleteCartItem = async (req, res) => {
         .json({ error: "Product not available or out of stock." });
     }
 
-
-
     await cart.save({ session });
 
     await session.commitTransaction();
@@ -312,7 +384,37 @@ exports.deleteCartItem = async (req, res) => {
   } finally {
     session.endSession();
   }
-}
+};
+
+// get the cart total prices
+exports.getCartTotal = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(404).json({ error: "User not found in request." });
+    }
+
+    const userId = req.user._id;
+
+    const cart = await getUserCartItems(userId);
+
+    const cartSubTotal = cart.reduce((total, item) => {
+      return total + (item.products.subTotalPrice || 0);
+    }, 0);
+
+    let shippingFee = 0;
+    let cartTotal = 0;
+
+    if (cartSubTotal > 0) {
+      shippingFee = cartSubTotal < 5000 ? 100 : 0;
+      cartTotal = cartSubTotal + shippingFee;
+    }
+
+    res.status(200).json({ cartSubTotal, shippingFee, cartTotal });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Internal server error." });
+  }
+};
 
 /*
 --controllers

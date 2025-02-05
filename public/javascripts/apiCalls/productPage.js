@@ -62,7 +62,7 @@ const showProducts = (products, total, hasMore) => {
             ${
               product.quantity === 0
               ? `<button class="out-of-stock" disabled>Out of Stock</button>`
-              : `<button class="add-cart">Add Cart</button>`
+              : `<button class="add-cart" onClick="addToCart('${product._id}')">Add Cart</button>`
             }
               <span class="wishlist-icon" data-wishlisted="false">
                 <i class="fa-regular fa-heart"></i>

@@ -66,7 +66,8 @@ router.get('/account/coupons', userAccountController.getCoupons)
 
 // ORDER BASED ROUTES 
 router.get('/cart', userOrderController.getCartPage)
-router.get('/cart/all', userOrderController.getCartItems)
+router.get('/cart/all', varifyLoginUserSession, userOrderController.getCartItems)
+router.get('/cart/total', varifyLoginUserSession, userOrderController.getCartTotal)
 // send products id in the body 
 router.post('/cart/add', varifyLoginUserSession, userOrderController.addItemToCart)
 router.patch('/cart/increase', varifyLoginUserSession, userOrderController.increaseCartItemQuantity)
