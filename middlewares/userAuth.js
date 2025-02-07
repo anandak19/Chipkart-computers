@@ -55,6 +55,7 @@ const isLogin = async (req, res, next) => {
     }
 
     console.log("isLogin middleware: User is logged in and exists in the database.");
+    req.userId = userId
     return next();
   } catch (error) {
     console.error("isLogin middleware: Error occurred:", error.message);

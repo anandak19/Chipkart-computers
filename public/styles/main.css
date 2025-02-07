@@ -15,3 +15,11 @@ body {
 p{
   margin-bottom: 0;
 }
+
+.toast {
+  opacity: 1 !important; 
+}
+
+.toast-top-center{
+  margin-top: 20px;
+}

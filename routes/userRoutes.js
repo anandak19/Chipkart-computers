@@ -74,4 +74,13 @@ router.patch('/cart/increase', varifyLoginUserSession, userOrderController.incre
 router.patch('/cart/decrease', varifyLoginUserSession, userOrderController.decreaseCartItemQuantity)
 router.delete('/cart/remove', varifyLoginUserSession, userOrderController.deleteCartItem)
 
+router.get('/checkout',isLogin,  userOrderController.getCheckoutPage)
+// api calls 
+router.post('/checkout/address', userOrderController.chooseDeliveryAddress)
+router.post('/checkout/confirm', varifyLoginUserSession, userOrderController.placeOrder)
+
+
+
+
+
 module.exports = router

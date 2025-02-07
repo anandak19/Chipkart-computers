@@ -35,4 +35,22 @@ const getUserCartItems = async(userId) => {
     ])
 }
 
-module.exports = {getUserCartItems}
+const getCartTotal = async(userId) => {
+  const cart = await getUserCartItems(userId)
+
+  const cartSubTotal = cart.reduce((total, item) => {
+    return total + (item.products.subTotalPrice || 0);
+  }, 0);
+
+  let shippingFee = 0;
+  let cartTotal = 0;
+
+  if (cartSubTotal > 0) {
+    shippingFee = cartSubTotal < 5000 ? 100 : 0;
+    cartTotal = cartSubTotal + shippingFee;
+  }
+
+  return cartTotal
+}
+
+module.exports = {getUserCartItems, getCartTotal}

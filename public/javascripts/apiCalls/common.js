@@ -1,3 +1,11 @@
+toastr.options = {
+    positionClass: "toast-top-center",
+    timeOut: 3000,
+    showMethod: "slideDown",
+    hideMethod: "fadeOut"
+};
+
+
 async function addToCart(id) {
     try {
         const response = await fetch('/cart/add', {
@@ -5,12 +13,12 @@ async function addToCart(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({productId: id})
         })
-
+ 
         const data = await response.json()
         if (response.ok) {
-            alert(data.message)
+            toastr.success(data.message);
         }else{
-            alert(data.error)
+            toastr.info(data.error);
         }
         
     } catch (error) {

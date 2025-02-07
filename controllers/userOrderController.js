@@ -1,13 +1,15 @@
 const ProductSchema = require("../models/Product");
 const CartSchema = require("../models/Cart");
 const UserSchema = require("../models/User");
+const AddressShema = require("../models/Address");
+const OrderSchema = require("../models/Order");
 const mongoose = require("mongoose");
 require("dotenv").config();
 const {
   decreaseProductQuantity,
   increaseProductQuantity,
 } = require("../utils/productQtyManagement");
-const { getUserCartItems } = require("../utils/cartManagement");
+const { getUserCartItems, getCartTotal } = require("../utils/cartManagement");
 
 const maxQty = Number(process.env.MAX_QTY);
 
@@ -73,7 +75,6 @@ exports.getCartItems = async (req, res) => {
         },
       },
     ];
-
 
     const cart = await CartSchema.aggregate(pipeline);
 
@@ -416,9 +417,122 @@ exports.getCartTotal = async (req, res) => {
   }
 };
 
+// CHECK OUT PAGE
+exports.getCheckoutPage = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.redirect("/login");  
+    }
+
+    const userId = req.user._id; 
+    const cart = await CartSchema.findOne({ userId });
+
+    if (!cart || cart.products.length === 0) {
+      return res.redirect("/cart");  
+    }
+
+    res.render("user/account/checkout");
+  } catch (error) {
+    console.error("Error fetching cart:", error);
+    res.status(500).send("Internal Server Error");
+  }
+};
+
+// save changed delivery address to session
+exports.chooseDeliveryAddress = async (req, res) => {
+  try {
+    console.log(req.body);
+    const { addressId } = req.body;
+
+    if (!addressId) {
+      return res.status(400).json({ error: "Choose an address" });
+    }
+
+    const address = await AddressShema.findById(addressId);
+
+    if (!address) {
+      return res.status(404).json({ error: "Address not found" });
+    }
+
+    req.session.deliveryAddress = addressId;
+    res.status(200).json({ message: "Address ID added to session" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
+/*
+request body: paymentMethod: "COD" / "Online"
+session needed- login
+optional session needed - choose address
+*/
+
+// to place an order without coupon 
+exports.placeOrder = async (req, res) => {
+  try {
+    // change this code later to applay coupon
+
+    if (!req.user) {
+      return res.status(404).json({ error: "User not found in request." });
+    }
+
+    const userId = req.user._id;
+    const { paymentMethod } = req.body
+
+    if (!paymentMethod) {
+      return res.status(404).json({ error: "Please choose a payment method." });
+    }
+
+    const cart = await CartSchema.findOne({userId})
+
+    // cart total or total amont payable by user with out coupon discount 
+    const cartTotal = await getCartTotal(userId);
+    // store the items into a variable 
+    const orderItems = cart.products.map(item => ({
+      productId: item.productId,
+      quantity: item.quantity
+    }));
+
+    let addressId = req.session.deliveryAddress;
+
+    if (!req.session.deliveryAddress) {
+      const address = await AddressShema.findOne({ userId: userId, isDefault: true }, '_id');
+      addressId = address ? address._id : null;
+    } else {
+      const address = await AddressShema.findOne({ _id: deliveryAddress }, '_id');
+      addressId = address ? address._id : null;
+    }
+    
+    if (!addressId) {
+      return res.status(400).json({ error: "No delivery address found" });
+    }
+
+
+    const newOrder = new OrderSchema({
+      userId,
+      addressId,
+      totalAmount: cartTotal,
+      totalPayable: cartTotal,
+      paymentMethod: paymentMethod,
+      items: orderItems
+    })
+
+    await newOrder.save()
+    await CartSchema.deleteOne({userId})
+
+    console.log(newOrder);
+
+    res.status(200).json({ message: "Order Placed Successfully" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Internal server error." });
+  }
+};
+
 /*
 --controllers
-
 to add a product to cart
 to get the cart page
 to increese the quantity of a product in cart

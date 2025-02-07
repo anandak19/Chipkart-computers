@@ -36,7 +36,12 @@ router.post('/categories/new', adminController.postCategoryForm)
 // render the offer page 
 router.get('/offers', isAdminLogin, adminController.getOfferModule)
 // render the order page to the admin
-router.get('/orders', isAdminLogin, adminController.getOrderManagement)
+router.get('/orders', adminController.getOrderManagement)
+router.get('/orders/all', adminController.getAllOrders)
+// router.get('/orders/all/:orderId', adminController.renderOrderDetailsPage)
+router.get('/orders/all/:orderId', adminController.renderOrderDetailsPage)
+router.post('/orders/update-status', adminController.updateOrderStatus)
+
 // render the sales report page 
 router.get('/reports', isAdminLogin, adminController.getSalesReport)
 // render the coupen management page 

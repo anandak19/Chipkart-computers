@@ -411,4 +411,10 @@ body {
 }
 
 
-/* paginations  */
+.toast {
+  opacity: 1 !important; 
+}
+
+.toast-top-center{
+  margin-top: 20px;
+}

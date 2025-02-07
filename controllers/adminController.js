@@ -1,6 +1,8 @@
 const UserSchema = require("../models/User");
 const CategoriesSchema = require("../models/Category");
 const ProductSchema = require("../models/Product");
+const OrderSchema = require("../models/Order");
+const AddressSchema = require("../models/Address");
 
 exports.getDashboard = (req, res) => {
   res.render("admin/dashbord", { title: "Admin Dashboard" });
@@ -589,7 +591,7 @@ exports.postUpdateCategoryForm = async (req, res) => {
     }
 
     const existingCategory = await CategoriesSchema.findOne({
-      categoryName: { $regex: new RegExp("^"+categoryName+"$", "i")},
+      categoryName: { $regex: new RegExp("^" + categoryName + "$", "i") },
       _id: { $ne: id },
     });
 
@@ -624,9 +626,138 @@ exports.getOfferModule = (req, res) => {
   res.render("admin/offerModule", { title: "Offer Module" });
 };
 
+// -------------ORDER MANAGMENT START
 exports.getOrderManagement = (req, res) => {
   res.render("admin/orderManagement", { title: "Order Management" });
 };
+
+exports.getAllOrders = async (req, res) => {
+  try {
+    const { search } = req.query;
+    const page = parseInt(req.query.page) || 0;
+    const limit = 5; //make this to 5 later
+    const skip = page * limit;
+    const pipeline = [];
+     
+  
+      if (search) {
+        const query = search.trim();
+        pipeline.push({
+          $match: {
+            orderId: { $regex: query, $options: "i" }
+          }
+        });
+      }
+  
+      pipeline.push({
+        $facet: {
+          ordersCount: [{ $count: "total" }],
+          paginatedResult: [{ $skip: skip }, { $limit: limit }],
+        },
+      });
+  
+      const result = await OrderSchema.aggregate(pipeline);
+  
+      const totalorders = result[0]?.ordersCount[0]?.total || 0;
+      console.log(result[0]);
+      const orders = result[0]?.paginatedResult;
+      const hasMore = skip + orders.length < totalorders;
+  
+      res.status(200).json({
+        totalorders,
+        orders,
+        hasMore,
+      });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    const {  orderId, status } = req.body
+    const validStatuses = ["Ordered", "Shipped", "Delivered"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: "Invalid order status" });
+    }
+
+    const order = await OrderSchema.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    order.orderStatus = status;
+    await order.save(); 
+
+    res.status(200).json({ success: true, message: "Order status updated successfully" });
+
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+}
+
+
+exports.renderOrderDetailsPage = async (req, res) => {
+  try {
+    const {orderId} = req.params 
+
+    if (!orderId) {
+      res.redirect('/orders/all')
+    }
+
+    const orderDetails = await OrderSchema.findById(orderId)
+    if (!orderDetails) {
+      res.redirect('/orders/all')
+    }
+
+    req.session.orderId = orderDetails._id
+
+    res.render("admin/orderDetails", { title: "Order Details", orderDetails });
+
+  } catch (error) {
+    console.log(error)
+    res.redirect('/orders/all')
+  }
+}
+
+// get user detail with id 
+exports.getUserDataAndDeliveryInfo = async (req, res) => {
+  try {
+    const orderId = req.session.orderId
+    if (!orderId) {
+      res.status(400).json({error: 'Session expired'})
+    }
+    const order = await OrderSchema.findById(orderId)
+    if (!order) {
+      res.status(404).json({error: 'Order not found'})
+    }
+
+    const user = await UserSchema.findOne({userId: order.userId})
+    if (!user) {
+      res.status(404).json({error: 'User not found'})
+    }
+
+    const address = await AddressSchema.findById(order.addressId)
+    if (!address) {
+      res.status(404).json({error: 'Address not found'})
+    }
+
+    res.status(200).json({user, address})
+    
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({error: 'Internal server error'})
+  }
+}
+
+
+
+// get order items 
+
+// -------------ORDER MANAGMENT END
+
 
 exports.getSalesReport = (req, res) => {
   res.render("admin/salesReport", { title: "Sales Report" });

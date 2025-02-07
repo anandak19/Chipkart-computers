@@ -1,8 +1,7 @@
-const cartSubtotal = document.getElementById('cartSubtotal')
-const shippingCost = document.getElementById('shippingCost')
-const cartTotal = document.getElementById('cartTotal')
-const proceedBtn = document.getElementById('proceedBtn')
-
+const cartSubtotal = document.getElementById("cartSubtotal");
+const shippingCost = document.getElementById("shippingCost");
+const cartTotal = document.getElementById("cartTotal");
+const proceedBtn = document.getElementById("proceedBtn");
 
 let page = 0;
 
@@ -13,7 +12,7 @@ function formatPrice(price) {
 const showCartItems = (cartItems) => {
   const cartContainer = document.getElementById("cartContainer");
   cartContainer.innerHTML = "";
-  console.log(cartItems.length)
+  console.log(cartItems.length);
 
   if (cartItems.length !== 0) {
     cartItems.forEach((item) => {
@@ -84,96 +83,99 @@ const getUserCart = async () => {
 };
 
 const showCartTotal = (data) => {
-    cartSubtotal.innerText = formatPrice(data.cartSubTotal) || 0
-    shippingCost.innerText = formatPrice(data.shippingFee)  || 0
-    cartTotal.innerText = formatPrice(data.cartTotal) || 0
-}
+  cartSubtotal.innerText = formatPrice(data.cartSubTotal) || 0;
+  shippingCost.innerText = formatPrice(data.shippingFee) || 0;
+  cartTotal.innerText = formatPrice(data.cartTotal) || 0;
+};
 
 const getCartTotal = async () => {
-    try {
-        const response = await fetch('cart/total')
-        const data = await response.json()
-        if (response.ok) {
-            showCartTotal(data)
-        }else{
-            console.error(data.error);
-            alert("Somthing went wrong")
-        }
-    } catch (error) {
-        console.error(error);
-        alert("Internal server error")
-    }
-}
-
-
-
-async function decreaseQuantity(id) {
-  console.log("decrement: ",id);
   try {
-    const response = await fetch('/cart/decrease', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: id })
-    })
-
-    const data = await response.json()
+    const response = await fetch("cart/total");
+    const data = await response.json();
     if (response.ok) {
-        getUserCart()
-        getCartTotal()
-    }else{
-        alert(data.error || "Somthing went wrong")
+      showCartTotal(data);
+    } else {
+      console.error(data.error);
+      toastr.warning(data.error, "Warning");
     }
   } catch (error) {
     console.error(error);
-    alert("Internal server error")
+    alert("Internal server error");
+  }
+};
+
+async function decreaseQuantity(id) {
+  console.log("decrement: ", id);
+  try {
+    const response = await fetch("/cart/decrease", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId: id }),
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      getUserCart();
+      getCartTotal();
+    } else {
+      toastr.warning(data.error, "Warning");
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Internal server error");
   }
 }
 
 async function increaseQuantity(id) {
-    console.log("increment: ",id);
-    try {
-        const response = await fetch('/cart/increase', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ productId: id })
-        })
-    
-        const data = await response.json()
-        if (response.ok) {
-            getUserCart()
-            getCartTotal()
-        }else{
-            alert(data.error || "Somthing went wrong")
-        }
-      } catch (error) {
-        console.error(error);
-        alert("Internal server error")
-      }
+  console.log("increment: ", id);
+  try {
+    const response = await fetch("/cart/increase", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId: id }),
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      getUserCart();
+      getCartTotal();
+    } else {
+      toastr.info(data.error);
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Internal server error");
+  }
 }
 
 async function removeItem(id) {
-    console.log("remove: ",id);
-    try {
-        const response = await fetch('/cart/remove', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ productId: id })
-        })
-    
-        const data = await response.json()
-        if (response.ok) {
-            getUserCart()
-            getCartTotal()
-        }else{
-            alert(data.error || "Somthing went wrong")
-        }
-      } catch (error) {
-        console.error(error);
-        alert("Internal server error")
-      }
+  console.log("remove: ", id);
+  try {
+    const response = await fetch("/cart/remove", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId: id }),
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      getUserCart();
+      getCartTotal();
+    } else {
+      toastr.warning(data.error, "Warning");
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Internal server error");
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   getUserCart();
-  getCartTotal()
+  getCartTotal();
 });
+
+
+proceedBtn.addEventListener('click', () => {
+  window.location.replace('/checkout')
+})
