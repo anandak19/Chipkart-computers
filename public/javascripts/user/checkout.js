@@ -2,7 +2,9 @@ const addressContainer = document.getElementById("addressContainer");
 const backBtn = document.getElementById("backBtn");
 const payableAmount = document.getElementById("payableAmount");
 
-backBtn.addEventListener("click", () => window.history.back());
+backBtn.addEventListener("click", () => {
+  window.location.href = "/cart";
+});
 
 // show address method
 const renderAddressses = (addressArray) => {
@@ -110,9 +112,7 @@ async function checkedAddres(addressId) {
     });
     const data = await response.json();
     if (!response.ok) {
-      alert(data.error);
-    } else {
-      alert("operation success");
+      toastr.error(data.error);
     }
   } catch (error) {
     console.error(error);
@@ -121,10 +121,6 @@ async function checkedAddres(addressId) {
 }
 
 
-/*
-get the payment method form radio btns 
-
-*/
 // method to place the order 
 const placeOrderBtn = document.getElementById('placeOrderBtn')
 placeOrderBtn.addEventListener('click', async() => {

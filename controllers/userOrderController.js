@@ -501,7 +501,7 @@ exports.placeOrder = async (req, res) => {
       const address = await AddressShema.findOne({ userId: userId, isDefault: true }, '_id');
       addressId = address ? address._id : null;
     } else {
-      const address = await AddressShema.findOne({ _id: deliveryAddress }, '_id');
+      const address = await AddressShema.findOne({ _id: addressId }, '_id');
       addressId = address ? address._id : null;
     }
     

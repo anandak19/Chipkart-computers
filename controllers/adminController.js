@@ -3,6 +3,7 @@ const CategoriesSchema = require("../models/Category");
 const ProductSchema = require("../models/Product");
 const OrderSchema = require("../models/Order");
 const AddressSchema = require("../models/Address");
+const { getOrderItemsDetails } = require("../utils/orderManagement");
 
 exports.getDashboard = (req, res) => {
   res.render("admin/dashbord", { title: "Admin Dashboard" });
@@ -727,21 +728,22 @@ exports.getUserDataAndDeliveryInfo = async (req, res) => {
   try {
     const orderId = req.session.orderId
     if (!orderId) {
-      res.status(400).json({error: 'Session expired'})
+      return res.status(400).json({error: 'Session expired'})
     }
     const order = await OrderSchema.findById(orderId)
     if (!order) {
-      res.status(404).json({error: 'Order not found'})
+      return res.status(404).json({error: 'Order not found'})
     }
+    console.log(order.userId)
 
-    const user = await UserSchema.findOne({userId: order.userId})
+    const user = await UserSchema.findById(order.userId)
     if (!user) {
-      res.status(404).json({error: 'User not found'})
+      return res.status(404).json({error: 'User not found'})
     }
 
     const address = await AddressSchema.findById(order.addressId)
     if (!address) {
-      res.status(404).json({error: 'Address not found'})
+      return res.status(404).json({error: 'Address not found'})
     }
 
     res.status(200).json({user, address})
@@ -752,6 +754,26 @@ exports.getUserDataAndDeliveryInfo = async (req, res) => {
   }
 }
 
+exports.getOrderItems = async (req, res) => {
+  try {
+    const orderId = req.session.orderId
+    if (!orderId) {
+      return res.status(400).json({error: 'Session expired'})
+    }
+    const orderDetails = await getOrderItemsDetails(orderId)
+
+    console.log("The result")
+    if (!orderDetails) {
+      return res.status(404).json({error: 'Order not found or faild to join'})
+    }
+
+    res.status(200).json({orderDetails})
+    
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({error: 'Internal server error'})
+  }
+}
 
 
 // get order items 

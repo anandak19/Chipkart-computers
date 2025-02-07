@@ -47,17 +47,17 @@
                     </p>
                     
                     <!-- Order Status in Same Line -->
-                    <div class="order-status-container">
+                    <!-- <div class="order-status-container">
                         <label for="order-status"><strong>Order Status:</strong></label>
-                        <select id="order-status" class="order-status-dropdown">
+                        <select id="order-status" class="order-status-dropdown" onchange="updateOrderStatus(this.value, '${order._id}')">
                             <option value="pending">Ordered</option>
                             <option value="shipped">Shipped</option>
                             <option value="delivered">Delivered</option>
                         </select>
-                    </div>
+                    </div> -->
         
                     <div class="cancel-actions">
-                        <input type="text" id="cancel-reason" class="cancel-reason-input" placeholder="Enter reason">
+                        <input type="text" id="cancelReason" class="cancel-reason-input" placeholder="Enter reason">
                         <button class="cancel-order-btn">Cancel Order</button>
                     </div>
                 </div>
@@ -69,15 +69,16 @@
             <div class="order-info-cards-container">
                 <div class="card">
                     <h3>Customer</h3>
-                    <p>Name: <span id="userName">Anandakrishnan H</span></p>
-                    <p>Email: <span id="userEmail">anandak19h@gmail.com</span></p>
-                    <p>Phone: <span id="userPhone">9588985696</span></p>
+                    <p>Name: <span id="userName"></span></p>
+                    <p>Email: <span id="userEmail"></span></p>
+                    <p>Phone: <span id="userPhone"></span></p>
                 </div>
                 <div class="card">
                     <h3>Delivery Info</h3>
                     <p>Reciver: <span id="reciver">Anandakrishnan H</span></p>
                     <p>Phone: <span id="phone">9588465696</span></p>
-                    <p>Address: <span id="address">Long text that will come 2 or 3 lines</span></p>
+                    <p>Address: <span id="address"></span></p>
+                    <p>Landmark: <span id="landmark"></span></p>
                 </div>
                 <div class="card">
                     <h3>Payment Info</h3>
@@ -92,8 +93,8 @@
 
             <div class="items-container">
                 <h3>Items</h3>
-                <table class="order-items-table mt-3">
-                    <thead>
+                <table class="table table-bordered text-center order-items-table">
+                    <thead class="thead-dark">
                         <tr>
                             <th>No</th>
                             <th>Product Image</th>
@@ -102,23 +103,10 @@
                             <th>Quantity</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td><img src="/images/sample-product.jpg" alt="Product 1"></td>
-                            <td>Luxury Watch</td>
-                            <td>₹25,000</td>
-                            <td>1</td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td><img src="/images/sample-product.jpg" alt="Product 2"></td>
-                            <td>Sports Watch</td>
-                            <td>₹15,000</td>
-                            <td>2</td>
-                        </tr>
+                    <tbody id="orderItemTable">
                     </tbody>
                 </table>
+                
             </div>
 
         </div>
@@ -127,5 +115,6 @@
     </div>
 
     <%- include("../partials/adminFooter") %>
+    <script src="/javascripts/admin/orderDetails.js"></script>
   </body>
 </html>

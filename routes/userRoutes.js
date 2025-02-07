@@ -2,7 +2,7 @@ const express = require('express')
 const userController = require('../controllers/userController')
 const userAccountController = require('../controllers/userAccountController')
 const userOrderController = require('../controllers/userOrderController')
-const { isLogin, varifyLoginUserSession } = require('../middlewares/userAuth')
+const { isLogin, varifyLoginUserSession, getUser } = require('../middlewares/userAuth')
 const { validateProduct } = require('../middlewares/productValidation')
 const { validateNewReview } = require('../middlewares/review')
 const { validateAddressFields } = require('../middlewares/accountValidators')
@@ -74,7 +74,7 @@ router.patch('/cart/increase', varifyLoginUserSession, userOrderController.incre
 router.patch('/cart/decrease', varifyLoginUserSession, userOrderController.decreaseCartItemQuantity)
 router.delete('/cart/remove', varifyLoginUserSession, userOrderController.deleteCartItem)
 
-router.get('/checkout',isLogin,  userOrderController.getCheckoutPage)
+router.get('/checkout',getUser,  userOrderController.getCheckoutPage)
 // api calls 
 router.post('/checkout/address', userOrderController.chooseDeliveryAddress)
 router.post('/checkout/confirm', varifyLoginUserSession, userOrderController.placeOrder)

@@ -25,6 +25,8 @@ const OrderSchema = new Schema(
     paymentMethod: {type: String, required: true, enum: ["COD", "Online"], trim: true },
     appliedCoupon: { type: String, default: null },
     orderStatus: {type: String, enum: ["Ordered", "Shipped", "Delivered", "Cancelled"], default: "Ordered", trim: true },
+    isCancelled: { type: Boolean, default: false },
+    cancelReason: { type: String, default: null },
     items: [CartProductSchema],
     
   },

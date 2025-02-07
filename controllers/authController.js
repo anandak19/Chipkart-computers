@@ -178,7 +178,7 @@ exports.registerGoogleUser = async (req, res) => {
         email,
         isVerified: true,
       });
-      const user = await newUser.save();
+      user = await newUser.save();
       console.log("New user saved to the database:", user);
     }
 

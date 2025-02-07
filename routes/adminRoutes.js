@@ -38,6 +38,9 @@ router.get('/offers', isAdminLogin, adminController.getOfferModule)
 // render the order page to the admin
 router.get('/orders', adminController.getOrderManagement)
 router.get('/orders/all', adminController.getAllOrders)
+router.get('/orders/info', adminController.getUserDataAndDeliveryInfo)
+router.get('/orders/items', adminController.getOrderItems)
+
 // router.get('/orders/all/:orderId', adminController.renderOrderDetailsPage)
 router.get('/orders/all/:orderId', adminController.renderOrderDetailsPage)
 router.post('/orders/update-status', adminController.updateOrderStatus)
