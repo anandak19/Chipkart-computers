@@ -359,6 +359,16 @@ exports.getOrderHistory = (req, res) => {
   res.render("user/account/orderHistory", { currentPage: "orders" });
 };
 
+exports.getAllOrders = (req, res) => {
+  try {
+    const userId = req.user.Id
+    // find all the orders of user 
+    // loop thought the each orders and get the product details 
+  } catch (error) {
+    
+  }
+}
+
 // WALLET
 exports.getWallet = (req, res) => {
   res.render("user/account/wallet", { currentPage: "wallet" });

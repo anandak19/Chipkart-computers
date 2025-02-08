@@ -60,7 +60,12 @@ router.get('/account/address/:id', varifyLoginUserSession)
 router.patch('/account/address/:id', varifyLoginUserSession, validateAddressFields, userAccountController.saveEditedAddress) // clint side is not completed
 router.patch('/account/address/toogle/:id', varifyLoginUserSession, userAccountController.toggleAddress)
 
+// ORDERS ROUTES START 
 router.get('/account/orders', userAccountController.getOrderHistory)
+router.get('/account/orders/all', getUser, userAccountController.getAllOrders)
+
+// ORDERS ROUTES START 
+
 router.get('/account/wallet', userAccountController.getWallet)
 router.get('/account/coupons', userAccountController.getCoupons)
 
@@ -74,8 +79,8 @@ router.patch('/cart/increase', varifyLoginUserSession, userOrderController.incre
 router.patch('/cart/decrease', varifyLoginUserSession, userOrderController.decreaseCartItemQuantity)
 router.delete('/cart/remove', varifyLoginUserSession, userOrderController.deleteCartItem)
 
-router.get('/checkout',getUser,  userOrderController.getCheckoutPage)
-// api calls 
+router.get('/checkout', getUser,  userOrderController.getCheckoutPage)
+// api calls
 router.post('/checkout/address', userOrderController.chooseDeliveryAddress)
 router.post('/checkout/confirm', varifyLoginUserSession, userOrderController.placeOrder)
 
