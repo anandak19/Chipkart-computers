@@ -50,7 +50,7 @@ const showOrderItems = (orderDetails) => {
   
         row.innerHTML = `
             <td>${index + 1}</td>
-            <td><img src="${item.images[0].filepath}" alt="Product-image"></td>
+            <td><img src="${item.image[0].filepath}" alt="Product-image"></td>
             <td>${item.name}</td>
             <td>${item.price}</td>
             <td>${item.quantity}</td>
@@ -71,7 +71,7 @@ const getOrderItems = async () => {
     const data = await response.json();
     if (response.ok) {
         console.log(data)
-        showOrderItems(data.orderDetails)
+        showOrderItems(data.items)
     }else{
         console.log(data)
     }
@@ -95,8 +95,16 @@ cancelOrderBtn.addEventListener('click', () =>{
         toastr.error("You must provide a valid reson");
         return
     } 
-    alert("Saved")
+    alert("Cancelled")
 })
+
+
+const backButton = document.querySelector('.back-btn');
+if (backButton) {
+  backButton.addEventListener('click', () => {
+    window.location.href = '/admin/orders';
+  });
+}
 
 
 

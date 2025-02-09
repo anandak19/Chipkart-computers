@@ -487,13 +487,15 @@ exports.placeOrder = async (req, res) => {
 
     const cart = await CartSchema.findOne({userId})
 
+    // get cartItems 
+    const orderItemsDetails = await getUserCartItems(userId)
+    const orderItems = orderItemsDetails.flatMap((item) => item.products);
     // cart total or total amont payable by user with out coupon discount 
     const cartTotal = await getCartTotal(userId);
-    // store the items into a variable 
-    const orderItems = cart.products.map(item => ({
-      productId: item.productId,
-      quantity: item.quantity
-    }));
+
+
+    console.log("the product is stored ia")
+    console.log(orderItems)
 
     let addressId = req.session.deliveryAddress;
 

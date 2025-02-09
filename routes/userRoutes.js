@@ -49,9 +49,9 @@ router.post('/account/user', userAccountController.postUserDetails)
 router.post('/account/user/password', userAccountController.postChangePassword)
 
 // user address 
-router.get('/account/address', userAccountController.getAddresses)
+router.get('/account/address',isLogin, userAccountController.getAddresses)
 router.get('/account/address/all', varifyLoginUserSession, userAccountController.getUsersAllAddress)
-router.get('/account/address/new', userAccountController.getAddressForm)
+router.get('/account/address/new',isLogin, userAccountController.getAddressForm)
 router.post('/account/address/new', varifyLoginUserSession, validateAddressFields, userAccountController.addAddress)
 router.delete('/account/address/:id', varifyLoginUserSession, userAccountController.deleteAddress)
 // get the edit page 
@@ -61,7 +61,7 @@ router.patch('/account/address/:id', varifyLoginUserSession, validateAddressFiel
 router.patch('/account/address/toogle/:id', varifyLoginUserSession, userAccountController.toggleAddress)
 
 // ORDERS ROUTES START 
-router.get('/account/orders', userAccountController.getOrderHistory)
+router.get('/account/orders', isLogin, userAccountController.getOrderHistory)
 router.get('/account/orders/all', getUser, userAccountController.getAllOrders)
 
 // ORDERS ROUTES START 
@@ -70,7 +70,7 @@ router.get('/account/wallet', userAccountController.getWallet)
 router.get('/account/coupons', userAccountController.getCoupons)
 
 // ORDER BASED ROUTES 
-router.get('/cart', userOrderController.getCartPage)
+router.get('/cart',isLogin, userOrderController.getCartPage)
 router.get('/cart/all', varifyLoginUserSession, userOrderController.getCartItems)
 router.get('/cart/total', varifyLoginUserSession, userOrderController.getCartTotal)
 // send products id in the body 

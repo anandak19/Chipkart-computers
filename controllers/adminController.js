@@ -760,14 +760,15 @@ exports.getOrderItems = async (req, res) => {
     if (!orderId) {
       return res.status(400).json({error: 'Session expired'})
     }
-    const orderDetails = await getOrderItemsDetails(orderId)
+    const orderDetails = await OrderSchema.findById(orderId)
+    const items = orderDetails.items
 
     console.log("The result")
     if (!orderDetails) {
       return res.status(404).json({error: 'Order not found or faild to join'})
     }
 
-    res.status(200).json({orderDetails})
+    res.status(200).json({items})
     
   } catch (error) {
     console.log(error)

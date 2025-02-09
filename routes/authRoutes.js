@@ -22,7 +22,7 @@ router.get("/signup", authController.getUserSignup);
 // users data is saved to db in signup validation itself 
 router.post("/signup", signupValidations, authController.startOtpVerification);
 // otp varification page 
-router.get("/varify-otp/:id",isVerified, authController.getVerify);
+router.get("/varify-otp/:id",isVerified, authController.getVerify); 
 router.post("/varify-otp", authController.validateOtp);
 router.get("/resend-otp", getUser, authController.startOtpVerification);
 

@@ -4,12 +4,12 @@ const { Schema } = mongoose;
 
 
 const CartProductSchema = new Schema({
-  productId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Product",
-    required: true,
-  },
-  quantity: { type: Number, required: true, default: 1 },
+  productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+  name: { type: String, required: true },
+  quantity: { type: Number, required: true },
+  price: { type: Number, required: true },
+  image: [{ type: mongoose.Schema.Types.Mixed }],
+  subTotalPrice: { type: Number, required: true }
 });
 
 const OrderSchema = new Schema(
@@ -27,7 +27,7 @@ const OrderSchema = new Schema(
     orderStatus: {type: String, enum: ["Ordered", "Shipped", "Delivered", "Cancelled"], default: "Ordered", trim: true },
     isCancelled: { type: Boolean, default: false },
     cancelReason: { type: String, default: null },
-    items: [CartProductSchema],
+    items: [{ type: mongoose.Schema.Types.Mixed }],
     
   },
   { timestamps: true }

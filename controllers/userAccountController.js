@@ -9,6 +9,7 @@ const {
   validateEmail,
   validatePassword,
 } = require("../utils/validations");
+const Order = require("../models/Order");
 
 // make a session validate middleware later that sends json response
 
@@ -359,13 +360,40 @@ exports.getOrderHistory = (req, res) => {
   res.render("user/account/orderHistory", { currentPage: "orders" });
 };
 
-exports.getAllOrders = (req, res) => {
+exports.getAllOrders = async(req, res) => {
   try {
-    const userId = req.user.Id
     // find all the orders of user 
-    // loop thought the each orders and get the product details 
-  } catch (error) {
+    const userId = String(req.user._id)
     
+    const pipeline = [
+      {
+        $match: {userId: userId}
+      },
+      {
+        $addFields: {
+          addressObjId: { $toObjectId: "$addressId" }
+        }
+      },
+      {
+        $lookup: {
+          from: "addresses",
+          localField: "addressObjId",
+          foreignField: "_id",
+          as: "addressDetails"
+        }
+      },
+      {
+        $unwind: { path: "$addressDetails", preserveNullAndEmptyArrays: true }
+      }
+    ]
+
+    const orders = await Order.aggregate(pipeline)
+
+    res.status(200).json({success: true, orders})
+
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 }
 

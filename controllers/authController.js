@@ -302,7 +302,7 @@ exports.logoutUser = async (req, res) => {
 // admin auth
 exports.getAdminLogin = (req, res) => {
   // if admin is logged in do not show this page
-  req.session.isLogin = false;
+  req.session.isAdminLogin = false;
   res.render("admin/login", {
     title: "Admin",
     email: req.flash("email") || "",
@@ -337,7 +337,7 @@ exports.postAdminLogin = async (req, res) => {
       return res.redirect("/admin/login");
     }
 
-    req.session.isLogin = true;
+    req.session.isAdminLogin = true;
     req.session.email = admin.email;
     req.session.adminId = admin._id;
     res.redirect("/admin");

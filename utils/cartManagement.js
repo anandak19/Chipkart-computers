@@ -27,6 +27,7 @@ const getUserCartItems = async(userId) => {
               "products.quantity": 1,
               "products.name": "$productDetails.productName",
               "products.price": "$productDetails.finalPrice",
+              "products.image": "$productDetails.images",
               "products.subTotalPrice": {
                 $multiply: ["$productDetails.finalPrice", "$products.quantity"]
               }

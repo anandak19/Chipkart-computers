@@ -13,13 +13,13 @@
 }
 
 .item-section {
-    background: #f9f9f9;
+    /* background: #f9f9f9; */
     padding: 10px;
     border-radius: 5px;
     display: flex;
     align-items: center;
     gap: 15px;
-    border: 1px solid #ddd;
+    /* border: 1px solid #ddd; */
 }
 
 .item-image img {
@@ -44,4 +44,5 @@
 .delivery-address {
     font-size: 14px;
     color: #666;
+    text-align: right;
 }

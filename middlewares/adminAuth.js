@@ -2,7 +2,7 @@ const UserSchema = require('../models/User')
 
 
 const isAdminLoginSubmitted = (req, res, next) => {
-    if (req.session.isLogin) {
+    if (req.session.isAdminLogin) {
         res.render('admin/dashbord')
     }else{
         return next()
@@ -10,7 +10,7 @@ const isAdminLoginSubmitted = (req, res, next) => {
 }
 
 const isAdminLogin = async(req, res, next) => {
-    const isAdminLogin = req?.session?.isLogin || false;
+    const isAdminLogin = req?.session?.isAdminLogin || false;
     const adminId = req?.session?.adminId || false;
     console.log(isAdminLogin)
     if (!isAdminLogin || !adminId) {
