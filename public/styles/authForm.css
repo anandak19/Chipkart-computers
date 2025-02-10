@@ -90,6 +90,8 @@ label {
 .login-btn {
   background-color: #146cda;
   width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .link-text {
@@ -142,4 +144,17 @@ label {
 
 .google-auth-button a:active {
   background-color: #c0c0c0;
+}
+
+/* loader  */
+button .loader {
+  width: 20px;
+  height: 20px;
+  display: none;
+  vertical-align: middle;
+  margin-left: 10px; 
+}
+
+button.loading .loader {
+  display: inline-block; /* Show loader when button has 'loading' class */
 }

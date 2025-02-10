@@ -2,6 +2,7 @@ const fullNameRegex = /^[a-zA-Z\s]+$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phoneNumberRegex = /^(\+\d{1,3}[- ]?)?\d{10}$/;
 const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{4,}$/;
+const submitBtn = document.getElementById('submitBtn')
 
 document.querySelector("form").addEventListener("submit", (e) => {
   e.preventDefault();
@@ -61,6 +62,7 @@ document.querySelector("form").addEventListener("submit", (e) => {
 
   if (isValid) {
     // api call to submit the data to server using fetch
+    
 
     const inputData = {
       name: fullName.trim(),
@@ -69,6 +71,11 @@ document.querySelector("form").addEventListener("submit", (e) => {
       password: password.trim(),
       confirmPassword: confirmPassword.trim(),
     };
+
+    // show loading 
+    submitBtn.classList.add('loading')
+    submitBtn.disabled = true
+
     const body = JSON.stringify(inputData);
 
     fetch("/signup", {
@@ -85,12 +92,16 @@ document.querySelector("form").addEventListener("submit", (e) => {
             window.location.replace(data.redirectUrl);
         }else{
             alert(data.message)
+            submitBtn.classList.remove('loading')
+            submitBtn.disabled = false 
         }
     })
     .catch(error => {
         console.error("Error", error)
         alert("Somthing went wrong")
+        submitBtn.classList.remove('loading')
+        submitBtn.disabled = false
     })
-
+      
   }
-});
+}); 

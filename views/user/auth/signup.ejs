@@ -71,16 +71,16 @@
             />
             <p id="confirmPasswordAlert" class="input-alert"></p>
           </div>
-
+ 
           <% if (errorMessage) { %>
           <div class="text-danger"><%= errorMessage %></div>
           <% } %>
 
           <button
             type="submit"
-            class="btn login-btn btn-primary mt-4 fs-5 fw-bold"
-          >
+            class="btn login-btn btn-primary mt-4 fs-5 fw-bold" id="submitBtn">
             Signup
+            <img src="/images/icons/loader-gif.gif" alt="" id="loader"  class="loader">
           </button>
 
           <div class="link-text mt-4">

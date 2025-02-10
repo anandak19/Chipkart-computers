@@ -2,10 +2,11 @@ const express = require('express')
 const userController = require('../controllers/userController')
 const userAccountController = require('../controllers/userAccountController')
 const userOrderController = require('../controllers/userOrderController')
-const { isLogin, varifyLoginUserSession, getUser } = require('../middlewares/userAuth')
-const { validateProduct } = require('../middlewares/productValidation')
+const { isLogin, varifyLoginUserSession, getUser, checkIsblocked } = require('../middlewares/userAuth')
+const { validateProduct, checkProductAvailability } = require('../middlewares/productValidation')
 const { validateNewReview } = require('../middlewares/review')
 const { validateAddressFields } = require('../middlewares/accountValidators')
+const { handleCart } = require('../middlewares/orderValidations')
 
 
 const router = express.Router()
@@ -74,15 +75,15 @@ router.get('/cart',isLogin, userOrderController.getCartPage)
 router.get('/cart/all', varifyLoginUserSession, userOrderController.getCartItems)
 router.get('/cart/total', varifyLoginUserSession, userOrderController.getCartTotal)
 // send products id in the body 
-router.post('/cart/add', varifyLoginUserSession, userOrderController.addItemToCart)
-router.patch('/cart/increase', varifyLoginUserSession, userOrderController.increaseCartItemQuantity)
-router.patch('/cart/decrease', varifyLoginUserSession, userOrderController.decreaseCartItemQuantity)
+router.post('/cart/add', varifyLoginUserSession, checkIsblocked, checkProductAvailability,  userOrderController.addItemToCart)
+router.patch('/cart/increase', varifyLoginUserSession, checkIsblocked, checkProductAvailability, userOrderController.increaseCartItemQuantity)
+router.patch('/cart/decrease', varifyLoginUserSession, checkIsblocked, checkProductAvailability, userOrderController.decreaseCartItemQuantity)
 router.delete('/cart/remove', varifyLoginUserSession, userOrderController.deleteCartItem)
 
 router.get('/checkout', getUser,  userOrderController.getCheckoutPage)
 // api calls
 router.post('/checkout/address', userOrderController.chooseDeliveryAddress)
-router.post('/checkout/confirm', varifyLoginUserSession, userOrderController.placeOrder)
+router.post('/checkout/confirm', varifyLoginUserSession, handleCart, userOrderController.placeOrder)
 
 
 

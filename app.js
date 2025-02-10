@@ -7,6 +7,7 @@ const passport = require("passport");
 const morgan = require("morgan");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 require("dotenv").config();
+const {errorHandler} = require("./middlewares/errorHandler")
 
 const app = express();
 //cache controle
@@ -77,5 +78,7 @@ const adminRoutes = require("./routes/adminRoutes");
 app.use("/admin", adminRoutes);
 app.use("/", userRoutes);
 app.use("/", authRoutes);
+
+app.use(errorHandler)
 
 module.exports = app;

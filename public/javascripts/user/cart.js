@@ -72,10 +72,9 @@ const getUserCart = async () => {
     const response = await fetch(url);
     const data = await response.json();
     if (response.ok) {
-      console.log(data);
       showCartItems(data.products);
     } else {
-      alert(data.error);
+      toastr.warning(data.error, "Warning");
     }
   } catch (error) {
     console.error(error);
@@ -95,7 +94,6 @@ const getCartTotal = async () => {
     if (response.ok) {
       showCartTotal(data);
     } else {
-      console.error(data.error);
       toastr.warning(data.error, "Warning");
     }
   } catch (error) {

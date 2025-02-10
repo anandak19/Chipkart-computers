@@ -92,77 +92,45 @@ exports.getCartItems = async (req, res) => {
 };
 
 // to add an an item to cart, product quantity will decrese in products too
+// FIXED
 exports.addItemToCart = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    // FROM HERE ----
-    if (!req.user) {
+    if (!req.user || !req.product) {
       await session.abortTransaction();
-      return res.status(404).json({ error: "User not found in request." });
+      return res
+        .status(404)
+        .json({ error: "User or product not found in request." });
     }
 
-    const { productId } = req.body;
+    const productId = req.product._id;
     const userId = req.user._id;
-
-    if (!productId) {
-      await session.abortTransaction();
-      return res.status(404).json({ error: "Product not found in request." });
-    }
-
-    const product = await ProductSchema.findById(productId).session(session);
-
-    if (!product) {
-      await session.abortTransaction();
-      return res.status(404).json({ error: "Invalid product" });
-    }
-
-    // TO HERE -- TRY TO MAKE IT A MIDDLEWARE LATER
 
     let cart = await CartSchema.findOne({ userId }).session(session);
 
+    // if user has no existing cart create one
     if (!cart) {
-      const updatedProduct = await decreaseProductQuantity(productId, session);
-
-      if (!updatedProduct) {
-        await session.abortTransaction();
-        return res
-          .status(400)
-          .json({ error: "Product not available or out of stock" });
-      }
-
       cart = new CartSchema({
         userId,
         products: [{ productId, quantity: 1 }],
       });
     } else {
+      // check if user already has product in cart
       const existingProduct = cart.products.find((p) =>
         p.productId.equals(productId)
       );
-
-      if (!existingProduct) {
-        const updatedProduct = await decreaseProductQuantity(
-          productId,
-          session
-        );
-        if (!updatedProduct) {
-          await session.abortTransaction();
-          return res
-            .status(400)
-            .json({ error: "Product not available or out of stock." });
-        }
-
-        cart.products.push({ productId, quantity: 1 });
-      } else {
+      if (existingProduct) {
         await session.commitTransaction();
-        return res.status(200).json({ message: "Products already in cart" });
+        return res.status(200).json({ message: "Product is already in cart" });
       }
+
+      // add the new product to cart
+      cart.products.push({ productId, quantity: 1 });
     }
 
-    console.log(cart);
     await cart.save({ session });
-
     await session.commitTransaction();
 
     return res.status(200).json({ message: "Product added to cart" });
@@ -176,32 +144,30 @@ exports.addItemToCart = async (req, res) => {
 };
 
 // to increase the quantity of the item in the cart
+// FIXED
 exports.increaseCartItemQuantity = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    // repeater code --
-    if (!req.user) {
+    if (!req.user || !req.product) {
       await session.abortTransaction();
-      return res.status(404).json({ error: "User not found in request." });
+      return res
+        .status(404)
+        .json({ error: "User or product not found in request." });
     }
 
-    const { productId } = req.body;
+    const productId = req.product._id;
     const userId = req.user._id;
 
-    if (!productId) {
-      await session.abortTransaction();
-      return res.status(404).json({ error: "Product not found in request." });
-    }
-
-    // reperter code end
     // find the cart of user
     let cart = await CartSchema.findOne({ userId }).session(session);
 
     if (!cart) {
       await session.abortTransaction();
-      return res.status(404).json({ error: "User have no cart." });
+      return res.status(404).json({
+        error: "You have no existing cart! Add an item to cart first",
+      });
     }
 
     // find the requested product from cart
@@ -213,7 +179,15 @@ exports.increaseCartItemQuantity = async (req, res) => {
       await session.abortTransaction();
       return res.status(404).json({
         error:
-          "Product not founded in users cart! Add the product to cart first",
+          "Product not founded in your cart! Add the product to cart first",
+      });
+    }
+
+    if (cart.products[productIndex].quantity >= req.product.quantity) {
+      await session.abortTransaction();
+      return res.status(404).json({
+        error:
+          "No stocks left",
       });
     }
 
@@ -226,18 +200,10 @@ exports.increaseCartItemQuantity = async (req, res) => {
     }
 
     // decrement product quantity from db
-    const updatedProduct = await decreaseProductQuantity(productId, session);
-    if (!updatedProduct) {
-      await session.abortTransaction();
-      return res
-        .status(400)
-        .json({ error: "Product not available or out of stock." });
-    }
 
     cart.products[productIndex].quantity++;
 
     await cart.save({ session });
-
     await session.commitTransaction();
 
     return res.status(200).json({ message: "Product incremented" });
@@ -251,32 +217,30 @@ exports.increaseCartItemQuantity = async (req, res) => {
 };
 
 // to decrease the cart item quantity
+// FIXED
 exports.decreaseCartItemQuantity = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    // repeater code --
-    if (!req.user) {
+    if (!req.user || !req.product) {
       await session.abortTransaction();
-      return res.status(404).json({ error: "User not found in request." });
+      return res
+        .status(404)
+        .json({ error: "User or product not found in request." });
     }
 
-    const { productId } = req.body;
+    const productId = req.product._id;
     const userId = req.user._id;
 
-    if (!productId) {
-      await session.abortTransaction();
-      return res.status(404).json({ error: "Product not found in request." });
-    }
-
-    // reperter code end
     // find the cart of user
     let cart = await CartSchema.findOne({ userId }).session(session);
 
     if (!cart) {
       await session.abortTransaction();
-      return res.status(404).json({ error: "User have no cart." });
+      return res.status(404).json({
+        error: "You have no existing cart! Add an item to cart first",
+      });
     }
 
     // find the requested product from cart
@@ -301,21 +265,10 @@ exports.decreaseCartItemQuantity = async (req, res) => {
       });
     }
 
-    // decrement product quantity from db
-    const updatedProduct = await increaseProductQuantity(productId, session);
-    if (!updatedProduct) {
-      await session.abortTransaction();
-      return res
-        .status(400)
-        .json({ error: "Product not available or out of stock." });
-    }
-
     cart.products[productIndex].quantity--;
-
     await cart.save({ session });
 
     await session.commitTransaction();
-
     return res.status(200).json({ message: "Product decremented" });
   } catch (error) {
     await session.abortTransaction();
@@ -327,26 +280,26 @@ exports.decreaseCartItemQuantity = async (req, res) => {
 };
 
 // to remove a item from cart
+// FIXED
 exports.deleteCartItem = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    // repeater code --
+    const { productId } = req.body;
+    if (!productId) {
+      return res
+        .status(400)
+        .json({ error: "Product not found in request! Select one product" });
+    }
+
     if (!req.user) {
       await session.abortTransaction();
       return res.status(404).json({ error: "User not found in request." });
     }
 
-    const { productId } = req.body;
     const userId = req.user._id;
 
-    if (!productId) {
-      await session.abortTransaction();
-      return res.status(404).json({ error: "Product not found in request." });
-    }
-
-    // reperter code end
     // find the cart of user
     let cart = await CartSchema.findOne({ userId }).session(session);
 
@@ -364,17 +317,7 @@ exports.deleteCartItem = async (req, res) => {
       cart.products.splice(productIndex, 1);
     }
 
-    // decrement product quantity from db
-    const updatedProduct = await increaseProductQuantity(productId, session);
-    if (!updatedProduct) {
-      await session.abortTransaction();
-      return res
-        .status(400)
-        .json({ error: "Product not available or out of stock." });
-    }
-
     await cart.save({ session });
-
     await session.commitTransaction();
 
     return res.status(200).json({ message: "Product removed from cart" });
@@ -421,14 +364,14 @@ exports.getCartTotal = async (req, res) => {
 exports.getCheckoutPage = async (req, res) => {
   try {
     if (!req.user) {
-      return res.redirect("/login");  
+      return res.redirect("/login");
     }
 
-    const userId = req.user._id; 
+    const userId = req.user._id;
     const cart = await CartSchema.findOne({ userId });
 
     if (!cart || cart.products.length === 0) {
-      return res.redirect("/cart");  
+      return res.redirect("/cart");
     }
 
     res.render("user/account/checkout");
@@ -462,74 +405,85 @@ exports.chooseDeliveryAddress = async (req, res) => {
   }
 };
 
-
 /*
 request body: paymentMethod: "COD" / "Online"
 session needed- login
 optional session needed - choose address
 */
 
-// to place an order without coupon 
+// to place an order without coupon
 exports.placeOrder = async (req, res) => {
+  const session = await mongoose.startSession()
+  session.startTransaction()
+
   try {
-    // change this code later to applay coupon
 
     if (!req.user) {
       return res.status(404).json({ error: "User not found in request." });
     }
 
     const userId = req.user._id;
-    const { paymentMethod } = req.body
+    const { paymentMethod } = req.body;
+    const cart = req.cart
 
     if (!paymentMethod) {
       return res.status(404).json({ error: "Please choose a payment method." });
     }
 
-    const cart = await CartSchema.findOne({userId})
-
-    // get cartItems 
-    const orderItemsDetails = await getUserCartItems(userId)
+    const orderItemsDetails = await getUserCartItems(userId);
     const orderItems = orderItemsDetails.flatMap((item) => item.products);
-    // cart total or total amont payable by user with out coupon discount 
+
+    // cart total or total amont payable by user with out coupon discount
     const cartTotal = await getCartTotal(userId);
 
-
-    console.log("the product is stored ia")
-    console.log(orderItems)
 
     let addressId = req.session.deliveryAddress;
 
     if (!req.session.deliveryAddress) {
-      const address = await AddressShema.findOne({ userId: userId, isDefault: true }, '_id');
+      const address = await AddressShema.findOne(
+        { userId: userId, isDefault: true },
+        "_id"
+      );
       addressId = address ? address._id : null;
     } else {
-      const address = await AddressShema.findOne({ _id: addressId }, '_id');
+      const address = await AddressShema.findOne({ _id: addressId }, "_id");
       addressId = address ? address._id : null;
     }
-    
+
     if (!addressId) {
       return res.status(400).json({ error: "No delivery address found" });
     }
 
-
+    // decrese the quantity of each product from db 
+    for (const item of cart.products) {
+      const updatedProduct = await decreaseProductQuantity(item.productId, item.quantity, session);
+      if (!updatedProduct) {
+        throw new Error(`Product with ID ${item.productId} is not available`);
+      }
+    }
+    
+    
     const newOrder = new OrderSchema({
       userId,
       addressId,
       totalAmount: cartTotal,
       totalPayable: cartTotal,
-      paymentMethod: paymentMethod,
-      items: orderItems
-    })
+      paymentMethod,
+      items: orderItems,
+    });
 
-    await newOrder.save()
-    await CartSchema.deleteOne({userId})
+    await newOrder.save({ session });
+    await CartSchema.deleteOne({ userId }, { session });
 
-    console.log(newOrder);
+    await session.commitTransaction();
 
     res.status(200).json({ message: "Order Placed Successfully" });
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({ error: "Internal server error." });
+    await session.abortTransaction();
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  }finally{
+    session.endSession()
   }
 };
 

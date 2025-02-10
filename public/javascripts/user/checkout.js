@@ -132,6 +132,9 @@ placeOrderBtn.addEventListener('click', async() => {
   }
 
   try {
+    placeOrderBtn.disabled = true;
+    placeOrderBtn.textContent = "Processing...";
+
     const response = await fetch('/checkout/confirm', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -140,15 +143,19 @@ placeOrderBtn.addEventListener('click', async() => {
     const data = await response.json()
     if (response.ok) {
       toastr.success(data.message);
+      placeOrderBtn.textContent = "Order Placed";
       setTimeout(() => {
-        window.location.href = "/";
+        window.location.href = "/account/orders";
       }, 2000); 
     }else{
+      placeOrderBtn.disabled = false;
+      placeOrderBtn.textContent = "Place The Order";
       toastr.error(data.error);
     }
   } catch (error) {
+    placeOrderBtn.disabled = false;
+    placeOrderBtn.textContent = "Place The Order";
     console.error(error);
     alert("Somthing went wrong")
   }
-
 })

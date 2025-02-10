@@ -115,8 +115,15 @@ const varifyLoginUserSession = async (req, res, next) => {
     
   } catch (error) {
     console.error("Error verifying login user:", error);
-    res.status(500).json({ error: "Internal server error" });
+    return next(error)
   }
 }
 
-module.exports = {isVerified, isLogin, isLogout, getUser, varifyLoginUserSession};
+const checkIsblocked = async (req, res, next) => {
+  if (req.user.isBlocked) {
+    return res.status(404).json({ error: `You are being blocked for the reason: ${req.user.blockReason}` });
+  }
+  return next()
+}
+
+module.exports = {isVerified, isLogin, isLogout, getUser, varifyLoginUserSession, checkIsblocked};

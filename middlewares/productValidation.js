@@ -8,7 +8,8 @@ const {
   validateDescription,
   validateProductName,
 } = require("../utils/productValidators");
-const ProductSchema = require("../models/Product")
+const ProductSchema = require("../models/Product");
+const CartSchema = require("../models/Cart");
 
 const newProductValidations = async (req, res, next) => {
   try {
@@ -30,11 +31,11 @@ const newProductValidations = async (req, res, next) => {
       validateDescription(description);
 
     if (errorMessage) {
-      return res.json({success: false, message: errorMessage})
+      return res.json({ success: false, message: errorMessage });
     }
 
     if (!req.files || req.files.length !== 4) {
-      return res.json({success: false, message: "Minimum 4 images required"})
+      return res.json({ success: false, message: "Minimum 4 images required" });
     }
     return next();
   } catch (error) {
@@ -42,9 +43,6 @@ const newProductValidations = async (req, res, next) => {
     return res.redirect("/admin/products");
   }
 };
-
-
-
 
 const updateProductValidations = async (req, res, next) => {
   try {
@@ -65,10 +63,9 @@ const updateProductValidations = async (req, res, next) => {
       validateHiglights(highlights) ||
       validateDescription(description);
 
-
-      if (errorMessage) {
-        return res.json({success: false, message: errorMessage})
-      }
+    if (errorMessage) {
+      return res.json({ success: false, message: errorMessage });
+    }
 
     return next();
   } catch (error) {
@@ -78,26 +75,65 @@ const updateProductValidations = async (req, res, next) => {
 };
 
 // validate product and send json res , if validated product id is avail in req.productId
-// check if the product is present, check if the product is in db, 
+// check if the product is present, check if the product is in db,
 const validateProduct = async (req, res, next) => {
   try {
-    console.log("body", req.body )
+    console.log("body", req.body);
     const productId = req.params.id;
     if (!productId) {
-      console.log("Id not found")
+      console.log("Id not found");
       return res.status(404).send("Id not found");
     }
-    const product = await ProductSchema.findById(productId)
+    const product = await ProductSchema.findById(productId);
     if (!product) {
-      console.log("Product not found")
+      console.log("Product not found");
       return res.status(404).send("Product not found");
     }
-    console.log("Product validatation passed")
-    req.productId = product._id
-    return next()
+    console.log("Product validatation passed");
+    req.productId = product._id;
+    return next();
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
-}
+};
 
-module.exports = { newProductValidations, updateProductValidations, validateProduct };
+const checkProductAvailability = async (req, res, next) => {
+  try {
+    const { productId } = req.body;
+    if (!productId) {
+      return res
+        .status(400)
+        .json({ error: "Product not found in request! Select one product" });
+    }
+
+    const product = await ProductSchema.findById(productId);
+    if (!product) {
+      console.log("Product not found");
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    if (!product.isListed) {
+      return res
+        .status(403)
+        .json({ error: "Product not available at this moment" });
+    }
+
+    if (product.quantity <= 0) {
+      return res.status(410).json({ error: "Product became out of stock" });
+    }
+
+    req.product = product;
+
+    return next();
+  } catch (error) {
+    console.log(error);
+    return next(error);
+  }
+};
+
+module.exports = {
+  newProductValidations,
+  updateProductValidations,
+  validateProduct,
+  checkProductAvailability,
+};
