@@ -27,6 +27,7 @@ const OrderSchema = new Schema(
     orderStatus: {type: String, enum: ["Ordered", "Shipped", "Delivered", "Cancelled"], default: "Ordered", trim: true },
     isCancelled: { type: Boolean, default: false },
     cancelReason: { type: String, default: null },
+    deliveryDate: { type: Date, default: null },
     items: [{ type: mongoose.Schema.Types.Mixed }],
     
   },
@@ -36,6 +37,11 @@ const OrderSchema = new Schema(
 OrderSchema.pre("save", async function (next) {
   if (!this.orderId) {
     this.orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+  }
+
+  if (!this.deliveryDate) {
+    this.deliveryDate = new Date();
+    this.deliveryDate.setDate(this.deliveryDate.getDate() + 5);
   }
   next()
 })

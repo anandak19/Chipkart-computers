@@ -153,3 +153,20 @@
 .pagination-btn i {
   pointer-events: none; /* Prevents accidental clicks on the icon */
 }
+
+.back-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #007bff;
+  color: white;
+  padding: 4px 15px;
+  border-radius: 8px;
+  font-size: 16px;
+  text-decoration: none;
+  transition: 0.3s ease;
+}
+
+.back-btn:hover{
+  background-color: #0056b3;
+}

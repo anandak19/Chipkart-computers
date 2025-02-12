@@ -1,0 +1,32 @@
+.product-details {
+    width: 100%;
+    overflow: hidden;
+    margin-right: 18px;
+}
+
+.product-details  h6{
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden; 
+}
+
+.return-btn-wrapper {
+    text-align: right; 
+    margin-top: 20px; 
+}
+
+.return-btn-wrapper button {
+    background-color: #dc3545; 
+    color: white; 
+    border: none; 
+    padding: 4px 20px; 
+    font-size: 16px; 
+    border-radius: 5px; 
+    cursor: pointer; 
+    transition: all 0.3s ease-in-out; 
+}
+
+.return-btn-wrapper button:hover {
+    background-color: #c82333; 
+}
+

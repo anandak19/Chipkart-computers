@@ -10,6 +10,7 @@ const {
   validatePassword,
 } = require("../utils/validations");
 const Order = require("../models/Order");
+const { getOrderItemsDetails } = require("../utils/orderManagement");
 
 // make a session validate middleware later that sends json response
 
@@ -495,12 +496,33 @@ exports.cancelOrderByUser = async (req, res) => {
     }
 
     orderDetails.isCancelled = true;
-    orderDetails.orderStatus = 'Cancelled'
+    orderDetails.orderStatus = "Cancelled";
     orderDetails.cancelReason = cancelReason;
 
     await orderDetails.save();
 
     res.status(200).json({ message: "Order cancelled successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.getReturnProductPage = async (req, res) => {
+  try {
+    const orderId = req.session.ordId;
+    if (!orderId) {
+      return res.status(400).json({ error: "Session expired" });
+    }
+
+    const items = await getOrderItemsDetails(orderId);
+    console.log(items)
+
+    if (!items) {
+      return res.status(404).json({ error: "Order Items not found" });
+    }
+
+    res.render("user/account/returnProduct", { currentPage: "orders", items });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });

@@ -33,7 +33,8 @@ const showOrderItems = (items) => {
         </div>
   
         <div class="product-total text-end">
-          <p>Sub Total: <span>₹${item.subTotalPrice.toLocaleString()}</span></p>
+          <p>Sub Total: ₹${item.subTotalPrice.toLocaleString()}</p>
+
         </div>
       `;
 
@@ -130,4 +131,9 @@ cancelOrderForm.addEventListener('submit', async(e) => {
   }
 })
 
+
+// return an item 
+function returnProduct() {
+  window.location.href = "/account/orders/all/ord/items/return";
+}
 

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Orders</title>
     <link rel="stylesheet" href="/styles/account.css" />
-    <link rel="stylesheet" href="/styles/userPages/orderDetails.css">
+    <link rel="stylesheet" href="/styles/userPages/orderDetails.css" />
     <%- include("../../partials/head") %>
   </head>
   <body>
@@ -21,93 +21,140 @@
               <div class="account-title">
                 <p class="page-title">Order Details</p>
                 <a class="back-btn" href="/account/orders">
-                    <i class="fa-solid fa-circle-arrow-left"></i> Back
-                  </a>
+                  <i class="fa-solid fa-circle-arrow-left"></i> Back
+                </a>
               </div>
               <!-- orders wrapper  -->
               <div class="orderDetails container mt-4">
                 <div class="row">
-                    <!-- Order Info Card -->
-                    <div class="col-md-4">
-                        <div class="details-card card shadow-sm">
-                            <div class="card-body">
-                                <p class="card-title">Order Info</p>
-                                <p><label>Order ID:</label> <%= orderDetails.orderId %></p>
-                                <p><label>Order Date:</label> 
-                                  <%= new Date(orderDetails.createdAt).toLocaleDateString("en-GB", { 
-                                    day: "2-digit", month: "2-digit", year: "2-digit" 
-                                  }) %>
-                                </p>
-                                <% if (!orderDetails.isCancelled && orderDetails.orderStatus !== 'Delivered') { %>
-                                  <button class="btn btn-danger btn-sm mt-4" id="cancelOrderBtnOpen">Cancel Order</button>
-                              <% } else if(orderDetails.isCancelled) { %>
-                                  <p class="text-danger mt-4">Cancelled due to:&nbsp;<%= orderDetails.cancelReason %></p>
-                              <% } else {%>
-                                <p class="text-success mt-4">Delivered</p>
-                                <% } %>
-                              
-                            </div>
-                        </div>
+                  <!-- Order Info Card -->
+                  <div class="col-md-4">
+                    <div class="details-card card shadow-sm">
+                      <div class="card-body">
+                        <p class="card-title">Order Info</p>
+                        <p>
+                          <label>Order ID:</label> <%= orderDetails.orderId %>
+                        </p>
+                        <p>
+                          <label>Order Date:</label>
+                          <%= new
+                          Date(orderDetails.createdAt).toLocaleDateString("en-GB",
+                          { day: "2-digit", month: "2-digit", year: "2-digit" })
+                          %>
+                        </p>
+                        <p>
+                          <label>Delivery Date:</label>
+                          <%= new
+                          Date(orderDetails.deliveryDate).toLocaleDateString("en-GB",
+                          { day: "2-digit", month: "2-digit", year: "2-digit" })
+                          %>
+                        </p>
+                        <% if (!orderDetails.isCancelled &&
+                        orderDetails.orderStatus !== 'Delivered') { %>
+                        <button
+                          class="btn btn-danger btn-sm mt-2"
+                          id="cancelOrderBtnOpen"
+                        >
+                          Cancel Order
+                        </button>
+                        <% } else if(orderDetails.isCancelled) { %>
+                        <p class="text-danger mt-4">
+                          Cancelled due to:&nbsp;<%= orderDetails.cancelReason
+                          %>
+                        </p>
+                        <% } else {%>
+                        <p class="text-success mt-4">Delivered</p>
+                        <% } %> <% if (orderDetails.orderStatus === 'Delivered')
+                        { %>
+                          <button class="btn btn-warning btn-sm" id="returnBtn" onclick="returnProduct()">Return a Product</button>
+                        <% } %>
+                      </div>
                     </div>
-            
-                    <!-- Delivery Details Card -->
-                    <div class="col-md-4">
-                        <div class="details-card card shadow-sm">
-                            <div class="card-body">
-                                <p class="card-title">Delivery Details</p>
-                                <p><label>Recipient:</label>&nbsp;<span id="recipient"></span></p>
-                                <p><label>Phone:</label>&nbsp;<span id="phone"></span></p>
-                                <p><label>Address:</label>&nbsp;<span id="address"></span></p>
-                                <p><label>Landmark:</label>&nbsp;<span id="landmark"></span></p>
-                            </div>
-                        </div>
+                  </div>
+
+                  <!-- Delivery Details Card -->
+                  <div class="col-md-4">
+                    <div class="details-card card shadow-sm">
+                      <div class="card-body">
+                        <p class="card-title">Delivery Details</p>
+                        <p>
+                          <label>Recipient:</label>&nbsp;<span
+                            id="recipient"
+                          ></span>
+                        </p>
+                        <p>
+                          <label>Phone:</label>&nbsp;<span id="phone"></span>
+                        </p>
+                        <p>
+                          <label>Address:</label>&nbsp;<span
+                            id="address"
+                          ></span>
+                        </p>
+                        <p>
+                          <label>Landmark:</label>&nbsp;<span
+                            id="landmark"
+                          ></span>
+                        </p>
+                      </div>
                     </div>
-            
-                    <!-- Payment Details Card -->
-                    <div class="col-md-4">
-                        <div class="details-card card shadow-sm">
-                            <div class="card-body">
-                                <p class="card-title">Payment Details</p>
-                                <p><label>Total Amount:</label> ₹ <%= orderDetails.totalAmount %></p>
-                                <p><label>Discount:</label> <span><%= orderDetails.discount %>%</span></p>
-                                <p><label>Total Payable:</label> ₹ <%= orderDetails.totalPayable %></p>
-                                <p><label>Payment Method:</label> <%= orderDetails.paymentMethod %></p>
-                                <p><label>Payment Status:</label> <span><%= orderDetails.paymentStatus %></span></p>
-                            </div>
-                        </div>
+                  </div>
+
+                  <!-- Payment Details Card -->
+                  <div class="col-md-4">
+                    <div class="details-card card shadow-sm">
+                      <div class="card-body">
+                        <p class="card-title">Payment Details</p>
+                        <p>
+                          <label>Total Amount:</label> ₹ <%=
+                          orderDetails.totalAmount %>
+                        </p>
+                        <p>
+                          <label>Discount:</label>
+                          <span><%= orderDetails.discount %>%</span>
+                        </p>
+                        <p>
+                          <label>Total Payable:</label> ₹ <%=
+                          orderDetails.totalPayable %>
+                        </p>
+                        <p>
+                          <label>Payment Method:</label> <%=
+                          orderDetails.paymentMethod %>
+                        </p>
+                        <p>
+                          <label>Payment Status:</label>
+                          <span><%= orderDetails.paymentStatus %></span>
+                        </p>
+                      </div>
                     </div>
+                  </div>
                 </div>
 
+                <div class="container mt-4" style="padding: 0">
+                  <div id="orderItemsContainer">
+                    <div
+                      class="order-item card shadow-sm p-3 d-flex flex-row align-items-center"
+                    >
+                      <div class="product-img-container">
+                        <img
+                          src="/images/sample-product.jpg"
+                          alt="Product Image"
+                          class="product-img"
+                        />
+                      </div>
 
-                <div class="container mt-4" style="padding: 0;">
+                      <div class="product-details flex-grow-1 px-3">
+                        <p class="product-name mb-1">Luxury Watch</p>
+                        <p class="product-price mb-1">Unit Price: ₹2,500</p>
+                        <p class="product-quantity mb-0">Quantity: 2</p>
+                      </div>
 
-                    <div id="orderItemsContainer">
-                        <div class="order-item card shadow-sm p-3 d-flex flex-row align-items-center">
-
-                          <div class="product-img-container">
-                                <img src="/images/sample-product.jpg" alt="Product Image" class="product-img">
-                            </div>
-                    
-                            <div class="product-details flex-grow-1 px-3">
-                                <p class="product-name mb-1">Luxury Watch</p>
-                                <p class="product-price mb-1">Unit Price: ₹2,500</p>
-                                <p class="product-quantity mb-0">Quantity: 2</p>
-                            </div>
-                    
-                            <div class="product-total text-end">
-                                <p>Sub Total: <span>50,000</span></p>
-                            </div>
-                        </div>
+                      <div class="product-total text-end">
+                        <p>Sub Total: <span>50,000</span></p>
+                      </div>
                     </div>
-                    
+                  </div>
                 </div>
-                
-                
-                
-
-
-            </div>
-            
+              </div>
             </div>
           </div>
         </div>
@@ -118,10 +165,14 @@
     <div id="dialogModal" class="dialog">
       <div class="dialog-content">
         <form id="cancelOrderForm">
-          <label for="blockReason">Why are you canceling this order?</label>
-          <p class="errorText"><small id="resonError" class="text-danger"></small></p>
-          <p class="errorText"><small id="resonSuccess" class="text-success"></small></p>
-          
+          <label for="cancelReason">Why are you canceling this order?</label>
+          <p class="errorText">
+            <small id="resonError" class="text-danger"></small>
+          </p>
+          <p class="errorText">
+            <small id="resonSuccess" class="text-success"></small>
+          </p>
+
           <input
             type="text"
             id="cancelReason"
@@ -134,9 +185,31 @@
       </div>
     </div>
 
+    <!-- return order item  -->
+    <div id="returnDialogModal" class="dialog">
+      <div class="dialog-content">
+        <form id="returnItemForm">
+          <label for="returnReason">Why are you canceling this order?</label>
+          <p class="errorText">
+            <small id="resonError" class="text-danger"></small>
+          </p>
+          <p class="errorText">
+            <small id="resonSuccess" class="text-success"></small>
+          </p>
+
+          <input
+            type="text"
+            id="returnReason"
+            class="dialogInput"
+            placeholder="Enter reason..."
+          />
+          <button type="submit" class="submitBtn">Cancel Order</button>
+          <button type="button" id="closeBtn" class="closeBtn">Close</button>
+        </form>
+      </div>
+    </div>
 
     <%- include("../../partials/userFooter") %>
     <script src="/javascripts/user/orderDetails.js"></script>
-
   </body>
 </html>

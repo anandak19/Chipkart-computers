@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Orders</title>
+    <link rel="stylesheet" href="/styles/account.css" />
+    <link rel="stylesheet" href="/styles/userPages/returnProduct.css" />
+    <%- include("../../partials/head") %>
+  </head>
+  <body>
+    <%- include("../../partials/userHeader") %>
+
+    <div class="account-wrapper page-wrapper">
+      <div class="content-wrapper profile-container">
+        <%- include("../../partials/userSidebar") %>
+
+        <div class="profile-data">
+          <div class="profie-content-wrapper">
+            <div class="content-section">
+              <!-- title  -->
+              <div class="account-title">
+                <p class="page-title">Choose the items to return</p>
+                <a class="back-btn" href="/account/orders">
+                  <i class="fa-solid fa-circle-arrow-left"></i> Back
+                </a>
+              </div>
+
+              <!-- order items  -->
+              <div class="container mt-4">
+                <div class="order-items">
+                  <div class="row">
+                    <!-- Product Card 1 -->
+
+                    <% items.forEach(item => { %>
+                    <div class="col-12">
+                      <div
+                        class="card p-3 mb-1 d-flex flex-row align-items-center justify-content-between"
+                      >
+                        <img
+                          src="<%= item.images[0].filepath %>"
+                          alt="Product Image"
+                          class="img-fluid rounded"
+                          style="width: 60px; height: 60px; object-fit: cover"
+                        />
+                        <div class="ms-3 flex-grow-1 product-details">
+                          <h6 class="mb-1"><%= item.name %></h6>
+                          <p class="text-muted mb-0">
+                            Quantity: <%= item.quantity %>
+                          </p>
+                        </div>
+                        <div>
+                          <input
+                            type="checkbox"
+                            value="<%= item.productId %>"
+                            class="form-check-input returnProducts"
+                            style="border: 1px solid black; padding: 12px"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <% }); %>
+                    
+                  </div>
+                </div>
+              </div>
+              <div class="return-btn-wrapper">
+                <button id="returnItemsOpenBtn">Return Selected Items</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- return order item  -->
+    <div id="returnDialogModal" class="dialog">
+      <div class="dialog-content">
+        <form id="returnItemForm">
+          <label for="returnReason">Why are you canceling this order?</label>
+          <p class="errorText">
+            <small id="resonError" class="text-danger"></small>
+          </p>
+          <p class="errorText">
+            <small id="resonSuccess" class="text-success"></small>
+          </p>
+
+          <input
+            type="text"
+            id="returnReason"
+            class="dialogInput"
+            placeholder="Enter reason..."
+          />
+          <button type="submit" class="submitBtn">Cancel Order</button>
+          <button type="button" id="closeBtn" class="closeBtn">Close</button>
+        </form>
+      </div>
+    </div>
+
+    <%- include("../../partials/userFooter") %>
+    <script src="/javascripts/user/returnProduct.js"></script>
+  </body>
+</html>

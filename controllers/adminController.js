@@ -689,6 +689,11 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     order.orderStatus = status;
+
+    if (status === 'Delivered') {
+      order.deliveryDate = new Date(); 
+    }
+
     await order.save(); 
 
     res.status(200).json({ success: true, message: "Order status updated successfully" });

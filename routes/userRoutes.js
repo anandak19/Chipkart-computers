@@ -66,11 +66,12 @@ router.get('/account/orders', userAccountController.getOrderHistory)
 router.get('/account/orders/all', varifyLoginUserSession, userAccountController.getAllOrders)
 router.get('/account/orders/all/ord/:id', userAccountController.getOrderDetaillsPage)
 router.get('/account/orders/all/ord/info/address', userAccountController.getDeliveryInfo)
+
 router.get('/account/orders/all/ord/info/itemes', userAccountController.getOrderItems)
 router.post('/account/orders/all/ord/cancel/order', userAccountController.cancelOrderByUser)
+router.get('/account/orders/all/ord/items/return', userAccountController.getReturnProductPage)
 
-// ORDERS ROUTES START 
-
+// ORDERS ROUTES START
 router.get('/account/wallet', userAccountController.getWallet)
 router.get('/account/coupons', userAccountController.getCoupons)
 
@@ -88,5 +89,7 @@ router.get('/checkout', getUser,  userOrderController.getCheckoutPage)
 // api calls
 router.post('/checkout/address', userOrderController.chooseDeliveryAddress)
 router.post('/checkout/confirm', varifyLoginUserSession, checkIsblocked, handleCart, userOrderController.placeOrder)
+
+
 
 module.exports = router
