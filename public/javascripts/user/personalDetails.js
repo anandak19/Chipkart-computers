@@ -1,12 +1,10 @@
 const personalDetailsForm = document.getElementById("detailsForm");
 const userName = document.getElementById("name");
 const phoneNumber = document.getElementById("phoneNumber");
-const email = document.getElementById("email");
 const dob = document.getElementById("dob");
 // errors
 const nameError = document.getElementById("nameError");
 const phoneNumberError = document.getElementById("phoneNumberError");
-const emailError = document.getElementById("emailError");
 const dobError = document.getElementById("dobError");
 const serverError = document.getElementById("serverError");
 // btns
@@ -14,7 +12,6 @@ const editBtn = document.getElementById("editBtn");
 const detailsSaveBtn = document.getElementById("detailsSaveBtn");
 // regex
 const nameRegex = /^[a-zA-Z\s]+$/;
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phoneNumberRegex = /^(\+\d{1,3}[- ]?)?\d{10,13}$/;
 const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[^\s]{4,}$/;
 
@@ -50,7 +47,6 @@ const getUserDetails = () => {
 editBtn.addEventListener("click", () => {
   userName.removeAttribute("readonly");
   phoneNumber.removeAttribute("readonly");
-  email.removeAttribute("readonly");
   dob.removeAttribute("readonly");
   detailsSaveBtn.style.display = "flex";
 });
@@ -61,7 +57,6 @@ personalDetailsForm.addEventListener("submit", (e) => {
 
   nameError.innerText = "";
   phoneNumberError.innerText = "";
-  emailError.innerText = "";
   dobError.innerText = "";
   serverError.innerText = "";
 
@@ -69,7 +64,6 @@ personalDetailsForm.addEventListener("submit", (e) => {
 
   const nameInput = userName.value.trim();
   const phoneNumberInput = phoneNumber.value.trim();
-  const emailInput = email.value.trim();
   const dobInput = dob.value.trim();
 
   if (!nameInput || !nameRegex.test(nameInput)) {
@@ -82,11 +76,6 @@ personalDetailsForm.addEventListener("submit", (e) => {
     phoneNumberError.innerText = "Enter a valid phone number";
   }
 
-  if (!emailInput || !emailRegex.test(emailInput)) {
-    isValid = false;
-    emailError.innerText = "Enter a valid email address";
-  }
-
   if (!dobInput) {
     isValid = false;
     dobError.innerText = "Enter a valid date of birth";
@@ -95,7 +84,6 @@ personalDetailsForm.addEventListener("submit", (e) => {
   if (isValid) {
     const body = {
       name: nameInput,
-      email: emailInput,
       phoneNumber: phoneNumberInput,
       dob: dobInput,
     };
@@ -116,12 +104,14 @@ personalDetailsForm.addEventListener("submit", (e) => {
         if (!ok) {
           serverError.innerText = data.error || "Something went wrong";
         } else {
-          // add a custom toster message for succes here
-          alert(data.message);
-          location.reload();
+          toastr.success(data.message, "Success");
+          setTimeout(() => {
+            location.reload();
+          }, 1000);
         }
       })
       .catch((error) => {
+        alert("Somthing went wrong")
         console.error("Fetch error:", error);
         serverError.innerText = "Network error. Please try again!";
       });

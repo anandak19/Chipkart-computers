@@ -56,13 +56,12 @@ exports.postUserDetails = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    let { name, email, phoneNumber, dob } = req.body;
-    if (!name || !email || !phoneNumber || !dob) {
+    let { name, phoneNumber, dob } = req.body;
+    if (!name || !phoneNumber || !dob) {
       return res.status(400).json({ error: "All fields are required" });
     }
 
     name = name.trim();
-    email = email.trim();
     phoneNumber = phoneNumber.trim();
     dob = dob.trim();
 
@@ -74,15 +73,6 @@ exports.postUserDetails = async (req, res) => {
 
     let refresh = false;
 
-    if (user.email !== email) {
-      errorMessage = await validateEmail(email);
-      if (errorMessage) {
-        console.log("Error in email: ", errorMessage);
-        return res.status(400).json({ error: errorMessage });
-      }
-      refresh = true;
-    }
-
     if (user.phoneNumber !== phoneNumber) {
       errorMessage = await validatePhoneNumber(phoneNumber);
       if (errorMessage) {
@@ -92,7 +82,6 @@ exports.postUserDetails = async (req, res) => {
     }
 
     user.name = name;
-    user.email = email;
     user.phoneNumber = phoneNumber;
     user.dob = dob;
 
@@ -297,7 +286,7 @@ exports.saveEditedAddress = async (req, res) => {
   }
 };
 
-// toggle adders default or not 
+// toggle adders default or not
 exports.toggleAddress = async (req, res) => {
   try {
     if (!req.user) {
@@ -337,65 +326,186 @@ exports.toggleAddress = async (req, res) => {
   }
 };
 
-// get all address of user 
+// get all address of user
 exports.getUsersAllAddress = async (req, res) => {
   try {
-
     if (!req.user) {
       return res.status(404).json({ error: "User not found in request." });
     }
 
-    const addressArray = await AddressSchema.find({userId: req.user._id})
-    
-    return res.status(200).json({ message: "Address fetched successfully", data: addressArray });
+    const addressArray = await AddressSchema.find({ userId: req.user._id });
+
+    return res
+      .status(200)
+      .json({ message: "Address fetched successfully", data: addressArray });
   } catch (error) {
     console.error("Error fetching address:", error);
     res.status(500).json({ error: "Internal server error" });
   }
-}
-
+};
 
 // ORDER HISTORY
 exports.getOrderHistory = (req, res) => {
   res.render("user/account/orderHistory", { currentPage: "orders" });
 };
 
-exports.getAllOrders = async(req, res) => {
+exports.getAllOrders = async (req, res) => {
   try {
-    // find all the orders of user 
-    const userId = String(req.user._id)
-    
+    // find all the orders of user
+    const userId = String(req.user._id);
+    let { page } = req.query;
+    page = page ? Number(page) : 0;
+    let limit = 3;
+    let skip = page * limit;
+
     const pipeline = [
       {
-        $match: {userId: userId}
+        $match: { userId: userId },
       },
       {
         $addFields: {
-          addressObjId: { $toObjectId: "$addressId" }
-        }
+          addressObjId: { $toObjectId: "$addressId" },
+        },
       },
       {
         $lookup: {
           from: "addresses",
           localField: "addressObjId",
           foreignField: "_id",
-          as: "addressDetails"
-        }
+          as: "addressDetails",
+        },
       },
       {
-        $unwind: { path: "$addressDetails", preserveNullAndEmptyArrays: true }
-      }
-    ]
+        $unwind: { path: "$addressDetails", preserveNullAndEmptyArrays: true },
+      },
+      {
+        $facet: {
+          paginatedResult: [
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+          ],
+          totalCount: [{ $count: "count" }],
+        },
+      },
+    ];
 
-    const orders = await Order.aggregate(pipeline)
+    const orders = await Order.aggregate(pipeline);
 
-    res.status(200).json({success: true, orders})
+    const paginatedResults = orders[0].paginatedResult;
+    const totalCount =
+      orders[0].totalCount.length > 0 ? orders[0].totalCount[0].count : 0;
 
+    const hasMore = skip + paginatedResults.length < totalCount;
+
+    res.status(200).json({ success: true, orders: paginatedResults, hasMore });
   } catch (error) {
     console.error("Error fetching orders:", error);
     res.status(500).json({ error: "Internal server error" });
   }
-}
+};
+
+exports.getOrderDetaillsPage = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      res.redirect("/account/orders");
+    }
+
+    const orderDetails = await Order.findById(id);
+    if (!orderDetails) {
+      res.redirect("/account/orders");
+    }
+
+    req.session.ordId = orderDetails._id;
+
+    res.render("user/account/orderDetails", {
+      currentPage: "orders",
+      orderDetails,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.getDeliveryInfo = async (req, res) => {
+  try {
+    const orderId = req.session.ordId;
+    if (!orderId) {
+      return res.status(400).json({ error: "Session expired" });
+    }
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+    console.log(order.userId);
+
+    const address = await AddressSchema.findById(order.addressId);
+    if (!address) {
+      return res.status(404).json({ error: "Address not found" });
+    }
+
+    res.status(200).json({ address });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.getOrderItems = async (req, res) => {
+  try {
+    const orderId = req.session.ordId;
+    if (!orderId) {
+      return res.status(400).json({ error: "Session expired" });
+    }
+    const orderDetails = await Order.findById(orderId);
+    const items = orderDetails.items;
+
+    if (!orderDetails) {
+      return res
+        .status(404)
+        .json({ error: "Order not found or faild to join" });
+    }
+
+    res.status(200).json({ items });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.cancelOrderByUser = async (req, res) => {
+  try {
+    const { cancelReason } = req.body;
+    console.log(cancelReason);
+
+    if (!cancelReason) {
+      return res.status(400).json({ error: "Provide a valid reason" });
+    }
+
+    const orderId = req.session.ordId;
+    if (!orderId) {
+      return res.status(400).json({ error: "Session expired" });
+    }
+    const orderDetails = await Order.findById(orderId);
+    if (!orderDetails) {
+      return res.status(400).json({ error: "Order not found" });
+    }
+
+    orderDetails.isCancelled = true;
+    orderDetails.orderStatus = 'Cancelled'
+    orderDetails.cancelReason = cancelReason;
+
+    await orderDetails.save();
+
+    res.status(200).json({ message: "Order cancelled successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 
 // WALLET
 exports.getWallet = (req, res) => {

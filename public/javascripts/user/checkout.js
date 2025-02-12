@@ -120,8 +120,7 @@ async function checkedAddres(addressId) {
   }
 }
 
-
-// method to place the order 
+// method to place the order
 const placeOrderBtn = document.getElementById('placeOrderBtn')
 placeOrderBtn.addEventListener('click', async() => {
   console.log(paymentMethod)

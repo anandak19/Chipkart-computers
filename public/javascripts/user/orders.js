@@ -1,68 +1,110 @@
-
-const ordersContainer = document.querySelector(".orders-container");
+const ordersContainer = document.querySelector(".ordersContainer");
 
 function renderOrders(orders) {
-    ordersContainer.innerHTML = ""; 
-  
-    orders.forEach(order => {
-      const orderCard = document.createElement("div");
-      orderCard.classList.add("order-card", "row");
-  
-      // Left Section: Products
-      const productsHTML = order.items.map(item => `
+  ordersContainer.innerHTML = "";
+
+  orders.forEach((order) => {
+    const orderCard = document.createElement("div");
+    orderCard.classList.add("order-card", "row");
+
+    // Left Section: Products
+    const productsHTML = order.items
+      .map(
+        (item) => `
         <div class="item-section d-flex align-items-center">
           <div class="item-image">
             <img src="${item.image[0].filepath}" alt="${item.name}">
           </div>
           <div class="item-details">
             <p class="product-name">${item.name}</p>
-            <p class="product-quantity">Quantity: ${item.quantity} Pcs</p>
+            <p class="product-quantity">${item.quantity} Pcs</p>
             <p class="product-price">₹${item.subTotalPrice}</p>
           </div>
         </div>
-      `).join("");
-  
-      // Right Section: Address & Status
-      const addressHTML = `
+      `
+      )
+      .join("");
+
+    // Right Section: Address & Status
+    const addressHTML = `
         <div class="col-md-6 address-section">
           <p class="order-status">Status: <span class="text-primary">${order.orderStatus}</span></p>
-          <p class="delivery-label">Delivery To:</p>
-          <p class="delivery-address">${order.addressDetails.fullName}, ${order.addressDetails.addressLine}, ${order.addressDetails.city}, ${order.addressDetails.state}, ${order.addressDetails.country}, Pincode: ${order.addressDetails.pincode}</p>
-          <p class="payment-method">Payment: ${order.paymentMethod}</p>
         </div>
       `;
-  
-      // Append to Order Card
-      orderCard.innerHTML = `
+
+    const moreHTML = `
+      <div class="details mt-3">
+        <div class="total-price">
+          <p>Total: ₹ ${order.totalPayable} <span>(${order.paymentStatus})</span></p>
+        </div>
+        <div class="show-more">
+          <a href="/account/orders/all/ord/${order._id}">Show Details</a>
+        </div>
+      </div>
+      `;
+
+    // Append to Order Card
+    orderCard.innerHTML = `
         <div class="col-md-6">
           <div class="products-list">${productsHTML}</div>
         </div>
         ${addressHTML}
+        ${moreHTML}
       `;
-  
-      ordersContainer.appendChild(orderCard);
-    });
-  }
 
-
-// get the order items of user 
-
-const getOrders = async() =>{
-    try {
-        const response = await fetch('/account/orders/all')
-        const data = await response.json()
-        if (response.ok) {
-            if (data.success) {
-                console.log(data)
-                renderOrders(data.orders)
-            }else{
-                alert("You have no orders")
-            }
-        }
-    } catch (error) {
-        console.error(error);
-        alert("Internal server error")
-    }
+    ordersContainer.appendChild(orderCard);
+  });
 }
 
-document.addEventListener('DOMContentLoaded', getOrders)
+// paginations
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
+let page = 0;
+let hasMore = false;
+const updatePaginators = (page, hasMore) => {
+  prevBtn.disabled = page === 0;
+  nextBtn.disabled = !hasMore;
+};
+
+// get the order items of user
+const getOrders = async (page) => {
+  try {
+    let url = `/account/orders/all?page=${page}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP Error! Status: ${response.status}`);
+    }
+    const data = await response.json();
+
+    if (data.success) {
+      console.log(data.orders);
+      renderOrders(data.orders);
+      updatePaginators(page, data.hasMore);
+    } else {
+      alert("Response not ok");
+    }
+  } catch (error) {
+    console.log(error);
+    alert("Internal server error");
+  }
+};
+
+const ordersDiv = document.querySelector('.profile-data')
+prevBtn.addEventListener("click", () => {
+  page--;
+  window.scrollTo(0, 0);
+  ordersDiv.scrollTo(0, 0);
+  getOrders(page);
+});
+
+nextBtn.addEventListener("click", () => {
+  page++;
+  window.scrollTo(0, 0);
+  ordersDiv.scrollTo(0, 0);
+  getOrders(page);
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  getOrders(0);
+});
