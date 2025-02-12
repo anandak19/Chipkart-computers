@@ -38,11 +38,13 @@ router.get('/offers', isAdminLogin, adminController.getOfferModule)
 // render the order page to the admin
 router.get('/orders',isAdminLogin, adminController.getOrderManagement)
 router.get('/orders/all', adminController.getAllOrders)
+// of single order 
 router.get('/orders/info', adminController.getUserDataAndDeliveryInfo)
 router.get('/orders/items', adminController.getOrderItems)
+router.post('/orders/cancel/order', adminController.cancelOrderByAdmin)
 
 // router.get('/orders/all/:orderId', adminController.renderOrderDetailsPage)
-router.get('/orders/all/:orderId',isAdminLogin, adminController.renderOrderDetailsPage)
+router.get('/orders/all/:orderId', isAdminLogin, adminController.renderOrderDetailsPage)
 router.post('/orders/update-status', adminController.updateOrderStatus)
 
 // render the sales report page 

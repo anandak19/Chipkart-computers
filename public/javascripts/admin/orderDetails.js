@@ -89,13 +89,34 @@ document.addEventListener("DOMContentLoaded", () => {
 // cancel order 
 const cancelOrderBtn = document.querySelector('.cancel-order-btn')
 const cancelReason = document.getElementById('cancelReason')
-cancelOrderBtn.addEventListener('click', () =>{
-    const reson = cancelReason.value.trim()
-    if (!reson) {
-        toastr.error("You must provide a valid reson");
+cancelOrderBtn.addEventListener('click', async() =>{
+    const reason = cancelReason.value.trim()
+    if (!reason) {
+        toastr.error("You must provide a valid reason");
         return
     } 
-    alert("Cancelled")
+
+    try {
+      const response = await fetch('/admin/orders/cancel/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({cancelReason: reason})
+      })
+
+      const data = await response.json()
+      if (response.ok) {
+        toastr.success(data.message || "Order cancelled")
+        setTimeout(() => {
+          location.reload()
+        } , 2000)
+      }else{
+        toastr.error(data.error || "Somthing went wrong")
+      }
+
+    } catch (error) {
+      console.error(error);
+      alert("somthing went wrong")
+    }
 })
 
 

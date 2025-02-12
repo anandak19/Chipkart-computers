@@ -777,7 +777,36 @@ exports.getOrderItems = async (req, res) => {
 }
 
 
-// get order items 
+// get order items
+exports.cancelOrderByAdmin = async (req, res) => {
+  try {
+    const { cancelReason } = req.body;
+
+    if (!cancelReason) {
+      return res.status(400).json({ error: "Provide a valid reason" });
+    }
+
+    const orderId = req.session.orderId;
+    if (!orderId) {
+      return res.status(400).json({ error: "Session expired" });
+    }
+    const orderDetails = await OrderSchema.findById(orderId);
+    if (!orderDetails) {
+      return res.status(400).json({ error: "Order not found" });
+    }
+
+    orderDetails.isCancelled = true;
+    orderDetails.orderStatus = 'Cancelled'
+    orderDetails.cancelReason = cancelReason;
+
+    await orderDetails.save();
+
+    res.status(200).json({ message: "Order cancelled successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
 
 // -------------ORDER MANAGMENT END
 

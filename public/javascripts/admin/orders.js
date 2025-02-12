@@ -26,11 +26,16 @@ const showorders = (orders, totalorders) => {
             <td>${order.paymentStatus}</td>
             <td>${order.paymentMethod}</td>
             <td>
-            <select onchange="updateOrderStatus(this.value, '${order._id}')">
-                <option value="Ordered" ${order.orderStatus === 'Ordered' ? 'selected' : ''}>Ordered</option>
-                <option value="Shipped" ${order.orderStatus === 'Shipped' ? 'selected' : ''}>Shipped</option>
-                <option value="Delivered" ${order.orderStatus === 'Delivered' ? 'selected' : ''}>Delivered</option>
-            </select>
+            ${
+              order.isCancelled ? '<span class="text-danger"><strong>Cancelled</strong></span>'
+              : `
+              <select onchange="updateOrderStatus(this.value, '${order._id}')">
+                  <option value="Ordered" ${order.orderStatus === 'Ordered' ? 'selected' : ''}>Ordered</option>
+                  <option value="Shipped" ${order.orderStatus === 'Shipped' ? 'selected' : ''}>Shipped</option>
+                  <option value="Delivered" ${order.orderStatus === 'Delivered' ? 'selected' : ''}>Delivered</option>
+              </select>
+              `
+            }
             </td>
             <td><a href="/admin/orders/all/${order._id}">View Order</a></td>
         `;
