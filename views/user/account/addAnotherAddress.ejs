@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Cart</title>
+    <%- include("../../partials/head") %>
+    <link rel="stylesheet" href="/styles/userPages/checkout.css" />
+  </head>
+  <body>
+    <%- include("../../partials/userHeader") %>
+
+    <div class="page-wrapper">
+      <div class="content-wrapper">
+        <div class="container-fluid cart-page-container">
+          <div class="page-title d-flex justify-content-between">
+            <h3 class="cart-title">Add Different Address</h3>
+            <button id="backBtn" onclick=window.history.back();>
+              <i class="fa-solid fa-circle-arrow-left"></i>Go Back
+            </button>
+          </div>
+          <!-- container  -->
+          <div class="delivery-address-wrapper checkout-container">
+            <div class="container mt-4">
+              <form class="row g-3" id="addressForm">
+                <div class="col-md-4">
+                  <label for="addressType" class="form-label">Address Type</label
+                  >
+                  <select class="form-select no-border" id="addressType">
+                    <option value="" selected disabled>
+                      Select Address Type
+                    </option>
+                    <option value="Home">Home</option>
+                    <option value="Work">Work</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <small class="text-danger" id="addressTypeError"></small>
+                </div>
+
+                <div class="col-md-4">
+                  <label for="fullName" class="form-label">Full Name</label>
+                  <input
+                    type="text"
+                    class="form-control no-border"
+                    id="fullName"
+                    placeholder="Enter full name"
+                  />
+                  <small class="text-danger" id="fullNameError"></small>
+                </div>
+
+                <div class="col-md-4">
+                  <label for="phoneNumber" class="form-label"
+                    >Phone Number</label
+                  >
+                  <input
+                    type="tel"
+                    class="form-control no-border"
+                    id="phoneNumber"
+                    placeholder="Enter phone number"
+                  />
+                  <small class="text-danger" id="phoneNumberError"></small>
+                </div>
+
+                <div class="col-md-4">
+                  <label for="addressLine" class="form-label"
+                    >Address Line</label
+                  >
+                  <input
+                    type="text"
+                    class="form-control no-border"
+                    id="addressLine"
+                    placeholder="Enter address"
+                  />
+                  <small class="text-danger" id="addressLineError"></small>
+                </div>
+
+                <div class="col-md-4">
+                  <label for="city" class="form-label">City</label>
+                  <input
+                    type="text"
+                    class="form-control no-border"
+                    id="city"
+                    placeholder="Enter city"
+                  />
+                  <small class="text-danger" id="cityError"></small>
+                </div>
+
+                <div class="col-md-4">
+                  <label for="state" class="form-label">State</label>
+                  <select class="form-select no-border" id="state">
+                    <option value="Kerala">Kerala</option>
+                  </select>
+                </div>
+
+                <div class="col-md-4">
+                  <label for="pincode" class="form-label">Pincode</label>
+                  <input
+                    type="text"
+                    class="form-control no-border"
+                    id="pincode"
+                    placeholder="Enter pincode"
+                  />
+                  <small class="text-danger" id="pincodeError"></small>
+                </div>
+
+                <div class="col-md-4">
+                  <label for="country" class="form-label">Country</label>
+                  <select class="form-select no-border" id="country">
+                    <option value="India" selected>India</option>
+                  </select>
+                </div>
+
+                <div class="col-md-4">
+                  <label for="landmark" class="form-label"
+                    >Landmark (Optional)</label
+                  >
+                  <input
+                    type="text"
+                    class="form-control no-border"
+                    id="landmark"
+                    placeholder="Enter landmark"
+                  />
+                </div>
+
+                <div class="col-md-12">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="isDefault"
+                    />
+                    <label class="form-check-label" for="isDefault"
+                      >Set as Default Address</label
+                    >
+                  </div>
+                </div>
+
+                <div class="col-md-12 d-flex justify-content-center">
+                  <small class="text-danger " id="serverMessage"></small>
+                  <button type="submit" class="btn btn-primary w-50">
+                    Save Address
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%- include("../../partials/userFooter") %>
+    <script src="/javascripts/apiCalls/common.js"></script>
+    <script src="/javascripts/user/addressNew.js"></script>
+  </body>
+</html>

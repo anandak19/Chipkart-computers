@@ -55,21 +55,24 @@ router.get('/account/address/all', varifyLoginUserSession, userAccountController
 router.get('/account/address/new',isLogin, userAccountController.getAddressForm)
 router.post('/account/address/new', varifyLoginUserSession, validateAddressFields, userAccountController.addAddress)
 router.delete('/account/address/:id', varifyLoginUserSession, userAccountController.deleteAddress)
-// get the edit page -- not done
-router.get('/account/address/:id', varifyLoginUserSession)
+router.get('/account/address/edit/:id', varifyLoginUserSession, userAccountController.getEditAddressPage) //working
+router.get('/account/address/address-details', varifyLoginUserSession, userAccountController.getAddressDetails) //working
 // clint side is not added 
-router.patch('/account/address/:id', varifyLoginUserSession, validateAddressFields, userAccountController.saveEditedAddress) // clint side is not completed
+router.patch('/account/address/edit', varifyLoginUserSession, validateAddressFields, userAccountController.saveEditedAddress) // clint side is not completed
 router.patch('/account/address/toogle/:id', varifyLoginUserSession, userAccountController.toggleAddress)
 
 // ORDERS ROUTES START ---isLogin
 router.get('/account/orders', userAccountController.getOrderHistory)
+// updated 
 router.get('/account/orders/all', varifyLoginUserSession, userAccountController.getAllOrders)
 router.get('/account/orders/all/ord/:id', userAccountController.getOrderDetaillsPage)
 router.get('/account/orders/all/ord/info/address', userAccountController.getDeliveryInfo)
 
+// updated 
 router.get('/account/orders/all/ord/info/itemes', userAccountController.getOrderItems)
 router.post('/account/orders/all/ord/cancel/order', userAccountController.cancelOrderByUser)
 router.get('/account/orders/all/ord/items/return', userAccountController.getReturnProductPage)
+router.post('/account/orders/all/ord/items/return', userAccountController.returnSelectedProducts)
 
 // ORDERS ROUTES START
 router.get('/account/wallet', userAccountController.getWallet)
@@ -89,6 +92,8 @@ router.get('/checkout', getUser,  userOrderController.getCheckoutPage)
 // api calls
 router.post('/checkout/address', userOrderController.chooseDeliveryAddress)
 router.post('/checkout/confirm', varifyLoginUserSession, checkIsblocked, handleCart, userOrderController.placeOrder)
+router.get('/checkout/address/new', userOrderController.getAddAnotherAddressPage)
+
 
 
 

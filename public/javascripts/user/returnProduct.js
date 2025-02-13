@@ -1,9 +1,28 @@
 document.addEventListener("DOMContentLoaded", () => {
   const returnItemsOpenBtn = document.getElementById("returnItemsOpenBtn");
+  const closeBtn = document.getElementById("closeBtn");
+  const returnDialogModal = document.getElementById("returnDialogModal");
+  const returnItemForm = document.getElementById("returnItemForm");
 
-  returnItemsOpenBtn.addEventListener("click", async() => {
+  returnItemsOpenBtn.addEventListener("click", () => {
+    returnDialogModal.style.display = "flex";
+  });
+
+  closeBtn.addEventListener("click", () => {
+    returnDialogModal.style.display = "none";
+  });
+
+  returnItemForm.addEventListener("submit", async (e) => {
+    e.preventDefault()
     let checkboxes = document.querySelectorAll(".returnProducts");
     let selectedProducts = [];
+
+    const returnReason = document.getElementById('returnReason').value.trim()
+
+    if (!returnReason) {
+      toastr.error("Please enter a reason for return");
+      return
+    }
 
     checkboxes.forEach((checkbox) => {
       if (checkbox.checked) {
@@ -11,8 +30,34 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    console.log("Selected Products:", selectedProducts);
+    if (selectedProducts.length === 0) {
+      toastr.error("Choose the items you want to return");
+      return
+    }
 
-    const response = await fet
+    try {
+      const response = await fetch("/account/orders/all/ord/items/return", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productIds: selectedProducts,
+          returnReson: returnReason,
+        }),
+      });
+
+      const data = await response.json();
+      console.log(data);
+      if (response.ok) {
+        toastr.success("Your return request has been submitted successfully!");
+        // returnDialogModal.style.display = "none";
+      } else {
+        toastr.error(data.error);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error");
+    }
   });
 });

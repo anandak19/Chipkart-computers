@@ -4,6 +4,8 @@ const ProductSchema = require("../models/Product");
 const OrderSchema = require("../models/Order");
 const AddressSchema = require("../models/Address");
 const { getOrderItemsDetails } = require("../utils/orderManagement");
+const OrderItem = require("../models/orderItem");
+const { default: mongoose } = require("mongoose");
 
 exports.getDashboard = (req, res) => {
   res.render("admin/dashbord", { title: "Admin Dashboard" });
@@ -639,36 +641,44 @@ exports.getAllOrders = async (req, res) => {
     const limit = 5; //make this to 5 later
     const skip = page * limit;
     const pipeline = [];
-     
-  
-      if (search) {
-        const query = search.trim();
-        pipeline.push({
-          $match: {
-            orderId: { $regex: query, $options: "i" }
-          }
-        });
-      }
-  
+
+    if (search) {
+      const query = search.trim();
       pipeline.push({
-        $facet: {
-          ordersCount: [{ $count: "total" }],
-          paginatedResult: [{ $skip: skip }, { $limit: limit }],
+        $match: {
+          orderId: { $regex: query, $options: "i" },
         },
       });
-  
-      const result = await OrderSchema.aggregate(pipeline);
-  
-      const totalorders = result[0]?.ordersCount[0]?.total || 0;
-      console.log(result[0]);
-      const orders = result[0]?.paginatedResult;
-      const hasMore = skip + orders.length < totalorders;
-  
-      res.status(200).json({
-        totalorders,
-        orders,
-        hasMore,
-      });
+    }
+
+    pipeline.push({
+      $lookup: {
+        from: "orderitems",
+        localField: "_id",
+        foreignField: "orderId",
+        as: "items",
+      },
+    });
+
+    pipeline.push({
+      $facet: {
+        ordersCount: [{ $count: "total" }],
+        paginatedResult: [{ $skip: skip }, { $limit: limit }],
+      },
+    });
+
+    const result = await OrderSchema.aggregate(pipeline);
+    console.log(result);
+
+    const totalorders = result[0]?.ordersCount[0]?.total || 0;
+    const orders = result[0]?.paginatedResult;
+    const hasMore = skip + orders.length < totalorders;
+
+    res.status(200).json({
+      totalorders,
+      orders,
+      hasMore,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });
@@ -677,110 +687,109 @@ exports.getAllOrders = async (req, res) => {
 
 exports.updateOrderStatus = async (req, res) => {
   try {
-    const {  orderId, status } = req.body
+    const { orderId, status } = req.body;
     const validStatuses = ["Ordered", "Shipped", "Delivered"];
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({ success: false, message: "Invalid order status" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid order status" });
     }
 
     const order = await OrderSchema.findById(orderId);
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
     }
 
     order.orderStatus = status;
 
-    if (status === 'Delivered') {
-      order.deliveryDate = new Date(); 
+    if (status === "Delivered") {
+      order.deliveryDate = new Date();
     }
 
-    await order.save(); 
+    await order.save();
 
-    res.status(200).json({ success: true, message: "Order status updated successfully" });
-
+    res
+      .status(200)
+      .json({ success: true, message: "Order status updated successfully" });
   } catch (error) {
     console.error("Error updating order status:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
-}
-
+};
 
 exports.renderOrderDetailsPage = async (req, res) => {
   try {
-    const {orderId} = req.params 
+    const { orderId } = req.params;
 
     if (!orderId) {
-      res.redirect('/orders/all')
+      res.redirect("/orders/all");
     }
 
-    const orderDetails = await OrderSchema.findById(orderId)
+    const orderDetails = await OrderSchema.findById(orderId);
     if (!orderDetails) {
-      res.redirect('/orders/all')
+      res.redirect("/orders/all");
     }
 
-    req.session.orderId = orderDetails._id
+    req.session.orderId = orderDetails._id;
 
     res.render("admin/orderDetails", { title: "Order Details", orderDetails });
-
   } catch (error) {
-    console.log(error)
-    res.redirect('/orders/all')
+    console.log(error);
+    res.redirect("/orders/all");
   }
-}
+};
 
-// get user detail with id 
+// get user detail with id
 exports.getUserDataAndDeliveryInfo = async (req, res) => {
   try {
-    const orderId = req.session.orderId
+    const orderId = req.session.orderId;
     if (!orderId) {
-      return res.status(400).json({error: 'Session expired'})
+      return res.status(400).json({ error: "Session expired" });
     }
-    const order = await OrderSchema.findById(orderId)
+    const order = await OrderSchema.findById(orderId);
     if (!order) {
-      return res.status(404).json({error: 'Order not found'})
+      return res.status(404).json({ error: "Order not found" });
     }
-    console.log(order.userId)
+    console.log(order.userId);
 
-    const user = await UserSchema.findById(order.userId)
+    const user = await UserSchema.findById(order.userId);
     if (!user) {
-      return res.status(404).json({error: 'User not found'})
+      return res.status(404).json({ error: "User not found" });
     }
 
-    const address = await AddressSchema.findById(order.addressId)
+    const address = await AddressSchema.findById(order.addressId);
     if (!address) {
-      return res.status(404).json({error: 'Address not found'})
+      return res.status(404).json({ error: "Address not found" });
     }
 
-    res.status(200).json({user, address})
-    
+    res.status(200).json({ user, address });
   } catch (error) {
-    console.log(error)
-    res.status(500).json({error: 'Internal server error'})
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
   }
-}
+};
 
 exports.getOrderItems = async (req, res) => {
   try {
-    const orderId = req.session.orderId
+    const orderId = req.session.orderId;
     if (!orderId) {
-      return res.status(400).json({error: 'Session expired'})
+      return res.status(400).json({ error: "Session expired" });
     }
-    const orderDetails = await OrderSchema.findById(orderId)
-    const items = orderDetails.items
+    const items = await OrderItem.find({ orderId: orderId });
 
-    console.log("The result")
-    if (!orderDetails) {
-      return res.status(404).json({error: 'Order not found or faild to join'})
+    console.log("The result");
+    if (!items) {
+      return res.status(404).json({ error: "Items not found for order" });
     }
 
-    res.status(200).json({items})
-    
+    res.status(200).json({ items });
   } catch (error) {
-    console.log(error)
-    res.status(500).json({error: 'Internal server error'})
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
   }
-}
-
+};
 
 // get order items
 exports.cancelOrderByAdmin = async (req, res) => {
@@ -801,7 +810,7 @@ exports.cancelOrderByAdmin = async (req, res) => {
     }
 
     orderDetails.isCancelled = true;
-    orderDetails.orderStatus = 'Cancelled'
+    orderDetails.orderStatus = "Cancelled";
     orderDetails.cancelReason = cancelReason;
 
     await orderDetails.save();
@@ -811,10 +820,28 @@ exports.cancelOrderByAdmin = async (req, res) => {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });
   }
-}
+};
+
+exports.approveReturnItem = async (req, res) => {
+  try {
+
+    let {id: itemId} = req.params
+
+    const orderItem = await OrderItem.findById(itemId)
+    
+    orderItem.isReturned = true
+    await orderItem.save()
+
+
+    res.status(200).json({ message: "Return approved successfully" });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 
 // -------------ORDER MANAGMENT END
-
 
 exports.getSalesReport = (req, res) => {
   res.render("admin/salesReport", { title: "Sales Report" });

@@ -26,7 +26,7 @@ const renderAddressses = (addresses) => {
       }, ${address.pincode},</p>
               </div>
               <div class="actions">
-                <a href="/account/address/${
+                <a href="/account/address/edit/${
                   address._id
                 }"><i class="fas fa-pen"></i></a>
                 <button class="delete-btn" data-id="${

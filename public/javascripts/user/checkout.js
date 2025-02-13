@@ -38,7 +38,7 @@ const renderAddressses = (addressArray) => {
                 <input type="radio" name="address" class="form-check-input address-radio" data-id="${
                   address._id
                 }" ${address.isDefault ? "checked" : ""}/>
-                <button id="editAddressBtn" class="btn btn-light">
+                <button id="editAddressBtn" class="btn btn-light editAddressBtn" data-id="${address._id}">
                     <i class="fas fa-edit"></i>
                 </button>
             </div>
@@ -53,6 +53,19 @@ const renderAddressses = (addressArray) => {
         checkedAddres(this.dataset.id);
       });
     });
+
+    document.querySelectorAll(".editAddressBtn").forEach(button => {
+      button.addEventListener('click', async function () {
+        const addressId = this.getAttribute("data-id");
+        if (addressId) {
+          window.location.href = `/account/address/edit/${addressId}`
+        }else{
+          alert("faild to get edit page")
+        }
+          
+      })
+    })
+
   }
 };
 
@@ -158,3 +171,7 @@ placeOrderBtn.addEventListener('click', async() => {
     alert("Somthing went wrong")
   }
 })
+
+function newAddressClicked() {
+  window.location.href = "/checkout/address/new";
+}

@@ -110,13 +110,13 @@ addressForm.addEventListener("submit", async (e) => {
       const data = await response.json();
 
       if (!response.ok) {
-        serverMessage.innerText = data.error || "Server Error"
+        toastr.error(data.error || "Server Error")
       }
 
       serverMessage.classList.remove('text-danger')
       serverMessage.classList.add('text-success')
-      serverMessage.innerText = data.message
       console.log("Address added successfully:", data);
+      toastr.success(data.message || "Address added successfully")
       addressForm.reset()
     } catch (error) {
       console.error("Error adding address:", error);

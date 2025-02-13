@@ -30,6 +30,8 @@ const showOrderItems = (items) => {
           <p class="product-name mb-1">${item.name}</p>
           <p class="product-price mb-1">Unit Price: ₹${item.price.toLocaleString()}</p>
           <p class="product-quantity mb-0">Quantity: ${item.quantity}</p>
+          ${item.isReturnRequested ? `<p class= "text-warning">Return requested </p> `: '' }
+          ${item.isReturned ? `<p class= "text-danger">Returned</p> `: '' }
         </div>
   
         <div class="product-total text-end">

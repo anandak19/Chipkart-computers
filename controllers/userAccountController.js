@@ -11,6 +11,8 @@ const {
 } = require("../utils/validations");
 const Order = require("../models/Order");
 const { getOrderItemsDetails } = require("../utils/orderManagement");
+const OrderItem = require("../models/orderItem");
+const { default: mongoose } = require("mongoose");
 
 // make a session validate middleware later that sends json response
 
@@ -203,6 +205,32 @@ exports.addAddress = async (req, res) => {
   }
 };
 
+exports.getEditAddressPage = async (req, res) => {
+  const { id } = req.params;
+  req.session.editAddressId = id
+  res.render("user/account/editAddress", { currentPage: "address" });
+}
+
+exports.getAddressDetails = async(req, res) => {
+  try {
+    const addressId = req.session.editAddressId
+    if (!addressId) {
+      return res.status(400).json({error: "Session expired"})
+    }
+
+    const addressDetails = await AddressSchema.findById(addressId)
+    if (!addressDetails) {
+      return res.status(400).json({error: "Addresss Not found"})
+    }
+
+    res.status(200).json({message: 'Address fetched successfully', addressDetails})
+    
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 // delete a address
 exports.deleteAddress = async (req, res) => {
   try {
@@ -237,7 +265,7 @@ exports.saveEditedAddress = async (req, res) => {
       return res.status(404).json({ error: "User not found in request." });
     }
 
-    const { id } = req.params;
+    const addressId =  req.session.editAddressId
 
     const {
       addressType,
@@ -252,7 +280,7 @@ exports.saveEditedAddress = async (req, res) => {
     } = req.body;
 
     let address = await AddressSchema.findOne({
-      _id: id,
+      _id: addressId,
       userId: req.user._id,
     });
 
@@ -380,6 +408,14 @@ exports.getAllOrders = async (req, res) => {
         $unwind: { path: "$addressDetails", preserveNullAndEmptyArrays: true },
       },
       {
+        $lookup: {
+          from: "orderitems",
+          localField: "_id",
+          foreignField: "orderId",
+          as: "items",
+        },
+      },
+      {
         $facet: {
           paginatedResult: [
             { $sort: { createdAt: -1 } },
@@ -455,22 +491,21 @@ exports.getDeliveryInfo = async (req, res) => {
   }
 };
 
+// need to test
 exports.getOrderItems = async (req, res) => {
   try {
     const orderId = req.session.ordId;
     if (!orderId) {
       return res.status(400).json({ error: "Session expired" });
     }
-    const orderDetails = await Order.findById(orderId);
-    const items = orderDetails.items;
+    const orderItems = await OrderItem.find({ orderId: orderId });
 
-    if (!orderDetails) {
-      return res
-        .status(404)
-        .json({ error: "Order not found or faild to join" });
+    if (!orderItems) {
+      return res.status(404).json({ error: "Order items not found" });
     }
+    console.log(orderItems);
 
-    res.status(200).json({ items });
+    res.status(200).json({ items: orderItems });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });
@@ -515,14 +550,81 @@ exports.getReturnProductPage = async (req, res) => {
       return res.status(400).json({ error: "Session expired" });
     }
 
-    const items = await getOrderItemsDetails(orderId);
-    console.log(items)
+    const items = await OrderItem.find({ orderId: orderId, isReturnRequested: false  });
+    console.log(items);
 
     if (!items) {
       return res.status(404).json({ error: "Order Items not found" });
     }
 
     res.render("user/account/returnProduct", { currentPage: "orders", items });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.returnSelectedProducts = async (req, res) => {
+  try {
+    const orderId = req.session.ordId;
+
+    if (!orderId) {
+      return res.status(400).json({ error: "Session expired" });
+    }
+
+    const order = await Order.findById(orderId)
+    console.log(order)
+
+
+    if (order.orderStatus !== 'Delivered') {
+      return res.status(404).json({ error: "Order Is not yet deliverd" });
+    }
+
+    const today = new Date();
+    const deliveryDate = new Date(order.deliveryDate);
+    
+    const differenceInTime = today - deliveryDate;
+    const differenceInDays = differenceInTime / (1000 * 60 * 60 * 24); 
+    
+    if (differenceInDays > 10) {
+      return res.status(400).json({
+        error: "You can no longer return this product, since the 10-day return duration has exceeded."
+      });
+    }
+    
+
+    const items = await OrderItem.find({ orderId: orderId });
+    console.log(items);
+
+    if (!items) {
+      return res.status(404).json({ error: "Order Items not found" });
+    }
+
+    const { productIds, returnReson } = req.body;
+    if (!Array.isArray(productIds) || productIds.length === 0) {
+      return res
+        .status(400)
+        .json({ error: "Choose the items you want to return" });
+    }
+
+    if (!returnReson) {
+      return res.status(400).json({ error: "Please provide a reason for returning" });
+    }
+
+    const objectIds = productIds.map(id => new mongoose.Types.ObjectId(id));
+
+    const result = await OrderItem.updateMany(
+      { orderId: orderId, productId: { $in: objectIds } },
+      { $set: { isReturnRequested: true, returnReason: returnReson } }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(400).json({ error: "No matching products found in order. Request faild" });
+    }
+    
+
+    res.status(200).json({ message: "Return request send" });
+
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });

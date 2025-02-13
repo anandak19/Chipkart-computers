@@ -2,16 +2,6 @@ const mongoose = require("mongoose");
 
 const { Schema } = mongoose;
 
-
-const CartProductSchema = new Schema({
-  productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
-  name: { type: String, required: true },
-  quantity: { type: Number, required: true },
-  price: { type: Number, required: true },
-  image: [{ type: mongoose.Schema.Types.Mixed }],
-  subTotalPrice: { type: Number, required: true }
-});
-
 const OrderSchema = new Schema(
   {
     orderId: {type: String, unique: true },
@@ -28,8 +18,6 @@ const OrderSchema = new Schema(
     isCancelled: { type: Boolean, default: false },
     cancelReason: { type: String, default: null },
     deliveryDate: { type: Date, default: null },
-    items: [{ type: mongoose.Schema.Types.Mixed }],
-    
   },
   { timestamps: true }
 );

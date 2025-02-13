@@ -3,6 +3,7 @@ const CartSchema = require("../models/Cart");
 const UserSchema = require("../models/User");
 const AddressShema = require("../models/Address");
 const OrderSchema = require("../models/Order");
+const OrderItem = require('../models/orderItem')
 const mongoose = require("mongoose");
 require("dotenv").config();
 const {
@@ -186,8 +187,7 @@ exports.increaseCartItemQuantity = async (req, res) => {
     if (cart.products[productIndex].quantity >= req.product.quantity) {
       await session.abortTransaction();
       return res.status(404).json({
-        error:
-          "No stocks left",
+        error: "No stocks left",
       });
     }
 
@@ -413,29 +413,24 @@ optional session needed - choose address
 
 // to place an order without coupon
 exports.placeOrder = async (req, res) => {
-  const session = await mongoose.startSession()
-  session.startTransaction()
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
   try {
-
     if (!req.user) {
       return res.status(404).json({ error: "User not found in request." });
     }
 
     const userId = req.user._id;
     const { paymentMethod } = req.body;
-    const cart = req.cart
+    const cart = req.cart;
 
     if (!paymentMethod) {
       return res.status(404).json({ error: "Please choose a payment method." });
     }
 
-    const orderItemsDetails = await getUserCartItems(userId);
-    const orderItems = orderItemsDetails.flatMap((item) => item.products);
-
     // cart total or total amont payable by user with out coupon discount
     const cartTotal = await getCartTotal(userId);
-
 
     let addressId = req.session.deliveryAddress;
 
@@ -454,38 +449,74 @@ exports.placeOrder = async (req, res) => {
       return res.status(400).json({ error: "No delivery address found" });
     }
 
-    // decrese the quantity of each product from db 
+    // decrese the quantity of each product from db
     for (const item of cart.products) {
-      const updatedProduct = await decreaseProductQuantity(item.productId, item.quantity, session);
+      const updatedProduct = await decreaseProductQuantity(
+        item.productId,
+        item.quantity,
+        session
+      );
       if (!updatedProduct) {
         throw new Error(`Product with ID ${item.productId} is not available`);
       }
     }
-    
-    
+
     const newOrder = new OrderSchema({
       userId,
       addressId,
       totalAmount: cartTotal,
       totalPayable: cartTotal,
       paymentMethod,
-      items: orderItems,
     });
 
-    await newOrder.save({ session });
+    const order = await newOrder.save({ session });
+    if (!order) {
+      await session.abortTransaction();
+      return res.status(400).json({ error: "No delivery address found" });
+    }
+
+    // save order items 
+
+    const cartItemsDetails = await getUserCartItems(userId);
+    console.log("order item details", cartItemsDetails);
+    console.log("one order item ", cartItemsDetails[0]);
+    const orderItems = cartItemsDetails.map((item) => ({
+      orderId: order._id,
+      ...item.products,
+      isReturnRequested: false,
+      isReturned: false,
+      returnReason: null,
+      returnDate: null,
+    }));
+    console.log("modifid order items", orderItems);
+
+    const insertedOrderItems =  await OrderItem.insertMany(orderItems, {session});
+
+    if (insertedOrderItems.length !== orderItems.length) {
+      await session.abortTransaction();
+      throw new Error("Not all order items were adde");
+    }
+
+    // delete old cart 
     await CartSchema.deleteOne({ userId }, { session });
 
     await session.commitTransaction();
 
     res.status(200).json({ message: "Order Placed Successfully" });
+
   } catch (error) {
     await session.abortTransaction();
     console.error(error);
     return res.status(500).json({ error: error.message });
-  }finally{
-    session.endSession()
+  } finally {
+    session.endSession();
   }
 };
+
+
+exports.getAddAnotherAddressPage = async (req, res) =>{
+  res.render("user/account/addAnotherAddress");
+}
 
 /*
 --controllers

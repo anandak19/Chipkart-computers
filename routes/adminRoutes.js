@@ -42,6 +42,7 @@ router.get('/orders/all', adminController.getAllOrders)
 router.get('/orders/info', adminController.getUserDataAndDeliveryInfo)
 router.get('/orders/items', adminController.getOrderItems)
 router.post('/orders/cancel/order', adminController.cancelOrderByAdmin)
+router.post('/orders/return/approve/:id', adminController.approveReturnItem)
 
 // router.get('/orders/all/:orderId', adminController.renderOrderDetailsPage)
 router.get('/orders/all/:orderId', isAdminLogin, adminController.renderOrderDetailsPage)

@@ -46,6 +46,12 @@
                 { day: "2-digit", month: "2-digit", year: "2-digit" }) %>
               </p>
 
+              <p>
+                <strong>Delivery Date:</strong>
+                <%= new Date(orderDetails.deliveryDate).toLocaleDateString("en-GB",
+                { day: "2-digit", month: "2-digit", year: "2-digit" }) %>
+              </p>
+
               <% if(orderDetails.isCancelled) { %>
               <p class="text-danger">
                 Order Cancelled for the reason: <%= orderDetails.cancelReason %>
@@ -105,10 +111,14 @@
               <thead class="thead-dark">
                 <tr>
                   <th>No</th>
-                  <th>Product Image</th>
+                  <th>Product</th>
                   <th>Product Name</th>
                   <th>Price</th>
                   <th>Quantity</th>
+                  <th>Subtotal</th>
+                  <th>Is Return Requested</th>
+                  <th>Reason</th>
+                  <th>Confirm Return</th>
                 </tr>
               </thead>
               <tbody id="orderItemTable"></tbody>
