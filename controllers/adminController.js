@@ -502,14 +502,14 @@ exports.getCategoryForm = (req, res) => {
   });
 };
 
+// save new category 
 exports.postCategoryForm = async (req, res) => {
   try {
     const categoryName = req.body?.categoryName?.trim() || "";
     const isListed = req.body?.isListed;
 
     if (!categoryName || !isListed) {
-      req.flash("errorMessage", "Please enter the values");
-      return res.redirect("/admin/categories/new");
+      return res.status(400).json({ error: "Please enter the values" });
     }
 
     const existingCategory = await CategoriesSchema.findOne({
@@ -517,21 +517,29 @@ exports.postCategoryForm = async (req, res) => {
     });
     if (existingCategory) {
       console.log(existingCategory);
-      req.flash(
-        "errorMessage",
-        "Category with same name exists. Please try another name"
-      );
-      return res.redirect("/admin/categories/new");
+      return res.status(400).json({ error: "Category with same name exists. Please try another name" });
     }
 
-    const newCategory = new CategoriesSchema({ categoryName, isListed });
+    if (!req.file) {
+      return res.status(400).json({ error: "No image uploaded" });
+    }
+
+    // save image to cloudinary 
+
+
+    const imagePath = `/uploads/${req.file.filename}`; 
+
+   const newCategory = new CategoriesSchema({
+    categoryName,
+    isListed,
+    imagePath
+   })
+
     await newCategory.save();
-    req.flash("successMessage", "New category added");
-    return res.redirect("/admin/categories/new");
+    res.status(200).json({ message: "Category added successfully!" });
   } catch (error) {
     console.log(error);
-    req.flash("errorMessage", "Somthing went wrong");
-    return res.redirect("/admin/categories/new");
+    res.status(500).json({ error: "Internal Server Error" }); 
   }
 };
 

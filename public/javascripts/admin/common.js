@@ -4,3 +4,6 @@ toastr.options = {
     showMethod: "slideDown",
     hideMethod: "fadeOut"
 };
+
+document.getElementById('backButton').addEventListener('click', () => history.back())
+

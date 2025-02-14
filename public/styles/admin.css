@@ -418,3 +418,36 @@ body {
 .toast-top-center{
   margin-top: 20px;
 }
+
+
+.page-head-section{
+  display: flex;
+  justify-content: right;
+}
+
+.back-button {
+  background-color: #0056b3;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  padding: 4px 16px;
+  font-size: 16px;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.back-button i {
+  font-size: 18px;
+}
+
+.back-button:hover {
+  background-color: #004494;
+}
+
+.back-button:active {
+  transform: scale(0.95);
+}

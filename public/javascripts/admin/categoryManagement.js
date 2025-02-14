@@ -9,7 +9,11 @@ const showCategory = (categories) => {
       row.innerHTML = `
               <td>${index + 1}</td>
               <td>${category.categoryName}</td>
-              <td>${index + 1}</td>
+              ${category.imagePath
+                ? `<td><img src="${category.imagePath}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;"></td>` 
+                : `<td>No image added</td>`
+              }
+              
               <td>${new Date(category.createdAt).toLocaleDateString("en-GB", {
                 day: "2-digit",
                 month: "2-digit",

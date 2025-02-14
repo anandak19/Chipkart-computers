@@ -30,15 +30,15 @@ router.get('/categories/all', adminController.getCategories)
 router.post('/categories/toggle-listed/:id', adminController.toggleListCategory)
 router.get('/categories/edit/:id', adminController.getUpdateCategoryForm)
 router.post('/categories/edit/:id', adminController.postUpdateCategoryForm)
-router.get('/categories/new', isAdminLogin, adminController.getCategoryForm)
-router.post('/categories/new', adminController.postCategoryForm)
+router.get('/categories/new', isAdminLogin,  adminController.getCategoryForm) // isAdminLogin,
+router.post('/categories/new', upload.single('image'),  adminController.postCategoryForm)
 // offer management 
-// render the offer page 
+// render the offer page
 router.get('/offers', isAdminLogin, adminController.getOfferModule)
 // render the order page to the admin
 router.get('/orders',isAdminLogin, adminController.getOrderManagement)
 router.get('/orders/all', adminController.getAllOrders)
-// of single order 
+// of single order
 router.get('/orders/info', adminController.getUserDataAndDeliveryInfo)
 router.get('/orders/items', adminController.getOrderItems)
 router.post('/orders/cancel/order', adminController.cancelOrderByAdmin)
