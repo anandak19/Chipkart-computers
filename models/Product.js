@@ -13,8 +13,8 @@ const productSchema = new mongoose.Schema({
     description: { type: String, required: true, maxlength: 500 },
     isListed: { type: Boolean, required: true, default: true},
     images: [{
-        filename: { type: String, required: true },
-        filepath: { type: String, required: true },
+        filename: { type: String, default: null },
+        filepath: { type: String, default: null },
         position: { type: Number, required: true },
     }]
 }, {timestamps: true});

@@ -100,7 +100,7 @@
               <td><%= index + 1 %></td>
               <td>
                 <img
-                  src="<%= product.images[0].filepath %>"
+                  src="<%= product.images[0].filepath ? product.images[0].filepath : '/images/default/default.jpg' %>"
                   alt="<%= product.productName %>"
                   style="width: 100px; height: auto"
                 />

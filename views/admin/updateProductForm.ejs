@@ -51,6 +51,9 @@
       <%- include("../partials/adminHeader") %>
 
       <div class="main-content">
+        <div class="page-head-section">
+          <button class="back-button" id="backButton">Back</button>
+        </div>
         <!-- submit this form dynamically in the js with fech api, add images too  -->
         <div class="form-wrapper">
           <form id="productForm">
@@ -186,9 +189,10 @@
             <div class="product-image-section">
               <div class="form-group image-group">
                 <p class="image-label">Add Primary Image</p>
+                  <button class="btn btn-danger deleteImgBtns" data-id="<%= product.images[0]._id %>" ><i class="fa-regular fa-trash-can" style="color: #ffffff;"></i></button>
                 <label class="image-box" for="imageA">
                   <p>Choose an image</p>
-                  <img id="image0" alt="" src="<%= product.images[0].filepath %>" />
+                        <img id="image0" alt="" src="<%= product.images[0].filepath %>" />
                 </label>
                 <input
                   type="file"
@@ -200,9 +204,14 @@
               </div>
               <div class="form-group image-group">
                 <p class="image-label">Add Image 2</p>
+                <% if (product.images[1] && product.images[1].filepath) { %>
+                  <button class="btn btn-danger deleteImgBtns" data-id="<%= product.images[1]._id %>" ><i class="fa-regular fa-trash-can" style="color: #ffffff;"></i></button>
+                <% } %>
                 <label class="image-box" for="imageB">
                   <p>Choose an image</p>
-                  <img id="image1" alt="" src="<%= product.images[1].filepath %>" />
+                    <% if (product.images[1] && product.images[1].filepath) { %>
+                      <img id="image1" alt="" src="<%= product.images[1].filepath %>" />
+                    <% } %>
                 </label>
                 <input
                   type="file"
@@ -213,9 +222,14 @@
               </div>
               <div class="form-group image-group">
                 <p class="image-label">Add Image 3</p>
+                <% if (product.images[2] && product.images[2].filepath) { %>
+                  <button class="btn btn-danger deleteImgBtns" data-id="<%= product.images[2]._id %>" ><i class="fa-regular fa-trash-can" style="color: #ffffff;"></i></button>
+                <% } %>
                 <label class="image-box" for="imageC">
                   <p>Choose an image</p>
-                  <img id="image2" alt="" src="<%= product.images[2].filepath %>" />
+                  <% if (product.images[2] && product.images[2].filepath) { %>
+                    <img id="image2" alt="" src="<%= product.images[2].filepath %>" />
+                  <% } %>
                 </label>
                 <input
                   type="file"
@@ -226,9 +240,10 @@
               </div>
               <div class="form-group image-group">
                 <p class="image-label">Add Image 4</p>
+                  <button class="btn btn-danger deleteImgBtns" data-id="<%= product.images[3]._id %>" ><i class="fa-regular fa-trash-can" style="color: #ffffff;"></i></button>
                 <label class="image-box" for="imageD">
                   <p>Choose an image</p>
-                  <img id="image3" alt="" src="<%= product.images[3].filepath %>"/>
+                    <img id="image3" alt="Image 3" src="<%= product.images[3].filepath %>" />
                 </label>
                 <input
                   type="file"
@@ -261,6 +276,7 @@
     <script>
         window.productId = '<%= product._id %>';
     </script>
+        <%- include("../partials/adminFooter") %>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
     <script src="/javascripts/admin/updateProduct.js"></script>

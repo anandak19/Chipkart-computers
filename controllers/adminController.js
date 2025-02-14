@@ -5,7 +5,7 @@ const OrderSchema = require("../models/Order");
 const AddressSchema = require("../models/Address");
 const { getOrderItemsDetails } = require("../utils/orderManagement");
 const OrderItem = require("../models/orderItem");
-const { default: mongoose } = require("mongoose");
+const mongoose = require('mongoose')
 
 exports.getDashboard = (req, res) => {
   res.render("admin/dashbord", { title: "Admin Dashboard" });
@@ -310,6 +310,8 @@ exports.getEditProductForm = async (req, res) => {
       },
     ]);
 
+    req.session.selectedProductId = product._id
+
     res.render("admin/updateProductForm", {
       title: "Product Management - Edit Product",
       categoryArray,
@@ -425,6 +427,40 @@ exports.postEditProductForm = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+exports.deleteSingleProductImage = async (req, res, next) => {
+  try {
+    const productId = req.session.selectedProductId
+    if (!productId) {
+      return res.status(400).json({error: 'Session expired'})
+    }
+
+    const product = await ProductSchema.findById(productId)
+    if(!product){
+      return res.status(404).json({error: 'Product not found in the system'})
+    }
+
+    const { id: imageId } = req.params
+
+    const imageIndex = product.images.findIndex(img => 
+      img._id.toString() === new mongoose.Types.ObjectId(imageId).toString()
+    );
+    console.log("index", imageIndex)
+
+    product.images[imageIndex].filename = null
+    product.images[imageIndex].filepath = null
+
+    console.log("new product", product)
+
+    await product.save()
+
+    res.status(200).json({message: 'Image deleted successfully'})
+
+  } catch (error) {
+    console.log(error)
+    next(error)
+  }
+}
 
 exports.toggleListProduct = async (req, res) => {
   try {

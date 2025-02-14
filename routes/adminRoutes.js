@@ -24,6 +24,9 @@ router.post('/products/new', upload.array('images'), newProductValidations, admi
 router.get('/products/edit/:id', adminController.getEditProductForm)
 router.post('/products/edit/:id', upload.array('images'), adminController.postEditProductForm)
 router.post('/products/toggle-listed/:id', adminController.toggleListProduct)
+
+router.delete('/products/edit/image/:id', adminController.deleteSingleProductImage)
+
 //category management
 router.get('/categories', isAdminLogin, adminController.getCategoryManagement)
 router.get('/categories/all', adminController.getCategories)

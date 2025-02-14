@@ -248,7 +248,7 @@ if (updateProductBtn) {
       const data = await res.json();
       if (data.success){
         alert(data.message);
-        productForm.reset();
+        location.reload();
         for (let i = 0; i < croppedImages.length; i++) {
           document.getElementById(`image${i}`).removeAttribute('src');
         }
@@ -263,3 +263,33 @@ if (updateProductBtn) {
 
   });
 }
+
+// delete one image 
+const deleteImgBtns = document.querySelectorAll('.deleteImgBtns')
+
+deleteImgBtns.forEach((deleteBtn) => {
+  deleteBtn.addEventListener('click', async (e) => {
+    
+    const imageId = e.target.getAttribute("data-id");
+
+    console.log(imageId)
+
+    try {
+      const res = await fetch(`/admin/products/edit/image/${imageId}`, {
+        method: 'DELETE'
+      })
+
+      const result = await res.json()
+      console.log(result)
+
+      if (res.ok) {
+        location.reload();
+      }
+      
+    } catch (error) {
+      console.error(error);
+      alert("Somthing went wrong")
+    }
+
+  })
+})
