@@ -93,10 +93,12 @@ if (searchForm && query) {
     });
 }
 
-const resetBtn = document.getElementById("resetBtn")
-resetBtn.addEventListener("click", () => {
-    getCategories();
+query.addEventListener('input', () => { 
+  if (query.value.trim() === '') {
+    getCategories()
+  }
 })
+
 
 document.addEventListener("DOMContentLoaded", () => {
   getCategories();

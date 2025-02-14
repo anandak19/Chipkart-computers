@@ -159,6 +159,7 @@ async function removeItem(id) {
     if (response.ok) {
       getUserCart();
       getCartTotal();
+      getCartCount()
     } else {
       toastr.warning(data.error, "Warning");
     }

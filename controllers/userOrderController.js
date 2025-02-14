@@ -405,6 +405,29 @@ exports.chooseDeliveryAddress = async (req, res) => {
   }
 };
 
+
+exports.getCartItemCount = async (req, res, next) => {
+  try {
+    const loggedInUser = req.session.user
+    if (!loggedInUser) {
+      return res.status(200).json({ count: 0 });
+    }
+
+    const cart = await CartSchema.findOne({userId: loggedInUser.id})
+
+    if (!cart) {
+      return res.status(200).json({ count: 0 });
+    }
+
+    const itemCount = cart.products.length
+
+    return res.status(200).json({ count: itemCount });
+    
+  } catch (error) {
+    console.log(error)
+    next(error)
+  }
+}
 /*
 request body: paymentMethod: "COD" / "Online"
 session needed- login

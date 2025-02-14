@@ -117,6 +117,7 @@ const getFilters = () => {
 // Function to fetch filtered products
 const applyFilters = async () => {
   const filters = getFilters();
+  console.log(filters)
 
   const queryString = new URLSearchParams(filters).toString();
   console.log(queryString);
@@ -200,6 +201,7 @@ searchBox.addEventListener("input", () => {
 
 searchBtn.addEventListener("click", () => {
   delete filters.search;
+  page = 0
   filters.search = searchBox.value;
   applyFilters();
 });

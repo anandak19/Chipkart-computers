@@ -17,6 +17,7 @@ async function addToCart(id) {
         const data = await response.json()
         if (response.ok) {
             toastr.success(data.message);
+            getCartCount()
         }else{
             toastr.info(data.error);
         }

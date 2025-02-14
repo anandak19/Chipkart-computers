@@ -86,6 +86,28 @@ header {
   margin-left: 10px;
 }
 
+.header-main .user-side .user-collection .cart {
+  position: relative;
+  display: inline-block;
+}
+
+.cart-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: rgb(219, 0, 0);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
 /* Navigation section */
 nav {
   background-color: #146cda;

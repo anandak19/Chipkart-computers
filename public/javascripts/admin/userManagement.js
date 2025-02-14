@@ -205,10 +205,10 @@ const getUsers = async (page = 0, search = "") => {
 };
 
 // method to set search query
+const searchInput = document.getElementById('searchQuery');
 searchForm.addEventListener('submit', (e) => {
   e.preventDefault()
   const errorMessage = document.getElementById('errorMessage')
-  const searchInput = document.getElementById('searchQuery');
   const search = searchInput.value.trim();
   errorMessage.innerText = ''
   let isValid = true
@@ -221,6 +221,12 @@ searchForm.addEventListener('submit', (e) => {
   if (isValid) {
     console.log(search)
     getUsers(0, search)
+  }
+})
+
+searchInput.addEventListener('input', () =>{
+  if (searchInput.value.trim() === '') {
+    getUsers()
   }
 })
 

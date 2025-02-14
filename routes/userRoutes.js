@@ -57,7 +57,7 @@ router.post('/account/address/new', varifyLoginUserSession, validateAddressField
 router.delete('/account/address/:id', varifyLoginUserSession, userAccountController.deleteAddress)
 router.get('/account/address/edit/:id', varifyLoginUserSession, userAccountController.getEditAddressPage) //working
 router.get('/account/address/address-details', varifyLoginUserSession, userAccountController.getAddressDetails) //working
-// clint side is not added 
+// clint side is not added
 router.patch('/account/address/edit', varifyLoginUserSession, validateAddressFields, userAccountController.saveEditedAddress) // clint side is not completed
 router.patch('/account/address/toogle/:id', varifyLoginUserSession, userAccountController.toggleAddress)
 
@@ -87,6 +87,8 @@ router.post('/cart/add', varifyLoginUserSession, checkIsblocked, checkProductAva
 router.patch('/cart/increase', varifyLoginUserSession, checkIsblocked, checkProductAvailability, userOrderController.increaseCartItemQuantity)
 router.patch('/cart/decrease', varifyLoginUserSession, checkIsblocked, checkProductAvailability, userOrderController.decreaseCartItemQuantity)
 router.delete('/cart/remove', varifyLoginUserSession, userOrderController.deleteCartItem)
+// cart count in header 
+router.get('/cart/count', userOrderController.getCartItemCount)
 
 router.get('/checkout', getUser,  userOrderController.getCheckoutPage)
 // api calls
