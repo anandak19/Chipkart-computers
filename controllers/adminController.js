@@ -575,6 +575,8 @@ exports.getUpdateCategoryForm = async (req, res) => {
     if (!category) {
       return res.status(404).send("Category not found.");
     }
+
+    req.session.categoryId = category._id
     res.render("admin/formUpdateCategory", {
       title: "Category Management - Edit",
       errorMessage: req.flash("errorMessage"),
@@ -589,16 +591,22 @@ exports.getUpdateCategoryForm = async (req, res) => {
 
 exports.postUpdateCategoryForm = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id  = req.session.categoryId;
     if (!id) {
-      return res.redirect("/admin/categories");
+      return res.status(400).json({ error: "Session expired" });
     }
+
+    const category = await CategoriesSchema.findById(id);
+    if (!category) {
+      return res.status(400).json({ error: "Category not found" });
+    }
+
+    console.log(id)
     const categoryName = req.body?.categoryName?.trim() || "";
     const isListed = req.body?.isListed;
 
     if (!categoryName || !isListed) {
-      req.flash("errorMessage", "Please enter the values");
-      return res.redirect(`/admin/categories/edit/${id}`);
+      return res.status(400).json({ error: "Please enter the values" });
     }
 
     const existingCategory = await CategoriesSchema.findOne({
@@ -607,28 +615,28 @@ exports.postUpdateCategoryForm = async (req, res) => {
     });
 
     if (existingCategory) {
-      req.flash(
-        "errorMessage",
-        "Category with same name exists. Please try another name"
-      );
-      return res.redirect(`/admin/categories/edit/${id}`);
+      return res.status(400).json({ error: "Category with same name exists. Please try another name" });
     }
 
-    const updatedCategory = await CategoriesSchema.findOneAndUpdate(
-      { _id: id },
-      { categoryName: categoryName, isListed: isListed },
-      { new: true }
-    );
 
-    if (!updatedCategory) {
-      return res.redirect(`/admin/categories`);
+    let imagePath
+    if (req.file) {
+      imagePath = `/uploads/${req.file.filename}`; 
     }
 
-    req.flash("successMessage", "Category updated successfully");
-    res.redirect(`/admin/categories/edit/${id}`);
+    category.categoryName = categoryName || category.categoryName
+    category.isListed = isListed || category.isListed
+    if (req.file) { 
+      category.imagePath = imagePath || category.imagePath
+    }
+
+    await category.save()
+
+
+    return res.status(200).json({ message: "Category updated successfully" });
   } catch (error) {
     console.log(error);
-    return res.redirect("/admin/categories");
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 // -----category management end------

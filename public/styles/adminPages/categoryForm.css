@@ -69,3 +69,11 @@
   max-height: 400px;
 }
   
+
+.block-class{
+  display: block;
+}
+
+.non-class{
+  display: none;
+}

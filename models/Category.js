@@ -6,7 +6,7 @@ const CategoriesSchema = new Schema(
   {
     categoryName: { type: String, required: true },
     isListed: { type: Boolean, required: true },
-    imagePath: { type: String, required: true },
+    imagePath: { type: String, default: null },
   },
   {
     timestamps: true,
