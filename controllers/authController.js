@@ -66,11 +66,13 @@ exports.startOtpVerification = async (req, res) => {
       id: user._id,
       name: user.name,
     };
+    req.session.cookieName = 'userSession'
     // remove the below code later
     req.session.userEmail = req.user.email;
     req.session.isVerified = false;
     req.session.userId = req.user._id;
     req.session.isLogin = true;
+    
 
     return res.status(200).json({
       status: "success",
@@ -257,7 +259,7 @@ exports.postUserLogin = async (req, res) => {
 
     req.session.user = {
       email: user.email,
-      id: user._id,
+      id: user._id, 
       name: user.name,
     };
     // remove this from other routes and use the above object for the existing purpose

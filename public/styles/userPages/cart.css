@@ -76,10 +76,24 @@
   margin: 4px 0 0;
 }
 
-.cartItem-quantity {
+.cartItem-quantity{
+  position: relative;
+  max-width: fit-content;
+}
+
+.quantity-controllers {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.qty-warning{
+  position: absolute;
+  top: 30px;
+  right: 0px;
+  font-size: 12px;
+  width: max-content;
+  color: #e30000;
 }
 
 .qty-btn {

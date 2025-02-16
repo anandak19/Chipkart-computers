@@ -80,11 +80,11 @@ router.post('/account/orders/all/ord/items/return', userAccountController.return
 router.get('/account/wallet', userAccountController.getWallet)
 router.get('/account/coupons', userAccountController.getCoupons)
 
-// ORDER BASED ROUTES 
-router.get('/cart', isLogin, userOrderController.getCartPage)
+// ORDER BASED ROUTES
+router.get('/cart',  userOrderController.getCartPage)// isLogin,
 router.get('/cart/all', varifyLoginUserSession, userOrderController.getCartItems)
 router.get('/cart/total', varifyLoginUserSession, userOrderController.getCartTotal)
-// send products id in the body 
+// send products id in the body
 router.post('/cart/add', varifyLoginUserSession, checkIsblocked, checkProductAvailability,  userOrderController.addItemToCart)
 router.patch('/cart/increase', varifyLoginUserSession, checkIsblocked, checkProductAvailability, userOrderController.increaseCartItemQuantity)
 router.patch('/cart/decrease', varifyLoginUserSession, checkIsblocked, checkProductAvailability, userOrderController.decreaseCartItemQuantity)

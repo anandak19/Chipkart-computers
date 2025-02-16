@@ -31,12 +31,6 @@ exports.getCartItems = async (req, res) => {
 
     console.log(userId);
 
-    /*
-    match the cart from db with userId
-    unwind the product array 
-    join with the product collection
-    */
-
     const pipeline = [
       {
         $match: { userId: userId },
@@ -67,6 +61,19 @@ exports.getCartItems = async (req, res) => {
           "products.subTotalPrice": {
             $multiply: ["$productDetails.finalPrice", "$products.quantity"],
           },
+          "products.stockStatus": {
+            "$cond": {
+              "if": { "$eq": ["$productDetails.quantity", 0] },
+              "then": "out",
+              "else": {
+                "$cond": {
+                  "if": { "$gt": ["$products.quantity", "$productDetails.quantity"] },
+                  "then": "sna",
+                  "else": "in"
+                }
+              }  
+            }
+          }
         },
       },
       {

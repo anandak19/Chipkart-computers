@@ -38,13 +38,22 @@ const showCartItems = (cartItems) => {
         </div>
 
         <div class="cartItem-quantity">
-          <button class="qty-btn" onclick="decreaseQuantity('${
-            item.products.productId
-          }')">-</button>
-          <span class="qty-value">${item.products.quantity}</span>
-          <button class="qty-btn" onclick="increaseQuantity('${
-            item.products.productId
-          }')">+</button>
+          <div class="quantity-controllers">
+            <button class="qty-btn" onclick="decreaseQuantity('${
+              item.products.productId
+            }')">-</button>
+            <span class="qty-value">${item.products.quantity}</span>
+            <button class="qty-btn" onclick="increaseQuantity('${
+              item.products.productId
+            }')">+</button>
+          </div>
+          <p class="qty-warning">${
+            item.products.stockStatus === "out" 
+            ? "Out of Stock! Please remove this item" 
+            : item.products.stockStatus === "sna"
+              ? 'Stock not available'
+              : ''
+          }</p>
         </div>
 
         <div class="cartItem-total">
@@ -72,6 +81,7 @@ const getUserCart = async () => {
     const response = await fetch(url);
     const data = await response.json();
     if (response.ok) {
+      console.log(data);
       showCartItems(data.products);
     } else {
       toastr.warning(data.error, "Warning");
@@ -159,7 +169,7 @@ async function removeItem(id) {
     if (response.ok) {
       getUserCart();
       getCartTotal();
-      getCartCount()
+      getCartCount();
     } else {
       toastr.warning(data.error, "Warning");
     }
@@ -174,7 +184,6 @@ document.addEventListener("DOMContentLoaded", () => {
   getCartTotal();
 });
 
-
-proceedBtn.addEventListener('click', () => {
-  window.location.replace('/checkout')
-})
+proceedBtn.addEventListener("click", () => {
+  window.location.replace("/checkout");
+});
