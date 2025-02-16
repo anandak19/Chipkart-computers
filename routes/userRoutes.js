@@ -38,6 +38,8 @@ router.post('/products/:id/review/new',isLogin, validateProduct, validateNewRevi
 router.get('/products/:id/review', validateProduct, userController.getReviews)
 // get related products 
 router.get('/products/:id/related', validateProduct, userController.getRelatedProducts)
+// get top category images 
+router.get('/category/top', userController.getTopCategories)
 
 
 
@@ -49,10 +51,11 @@ router.get('/account/user', userAccountController.getUserDetails)
 router.post('/account/user', userAccountController.postUserDetails)
 router.post('/account/user/password', userAccountController.postChangePassword)
 
+
 // user address 
-router.get('/account/address',isLogin, userAccountController.getAddresses) 
+router.get('/account/address', isLogin, userAccountController.getAddresses) 
 router.get('/account/address/all', varifyLoginUserSession, userAccountController.getUsersAllAddress)
-router.get('/account/address/new',isLogin, userAccountController.getAddressForm)
+router.get('/account/address/new', isLogin, userAccountController.getAddressForm)
 router.post('/account/address/new', varifyLoginUserSession, validateAddressFields, userAccountController.addAddress)
 router.delete('/account/address/:id', varifyLoginUserSession, userAccountController.deleteAddress)
 router.get('/account/address/edit/:id', varifyLoginUserSession, userAccountController.getEditAddressPage) //working
@@ -62,13 +65,12 @@ router.patch('/account/address/edit', varifyLoginUserSession, validateAddressFie
 router.patch('/account/address/toogle/:id', varifyLoginUserSession, userAccountController.toggleAddress)
 
 // ORDERS ROUTES START ---isLogin
-router.get('/account/orders', userAccountController.getOrderHistory)
+router.get('/account/orders', isLogin, userAccountController.getOrderHistory)
 // updated 
 router.get('/account/orders/all', varifyLoginUserSession, userAccountController.getAllOrders)
 router.get('/account/orders/all/ord/:id', userAccountController.getOrderDetaillsPage)
 router.get('/account/orders/all/ord/info/address', userAccountController.getDeliveryInfo)
-
-// updated 
+// updated
 router.get('/account/orders/all/ord/info/itemes', userAccountController.getOrderItems)
 router.post('/account/orders/all/ord/cancel/order', userAccountController.cancelOrderByUser)
 router.get('/account/orders/all/ord/items/return', userAccountController.getReturnProductPage)
@@ -79,7 +81,7 @@ router.get('/account/wallet', userAccountController.getWallet)
 router.get('/account/coupons', userAccountController.getCoupons)
 
 // ORDER BASED ROUTES 
-router.get('/cart',isLogin, userOrderController.getCartPage)
+router.get('/cart', isLogin, userOrderController.getCartPage)
 router.get('/cart/all', varifyLoginUserSession, userOrderController.getCartItems)
 router.get('/cart/total', varifyLoginUserSession, userOrderController.getCartTotal)
 // send products id in the body 
@@ -95,8 +97,5 @@ router.get('/checkout', getUser,  userOrderController.getCheckoutPage)
 router.post('/checkout/address', userOrderController.chooseDeliveryAddress)
 router.post('/checkout/confirm', varifyLoginUserSession, checkIsblocked, handleCart, userOrderController.placeOrder)
 router.get('/checkout/address/new', userOrderController.getAddAnotherAddressPage)
-
-
-
 
 module.exports = router

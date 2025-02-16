@@ -33,7 +33,11 @@ router.post("/forgot-password", authController.postForgotPassword)
 router.get("/reset-password/:token", authController.getNewPasswordPage)
 router.post("/reset-password/:token", authController.postNewPassword)
 
-// // admin auth
+// check password reset status 
+router.get('/reset-password/reset/status', authController.checkPasswordResetStatus)
+router.get('/reset-password/reset/success', authController.getResetPasswordSuccessPage)
+
+// admin auth
 router.get('/admin/login', isAdminLoginSubmitted, authController.getAdminLogin)
 router.post('/admin/login', authController.postAdminLogin)
 router.get('/admin/logout', authController.logoutUser)

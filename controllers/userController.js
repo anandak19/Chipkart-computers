@@ -584,3 +584,28 @@ exports.getRelatedProducts = async (req, res) => {
     });
   }
 };
+
+
+exports.getTopCategories = async (req, res, next) => {
+  try {
+
+    const topCategories = await CategoriesSchema.aggregate([
+      {
+        $match: {isListed: true}
+      },
+      {
+        $sort: {createdAt: 1}
+      },
+      {
+        $limit: 5
+      }
+    ])
+
+    console.log(topCategories)
+    res.status(200).json({topCategories})
+
+  } catch (error) {
+    console.log(error)
+    next(error)
+  }
+}

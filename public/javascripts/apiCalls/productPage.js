@@ -34,7 +34,8 @@ const showProducts = (products, total, hasMore) => {
         product.images && product.images.length > 0
           ? product.images[0].filepath
           : "/images/default/default.jpg";
-          const rating = product.averageRating === 0 ? "0" : product.averageRating.toFixed(1);
+      const rating =
+        product.averageRating === 0 ? "0" : product.averageRating.toFixed(1);
       const productCard = `
           <div class="product-card">
             <div class="product-card-image">
@@ -46,7 +47,7 @@ const showProducts = (products, total, hasMore) => {
               <h4>
                 <a href="/products/${product._id}">${
         product.productName || "Unnamed Product"
-            }</a>
+      }</a>
               </h4>
               <div class="rating-price">
                 <div class="price">
@@ -61,8 +62,8 @@ const showProducts = (products, total, hasMore) => {
             <div class="product-actions">
             ${
               product.quantity === 0
-              ? `<button class="out-of-stock" disabled>Out of Stock</button>`
-              : `<button class="add-cart" onClick="addToCart('${product._id}')">Add Cart</button>`
+                ? `<button class="out-of-stock" disabled>Out of Stock</button>`
+                : `<button class="add-cart" onClick="addToCart('${product._id}')">Add Cart</button>`
             }
               <span class="wishlist-icon" data-wishlisted="false">
                 <i class="fa-regular fa-heart"></i>
@@ -76,9 +77,9 @@ const showProducts = (products, total, hasMore) => {
   }
 };
 
-// // wishlited icon 
+// // wishlited icon
 // {/* <i class="fa-solid fa-heart"></i> */}
-// setAttribute("data-wishlisted", "true"); 
+// setAttribute("data-wishlisted", "true");
 // classList.add("wishlisted");
 
 // on page load method
@@ -86,7 +87,7 @@ async function fetchProducts() {
   try {
     const response = await fetch("/products/p");
     const { products, total, hasMore } = await response.json();
-    console.log(products[0])
+    console.log(products[0]);
 
     showProducts(products, total, hasMore);
   } catch (error) {
@@ -117,7 +118,7 @@ const getFilters = () => {
 // Function to fetch filtered products
 const applyFilters = async () => {
   const filters = getFilters();
-  console.log(filters)
+  console.log(filters);
 
   const queryString = new URLSearchParams(filters).toString();
   console.log(queryString);
@@ -134,7 +135,7 @@ const applyFilters = async () => {
 };
 
 // event listeners to filters
-// for price order 
+// for price order
 priceOrder.addEventListener("change", () => {
   if (priceOrder.value.trim() === "") {
     delete filters.priceOrder;
@@ -142,58 +143,70 @@ priceOrder.addEventListener("change", () => {
   applyFilters();
 });
 
-// for rating 
-rating.addEventListener("change", ()=>{
+// for rating
+rating.addEventListener("change", () => {
   if (rating.value.trim() === "") {
     delete filters.ratingsAbove;
   }
   applyFilters();
 });
 
-// for sort 
+// for sort
 sortBy.addEventListener("change", () => {
-  delete filters.sortBy
-  applyFilters()
+  delete filters.sortBy;
+  applyFilters();
 });
 
-// for is featured 
-isFeaturedCheckbox.addEventListener("change", ()=> {
-  delete filters.isFeatured
-  applyFilters()
+// for is featured
+isFeaturedCheckbox.addEventListener("change", () => {
+  delete filters.isFeatured;
+  applyFilters();
 });
 
-// for is new check box 
+// for is new check box
 isNewCheckbox.addEventListener("change", () => {
-  delete filters.isNew
-  applyFilters()
+  delete filters.isNew;
+  applyFilters();
 });
 
-// for is popular 
+// for is popular
 isPopularCheckbox.addEventListener("change", () => {
-  delete filters.ratingsAbove
-  applyFilters()
+  delete filters.ratingsAbove;
+  applyFilters();
 });
+
 // event listeners to categories
 categoryList.addEventListener("click", async (event) => {
   if (event.target.tagName === "LI") {
-    categoryId = event.target.getAttribute("data-id");
-    console.log("Selected Category ID:", categoryId);
+    const selectedCategory = event.target;
+    const isSelected = selectedCategory.classList.contains("category-selected");
 
     document.querySelectorAll("#categoryList li").forEach((li) => {
       li.classList.remove("category-selected");
     });
 
-    event.target.classList.add("category-selected");
-
-    applyFilters();
+    if (!isSelected) {
+      selectedCategory.classList.add("category-selected");
+      categoryId = selectedCategory.getAttribute("data-id");
+      console.log("Selected Category ID:", categoryId);
+      page = 0
+      applyFilters();
+    } else {
+      categoryId = null
+      delete filters.categoryId
+      console.log("Category deselected");
+      applyFilters(); 
+    }
   }
 });
 
-// for search box input 
+
+// for search box input
 searchBox.addEventListener("input", () => {
   if (searchBox.value.trim() === "") {
-    console.log("removed search")
+    console.log("removed search");
     delete filters.search;
+    applyFilters();
   } else {
     filters.search = searchBox.value;
   }
@@ -201,7 +214,7 @@ searchBox.addEventListener("input", () => {
 
 searchBtn.addEventListener("click", () => {
   delete filters.search;
-  page = 0
+  page = 0;
   filters.search = searchBox.value;
   applyFilters();
 });

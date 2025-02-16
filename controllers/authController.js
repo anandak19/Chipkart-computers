@@ -63,10 +63,10 @@ exports.startOtpVerification = async (req, res) => {
 
     req.session.user = {
       email: user.email,
-      id: user._id, 
-      name: user.name
+      id: user._id,
+      name: user.name,
     };
-    // remove the below code later 
+    // remove the below code later
     req.session.userEmail = req.user.email;
     req.session.isVerified = false;
     req.session.userId = req.user._id;
@@ -184,8 +184,8 @@ exports.registerGoogleUser = async (req, res) => {
 
     req.session.user = {
       email: user.email,
-      id: user._id, 
-      name: user.name
+      id: user._id,
+      name: user.name,
     };
 
     req.session.userEmail = user.email;
@@ -257,14 +257,13 @@ exports.postUserLogin = async (req, res) => {
 
     req.session.user = {
       email: user.email,
-      id: user._id, 
-      name: user.name
+      id: user._id,
+      name: user.name,
     };
-    // remove this from other routes and use the above object for the existing purpose 
+    // remove this from other routes and use the above object for the existing purpose
     req.session.userEmail = user.email;
     req.session.isLogin = true;
     req.session.userId = user._id;
-
 
     res.status(200).json({
       success: true,
@@ -286,18 +285,14 @@ exports.postUserLogin = async (req, res) => {
 // logout user
 exports.logoutUser = async (req, res) => {
   try {
-    await logoutUser(req, res)
+    await logoutUser(req, res);
 
     return res.redirect("/");
-
   } catch (error) {
     console.error("Logout Error:", error);
     res.status(500).send({ message: error.message });
   }
 };
-
-
-
 
 // admin auth
 exports.getAdminLogin = (req, res) => {
@@ -385,6 +380,7 @@ exports.postForgotPassword = async (req, res) => {
 
     await sendEmailToUser(user.email, html, "Reset Password", resetLink);
 
+    req.session.passwordResetSuccess = false
     req.session.isPasswordUpdated = false;
     res
       .status(200)
@@ -400,11 +396,6 @@ exports.getNewPasswordPage = async (req, res) => {
   console.log(req.session.isPasswordUpdated);
   if (!req.session.isPasswordUpdated) {
     try {
-      /*
-      get the token from the path params
-      varify the token and render the page to users
-      else redirect to email entering page
-      */
       const { token } = req.params;
 
       if (!token) {
@@ -467,9 +458,24 @@ exports.postNewPassword = async (req, res) => {
 
     await user.save();
 
+    req.session.passwordResetSuccess = true
+
     res.status(200).json({ message: "Password saved succesfully" });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });
   }
+};
+
+exports.checkPasswordResetStatus = (req, res) => {
+  if (req.session.passwordResetSuccess) {
+    res.json({ resetCompleted: true });
+    req.session.passwordResetSuccess = false;
+  } else {
+    res.json({ resetCompleted: false });
+  }
+};
+
+exports.getResetPasswordSuccessPage = (req, res) => {
+  return res.render("user/auth/passwordResetSuccess");
 };

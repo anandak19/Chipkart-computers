@@ -5,7 +5,7 @@ const OrderSchema = require("../models/Order");
 const AddressSchema = require("../models/Address");
 const { getOrderItemsDetails } = require("../utils/orderManagement");
 const OrderItem = require("../models/orderItem");
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 
 exports.getDashboard = (req, res) => {
   res.render("admin/dashbord", { title: "Admin Dashboard" });
@@ -164,7 +164,9 @@ exports.getProductManagement = async (req, res) => {
   const skip = (page - 1) * limit;
 
   try {
-    const productsArray = await ProductSchema.aggregate([
+    let query = req.query.q;
+
+    const pipeline = [
       {
         $addFields: {
           categoryIdObject: { $toObjectId: "$categoryId" },
@@ -190,7 +192,16 @@ exports.getProductManagement = async (req, res) => {
       {
         $sort: { createdAt: -1 },
       },
-    ]);
+    ];
+
+    if (query) {
+      query = query.trim();
+      pipeline.unshift({
+        $match: { $text: { $search: query } },
+      });
+    }
+
+    const productsArray = await ProductSchema.aggregate(pipeline);
 
     const totalProducts = await ProductSchema.countDocuments();
     const totalPages = Math.ceil(totalProducts / limit);
@@ -204,6 +215,63 @@ exports.getProductManagement = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
+  }
+};
+
+exports.getAllProducts = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 0;
+    const limit = 5;
+    const skip = page * limit;
+
+    let query = req.query.q;
+
+    const pipeline = [
+      {
+        $addFields: {
+          categoryIdObject: { $toObjectId: "$categoryId" },
+        },
+      },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "categoryIdObject",
+          foreignField: "_id",
+          as: "categoryDetails",
+        },
+      },
+      {
+        $unwind: "$categoryDetails",
+      },
+      {
+        $facet: {
+          paginatedResult: [
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+          ],
+          total: [{ $count: "totalProducts" }],
+        },
+      },
+    ];
+
+    if (query) {
+      query = query.trim();
+      pipeline.unshift({
+        $match: { $text: { $search: query } },
+      });
+    }
+
+    const result = await ProductSchema.aggregate(pipeline);
+
+    const paginatedResult = result[0]?.paginatedResult;
+    const total = result[0]?.total[0]?.totalProducts || 0;
+    const hasMore = skip + paginatedResult.length < total;
+
+    res.status(200).json({ productsArray: paginatedResult, total, hasMore });
+  } catch (error) {
+    console.log(error);
+    next(error);
   }
 };
 
@@ -310,7 +378,7 @@ exports.getEditProductForm = async (req, res) => {
       },
     ]);
 
-    req.session.selectedProductId = product._id
+    req.session.selectedProductId = product._id;
 
     res.render("admin/updateProductForm", {
       title: "Product Management - Edit Product",
@@ -430,37 +498,37 @@ exports.postEditProductForm = async (req, res) => {
 
 exports.deleteSingleProductImage = async (req, res, next) => {
   try {
-    const productId = req.session.selectedProductId
+    const productId = req.session.selectedProductId;
     if (!productId) {
-      return res.status(400).json({error: 'Session expired'})
+      return res.status(400).json({ error: "Session expired" });
     }
 
-    const product = await ProductSchema.findById(productId)
-    if(!product){
-      return res.status(404).json({error: 'Product not found in the system'})
+    const product = await ProductSchema.findById(productId);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found in the system" });
     }
 
-    const { id: imageId } = req.params
+    const { id: imageId } = req.params;
 
-    const imageIndex = product.images.findIndex(img => 
-      img._id.toString() === new mongoose.Types.ObjectId(imageId).toString()
+    const imageIndex = product.images.findIndex(
+      (img) =>
+        img._id.toString() === new mongoose.Types.ObjectId(imageId).toString()
     );
-    console.log("index", imageIndex)
+    console.log("index", imageIndex);
 
-    product.images[imageIndex].filename = null
-    product.images[imageIndex].filepath = null
+    product.images[imageIndex].filename = null;
+    product.images[imageIndex].filepath = null;
 
-    console.log("new product", product)
+    console.log("new product", product);
 
-    await product.save()
+    await product.save();
 
-    res.status(200).json({message: 'Image deleted successfully'})
-
+    res.status(200).json({ message: "Image deleted successfully" });
   } catch (error) {
-    console.log(error)
-    next(error)
+    console.log(error);
+    next(error);
   }
-}
+};
 
 exports.toggleListProduct = async (req, res) => {
   try {
@@ -538,7 +606,7 @@ exports.getCategoryForm = (req, res) => {
   });
 };
 
-// save new category 
+// save new category
 exports.postCategoryForm = async (req, res) => {
   try {
     const categoryName = req.body?.categoryName?.trim() || "";
@@ -553,29 +621,30 @@ exports.postCategoryForm = async (req, res) => {
     });
     if (existingCategory) {
       console.log(existingCategory);
-      return res.status(400).json({ error: "Category with same name exists. Please try another name" });
+      return res.status(400).json({
+        error: "Category with same name exists. Please try another name",
+      });
     }
 
     if (!req.file) {
       return res.status(400).json({ error: "No image uploaded" });
     }
 
-    // save image to cloudinary 
+    // save image to cloudinary
 
+    const imagePath = `/uploads/${req.file.filename}`;
 
-    const imagePath = `/uploads/${req.file.filename}`; 
-
-   const newCategory = new CategoriesSchema({
-    categoryName,
-    isListed,
-    imagePath
-   })
+    const newCategory = new CategoriesSchema({
+      categoryName,
+      isListed,
+      imagePath,
+    });
 
     await newCategory.save();
     res.status(200).json({ message: "Category added successfully!" });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: "Internal Server Error" }); 
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -612,7 +681,7 @@ exports.getUpdateCategoryForm = async (req, res) => {
       return res.status(404).send("Category not found.");
     }
 
-    req.session.categoryId = category._id
+    req.session.categoryId = category._id;
     res.render("admin/formUpdateCategory", {
       title: "Category Management - Edit",
       errorMessage: req.flash("errorMessage"),
@@ -627,7 +696,7 @@ exports.getUpdateCategoryForm = async (req, res) => {
 
 exports.postUpdateCategoryForm = async (req, res) => {
   try {
-    const id  = req.session.categoryId;
+    const id = req.session.categoryId;
     if (!id) {
       return res.status(400).json({ error: "Session expired" });
     }
@@ -637,7 +706,7 @@ exports.postUpdateCategoryForm = async (req, res) => {
       return res.status(400).json({ error: "Category not found" });
     }
 
-    console.log(id)
+    console.log(id);
     const categoryName = req.body?.categoryName?.trim() || "";
     const isListed = req.body?.isListed;
 
@@ -651,23 +720,23 @@ exports.postUpdateCategoryForm = async (req, res) => {
     });
 
     if (existingCategory) {
-      return res.status(400).json({ error: "Category with same name exists. Please try another name" });
+      return res.status(400).json({
+        error: "Category with same name exists. Please try another name",
+      });
     }
 
-
-    let imagePath
+    let imagePath;
     if (req.file) {
-      imagePath = `/uploads/${req.file.filename}`; 
+      imagePath = `/uploads/${req.file.filename}`;
     }
 
-    category.categoryName = categoryName || category.categoryName
-    category.isListed = isListed || category.isListed
-    if (req.file) { 
-      category.imagePath = imagePath || category.imagePath
+    category.categoryName = categoryName || category.categoryName;
+    category.isListed = isListed || category.isListed;
+    if (req.file) {
+      category.imagePath = imagePath || category.imagePath;
     }
 
-    await category.save()
-
+    await category.save();
 
     return res.status(200).json({ message: "Category updated successfully" });
   } catch (error) {
@@ -876,17 +945,14 @@ exports.cancelOrderByAdmin = async (req, res) => {
 
 exports.approveReturnItem = async (req, res) => {
   try {
+    let { id: itemId } = req.params;
 
-    let {id: itemId} = req.params
+    const orderItem = await OrderItem.findById(itemId);
 
-    const orderItem = await OrderItem.findById(itemId)
-    
-    orderItem.isReturned = true
-    await orderItem.save()
-
+    orderItem.isReturned = true;
+    await orderItem.save();
 
     res.status(200).json({ message: "Return approved successfully" });
-
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });

@@ -101,12 +101,12 @@ const varifyLoginUserSession = async (req, res, next) => {
   try {
     const loggedInUser = req.session.user
     if (!loggedInUser) {
-      res.status(400).json({error: "Session expired"})
+      res.status(400).json({error: "Please Login First", redirect: true})
     }
     const user = await User.findById(loggedInUser.id)
 
     if (!user) {
-      return res.status(404).json({ error: "User not found." });
+      return res.status(404).json({ error: "User not found.", redirect: false });
     }
 
     req.user = user;

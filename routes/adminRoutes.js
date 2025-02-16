@@ -19,7 +19,8 @@ router.get('/users/search', adminController.searchUser)
 
 // product management 
 router.get('/products', isAdminLogin,  adminController.getProductManagement)
-router.get('/products/new', adminController.getProductForm) 
+router.get('/products/all',  adminController.getAllProducts)
+router.get('/products/new', adminController.getProductForm)
 router.post('/products/new', upload.array('images'), newProductValidations, adminController.addNewProduct)
 router.get('/products/edit/:id', adminController.getEditProductForm)
 router.post('/products/edit/:id', upload.array('images'), adminController.postEditProductForm)

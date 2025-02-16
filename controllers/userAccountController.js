@@ -207,29 +207,30 @@ exports.addAddress = async (req, res) => {
 
 exports.getEditAddressPage = async (req, res) => {
   const { id } = req.params;
-  req.session.editAddressId = id
+  req.session.editAddressId = id;
   res.render("user/account/editAddress", { currentPage: "address" });
-}
+};
 
-exports.getAddressDetails = async(req, res) => {
+exports.getAddressDetails = async (req, res) => {
   try {
-    const addressId = req.session.editAddressId
+    const addressId = req.session.editAddressId;
     if (!addressId) {
-      return res.status(400).json({error: "Session expired"})
+      return res.status(400).json({ error: "Session expired" });
     }
 
-    const addressDetails = await AddressSchema.findById(addressId)
+    const addressDetails = await AddressSchema.findById(addressId);
     if (!addressDetails) {
-      return res.status(400).json({error: "Addresss Not found"})
+      return res.status(400).json({ error: "Addresss Not found" });
     }
 
-    res.status(200).json({message: 'Address fetched successfully', addressDetails})
-    
+    res
+      .status(200)
+      .json({ message: "Address fetched successfully", addressDetails });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
   }
-}
+};
 
 // delete a address
 exports.deleteAddress = async (req, res) => {
@@ -265,7 +266,7 @@ exports.saveEditedAddress = async (req, res) => {
       return res.status(404).json({ error: "User not found in request." });
     }
 
-    const addressId =  req.session.editAddressId
+    const addressId = req.session.editAddressId;
 
     const {
       addressType,
@@ -550,7 +551,10 @@ exports.getReturnProductPage = async (req, res) => {
       return res.status(400).json({ error: "Session expired" });
     }
 
-    const items = await OrderItem.find({ orderId: orderId, isReturnRequested: false  });
+    const items = await OrderItem.find({
+      orderId: orderId,
+      isReturnRequested: false,
+    });
     console.log(items);
 
     if (!items) {
@@ -572,26 +576,25 @@ exports.returnSelectedProducts = async (req, res) => {
       return res.status(400).json({ error: "Session expired" });
     }
 
-    const order = await Order.findById(orderId)
-    console.log(order)
+    const order = await Order.findById(orderId);
+    console.log(order);
 
-
-    if (order.orderStatus !== 'Delivered') {
+    if (order.orderStatus !== "Delivered") {
       return res.status(404).json({ error: "Order Is not yet deliverd" });
     }
 
     const today = new Date();
     const deliveryDate = new Date(order.deliveryDate);
-    
+
     const differenceInTime = today - deliveryDate;
-    const differenceInDays = differenceInTime / (1000 * 60 * 60 * 24); 
-    
+    const differenceInDays = differenceInTime / (1000 * 60 * 60 * 24);
+
     if (differenceInDays > 10) {
       return res.status(400).json({
-        error: "You can no longer return this product, since the 10-day return duration has exceeded."
+        error:
+          "You can no longer return this product, since the 10-day return duration has exceeded.",
       });
     }
-    
 
     const items = await OrderItem.find({ orderId: orderId });
     console.log(items);
@@ -608,10 +611,12 @@ exports.returnSelectedProducts = async (req, res) => {
     }
 
     if (!returnReson) {
-      return res.status(400).json({ error: "Please provide a reason for returning" });
+      return res
+        .status(400)
+        .json({ error: "Please provide a reason for returning" });
     }
 
-    const objectIds = productIds.map(id => new mongoose.Types.ObjectId(id));
+    const objectIds = productIds.map((id) => new mongoose.Types.ObjectId(id));
 
     const result = await OrderItem.updateMany(
       { orderId: orderId, productId: { $in: objectIds } },
@@ -619,12 +624,12 @@ exports.returnSelectedProducts = async (req, res) => {
     );
 
     if (result.modifiedCount === 0) {
-      return res.status(400).json({ error: "No matching products found in order. Request faild" });
+      return res
+        .status(400)
+        .json({ error: "No matching products found in order. Request faild" });
     }
-    
 
     res.status(200).json({ message: "Return request send" });
-
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });

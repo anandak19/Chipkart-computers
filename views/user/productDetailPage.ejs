@@ -18,25 +18,24 @@
             <% if(product && product.images) { %> <%
             product.images.forEach((image) => { %>
             <div class="small-image">
-              <img src="<%= image.filepath %>" alt="Product Image" />
+              <img src="<%= image.filepath ? image.filepath : '/images/default/default.jpg' %>" alt="Product Image" />
             </div>
             <% }); %> <% } else { %>
             <p>No images available.</p>
             <% } %>
           </div>
-
           <div class="large-image">
             <div
               id="imageZoom"
               style="
-                --url: url(<%= product.images[0].filepath %>);
+                --url: url(<%= product.images[0].filepath ? product.images[0].filepath : '/images/default/default.jpg'  %>);
                 --zoom-x: 0%;
                 --zoom-y: 0%;
                 --display: none;
               "
             >
               <img
-                src="<%= product.images[0].filepath %>"
+                src="<%= product.images[0].filepath ? product.images[0].filepath : '/images/default/default.jpg' %>"
                 alt="Product Image"
               />
               <div class="wishlist-icon">

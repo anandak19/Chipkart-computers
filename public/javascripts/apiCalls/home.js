@@ -136,7 +136,38 @@ const getLatestProducts = async () => {
     });
 };
 
+const categoryWrapper = document.querySelector('.categories-wrapper')
+const getTopCategories = async () => {
+  try {
+    const res = await fetch('/category/top')
+    const data = await res.json()
+    if (res.ok) {
+      console.log(data.topCategories)
+      categoryWrapper.innerHTML = "";
+
+      data.topCategories.forEach((category) => {
+        const categoryDiv = document.createElement("div");
+        categoryDiv.classList.add("category");
+
+        categoryDiv.innerHTML = `
+        <div class="category-image">
+          <img src="${category.imagePath}" alt="${category.categoryName}" />
+        </div>
+        <p class="category-name">${category.categoryName}</p>
+      `;
+
+      categoryWrapper.appendChild(categoryDiv);
+      })
+    }
+  } catch (error) {
+    console.error(error);
+    alert('Error fetching top categories')
+  }
+}
+
+
 document.addEventListener("DOMContentLoaded", (event) => {
+  getTopCategories()
   // get featured prducts
   getFeaturedProducts();
   // get latest products

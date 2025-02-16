@@ -20,10 +20,19 @@ async function addToCart(id) {
             getCartCount()
         }else{
             toastr.info(data.error);
+            if (data.redirect) {
+                setTimeout(() => {
+                    window.location = '/login'
+                }, 1000)
+            }
         }
         
     } catch (error) {
         console.error("Error", error);
         alert("Somthing went wrong")
+        if (data.redirect) {
+            window.location = '/login'
+        }
     }
+
 }

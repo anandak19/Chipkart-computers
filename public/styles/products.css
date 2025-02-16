@@ -37,13 +37,14 @@
   cursor: pointer;
   transition: all 0.3s ease;
 }
-.side-panel ul li:hover {
-  background-color: #a5d2ff;
-}
-
 .category-selected {
   background-color: #8fc6fd;
+  font-weight: 600;
 }
+.side-panel ul li:hover {
+  background-color: #c6e2fe;
+}
+
 
 .filter {
   margin-bottom: 15px;
