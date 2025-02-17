@@ -6,7 +6,8 @@ const AddressSchema = require("../models/Address");
 const { getOrderItemsDetails } = require("../utils/orderManagement");
 const OrderItem = require("../models/orderItem");
 const mongoose = require("mongoose");
-const Session = mongoose.connection.collection('sessions')
+const Coupons = require("../models/Coupon");
+const Session = mongoose.connection.collection("sessions");
 
 exports.getDashboard = (req, res) => {
   res.render("admin/dashbord", { title: "Admin Dashboard" });
@@ -108,7 +109,7 @@ exports.toggleBlockUser = async (req, res) => {
       user.blockReason = reason;
     }
 
-    // clear all the session with user and completly logout user 
+    // clear all the session with user and completly logout user
     await Session.deleteMany({ "session.userId": id });
 
     await user.save();
@@ -971,6 +972,91 @@ exports.getCouponManagement = (req, res) => {
   res.render("admin/couponManagement", { title: "Coupon Management" });
 };
 
+// get all available coupons
+// later make modification, how many users used the coupon
+exports.getAllCoupons = async (req, res, next) => {
+  try {
+    const { search } = req.query;
+    const page = parseInt(req.query.page) || 0;
+    const limit = 5;
+    const skip = page * limit;
+
+    const pipeline = [
+      {
+        $facet: {
+          couponsCount: [{ $count: "total" }],
+          paginatedResult: [{ $skip: skip }, { $limit: limit }],
+        },
+      },
+    ];
+
+    if (search) {
+      const couponCode = search.trim();
+      pipeline.unshift({
+        $match: { couponCode: { $regex: couponCode, $options: "i" } },
+      });
+    }
+
+    const result = await Coupons.aggregate(pipeline);
+    console.log(result)
+
+    const totalCoupons = result[0]?.couponsCount[0]?.total || 0;
+    const coupons = result[0]?.paginatedResult;
+    const hasMore = skip + coupons.length < totalCoupons;
+
+    res.status(200).json({
+      totalCoupons,
+      coupons,
+      hasMore,
+    });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+// render add coupon page 
 exports.getNewCouponForm = (req, res) => {
-  res.render("admin/newCoupon", { title: "Coupon Management - New Coupon" });
+  res.render("admin/newCoupon", { title: "Coupon Management - New Coupon", edit: false });
+};
+
+exports.saveNewCoupon = async (req, res, next) => {
+  try {
+    const {
+      couponCode,
+      discount,
+      minOrderAmount,
+      expirationDate,
+      description,
+      couponStatus,
+    } = req.body;
+
+    const existingCoupon = await Coupons.findOne({ couponCode });
+    if (existingCoupon) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Coupon code already exists!" });
+    }
+
+    const newCoupon = new Coupons({
+      couponCode,
+      discount,
+      minOrderAmount,
+      expirationDate,
+      description,
+      couponStatus,
+    });
+
+    await newCoupon.save();
+    return res
+      .status(201)
+      .json({ success: true, message: "Coupon created successfully!" });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+exports.getNewCouponForm = (req, res) => {
+  res.render("admin/newCoupon", { title: "Coupon Management - Edit Coupon", edit: true });
 };

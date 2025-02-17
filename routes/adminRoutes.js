@@ -3,6 +3,7 @@ const { isAdminLogin } = require('../middlewares/adminAuth')
 const adminController = require("../controllers/adminController");
 const { upload } = require('../utils/multer');
 const { newProductValidations, updateProductValidations } = require('../middlewares/productValidation');
+const { validateCouponDetails } = require('../middlewares/coupon');
 
 const router = express.Router()
 
@@ -57,7 +58,9 @@ router.get('/reports', isAdminLogin, adminController.getSalesReport)
 // render the coupen management page 
 router.get('/coupons', isAdminLogin, adminController.getCouponManagement)
 
+router.get('/coupons/all', adminController.getAllCoupons)
 router.get('/coupons/new', isAdminLogin, adminController.getNewCouponForm)
+router.post('/coupons/new', validateCouponDetails, adminController.saveNewCoupon)
 
 /*
 optional  we need banner management page

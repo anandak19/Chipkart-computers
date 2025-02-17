@@ -44,9 +44,7 @@ const showCategory = (categories) => {
       tableBody.appendChild(row);
     });
   }else{
-    const row = document.createElement("tr");
-    row.innerHTML = "Nothing to show"
-    tableBody.appendChild(row);
+    couponTableBody.innerHTML = `<tr><td colspan="8" class="text-muted">Nothing to show</td></tr>`;
   }
 };
 

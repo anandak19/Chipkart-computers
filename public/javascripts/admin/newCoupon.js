@@ -14,7 +14,7 @@ const expirationDateError = document.getElementById("expirationDateError");
 const descriptionError = document.getElementById("descriptionError");
 const statusError = document.getElementById("statusError");
 
-newCouponForm.addEventListener("submit", (e) => {
+newCouponForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   couponCodeError.innerHTML = "";
@@ -84,9 +84,23 @@ newCouponForm.addEventListener("submit", (e) => {
     };
 
     try {
+        const res = await fetch('/admin/coupons/new', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newCoupon)
+        })
+
+        const result = await res.json()
+        if(res.ok) {
+            toastr.success(result.message || "Success")
+            newCouponForm.reset()
+        }else{
+            toastr.warning(result.message || "Somthing went wrong")
+        }
         
     } catch (error) {
-        
+        console.error(error);
+        alert("Somthing went wrong")
     }
   }
 });
