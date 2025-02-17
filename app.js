@@ -49,6 +49,7 @@ app.use((req, res, next) => {
       store: MongoStore.create({
         mongoUrl: process.env.MONGO_URI,
         collectionName: "sessions",
+        stringify: false
       }),
       cookie: {
         maxAge: 24 * 60 * 60 * 1000,

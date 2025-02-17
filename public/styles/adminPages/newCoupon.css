@@ -1,0 +1,14 @@
+.form-container {
+    max-width: 800px;
+    margin: 50px auto;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+.form-group {
+    margin-bottom: 15px;
+}
+.description-field {
+    width: 100%;
+}

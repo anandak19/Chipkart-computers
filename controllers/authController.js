@@ -2,6 +2,8 @@ const UserSchema = require("../models/User");
 const { sendEmailToUser } = require("../utils/email");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
+const mongoose = require('mongoose')
+const Session = mongoose.connection.collection('sessions')
 const { validatePassword } = require("../utils/validations");
 const logoutUser = require("../utils/logoutUser");
 require("dotenv").config();
@@ -184,6 +186,31 @@ exports.registerGoogleUser = async (req, res) => {
       console.log("New user saved to the database:", user);
     }
 
+    req.session.userId = user._id.toString();
+    console.log(req.session);
+
+    const sessionUser = await Session.findOne({"session.userId": req.session.userId});
+    console.log(sessionUser);
+
+    // if user is blockd 
+    if(user.isBlocked) {
+      req.flash('errorMessage', `You are being blocked for the reason: ${user.blockReason}`)
+
+      await Session.deleteMany({ "session.userId": req.session.userId });
+      console.log("Sessions deleted due to block.");
+
+      req.session.destroy(err => {
+        if (err) {
+          console.error("Error destroying session:", err);
+        } else {
+          console.log("User session destroyed due to block.");
+        }
+      });
+
+      return res.redirect('/login');
+    }
+
+
     req.session.user = {
       email: user.email,
       id: user._id,
@@ -192,8 +219,8 @@ exports.registerGoogleUser = async (req, res) => {
 
     req.session.userEmail = user.email;
     req.session.isLogin = true;
-    req.session.userId = user._id;
 
+    await req.session.save(); 
     return res.redirect("/account");
   } catch (error) {
     console.error("Error saving user to the database:", error);
@@ -257,6 +284,15 @@ exports.postUserLogin = async (req, res) => {
       });
     }
 
+
+    // check if the user is blocked 
+    if(user.isBlocked) {
+      return res.status(400).json({
+        success: false,
+        message: `Your are being blocked for the reason: ${user.blockReason}`,
+      });
+    }
+
     req.session.user = {
       email: user.email,
       id: user._id, 
@@ -265,7 +301,7 @@ exports.postUserLogin = async (req, res) => {
     // remove this from other routes and use the above object for the existing purpose
     req.session.userEmail = user.email;
     req.session.isLogin = true;
-    req.session.userId = user._id;
+    req.session.userId = user._id.toString();
 
     res.status(200).json({
       success: true,

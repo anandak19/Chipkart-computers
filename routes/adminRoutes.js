@@ -8,7 +8,7 @@ const router = express.Router()
 
 
 router.get('/', isAdminLogin, adminController.getDashboard)
-// user management start 
+// user management start
 // -- isAdminLogin will come here
 router.get('/users', isAdminLogin, adminController.getUserManagementPage)
 router.get('/users/all', adminController.getUsers)
@@ -56,6 +56,8 @@ router.post('/orders/update-status', adminController.updateOrderStatus)
 router.get('/reports', isAdminLogin, adminController.getSalesReport)
 // render the coupen management page 
 router.get('/coupons', isAdminLogin, adminController.getCouponManagement)
+
+router.get('/coupons/new', isAdminLogin, adminController.getNewCouponForm)
 
 /*
 optional  we need banner management page

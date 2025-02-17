@@ -6,6 +6,7 @@ const AddressSchema = require("../models/Address");
 const { getOrderItemsDetails } = require("../utils/orderManagement");
 const OrderItem = require("../models/orderItem");
 const mongoose = require("mongoose");
+const Session = mongoose.connection.collection('sessions')
 
 exports.getDashboard = (req, res) => {
   res.render("admin/dashbord", { title: "Admin Dashboard" });
@@ -16,7 +17,6 @@ exports.getDashboard = (req, res) => {
 exports.getUserManagementPage = async (req, res) => {
   try {
     const usersArray = await UserSchema.find();
-    console.log(usersArray);
     res.render("admin/userManagement", {
       title: "User Management",
       usersArray,
@@ -60,7 +60,6 @@ exports.getUsers = async (req, res) => {
     const result = await UserSchema.aggregate(pipeline);
 
     const totalUsers = result[0]?.usersCount[0]?.total || 0;
-    console.log(result[0]);
     const users = result[0]?.paginatedResult;
     const hasMore = skip + users.length < totalUsers;
 
@@ -108,6 +107,9 @@ exports.toggleBlockUser = async (req, res) => {
       user.isBlocked = true;
       user.blockReason = reason;
     }
+
+    // clear all the session with user and completly logout user 
+    await Session.deleteMany({ "session.userId": id });
 
     await user.save();
     res.status(200).json({
@@ -967,4 +969,8 @@ exports.getSalesReport = (req, res) => {
 
 exports.getCouponManagement = (req, res) => {
   res.render("admin/couponManagement", { title: "Coupon Management" });
+};
+
+exports.getNewCouponForm = (req, res) => {
+  res.render("admin/newCoupon", { title: "Coupon Management - New Coupon" });
 };
