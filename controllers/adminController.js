@@ -7,6 +7,7 @@ const { getOrderItemsDetails } = require("../utils/orderManagement");
 const OrderItem = require("../models/orderItem");
 const mongoose = require("mongoose");
 const Coupons = require("../models/Coupon");
+const { getCategories } = require("../utils/categoryHelpers");
 const Session = mongoose.connection.collection("sessions");
 
 exports.getDashboard = (req, res) => {
@@ -752,6 +753,20 @@ exports.postUpdateCategoryForm = async (req, res) => {
 exports.getOfferModule = (req, res) => {
   res.render("admin/offerModule", { title: "Offer Module" });
 };
+
+exports.getNewOfferForm = (req, res) =>{
+  res.render("admin/offerForm", { title: "Offer Module - New Offer", edit: false });
+}
+
+exports.getAvailableCategories = async(req, res, next) => {
+  try {
+    const categories = await getCategories()
+    res.status(200).json({ data: categories });
+  } catch (error) {
+    console.log(error)
+    next(error)
+  }
+}
 
 // -------------ORDER MANAGMENT START
 exports.getOrderManagement = (req, res) => {

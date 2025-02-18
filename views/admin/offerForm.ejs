@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel</title>
+
+    <%- include("../partials/adminHead") %>
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h3 class="text-white text-center">Chipkart Admin</h3>
+      <a href="/admin"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a href="/admin/users"><i class="fas fa-users"></i> User Management</a>
+      <a href="/admin/products"
+        ><i class="fas fa-cogs"></i> Product Management</a
+      >
+      <a href="/admin/categories"
+        ><i class="fas fa-tags"></i> Category Management</a
+      >
+      <a href="/admin/offers" class="sidebar-active"
+        ><i class="fas fa-gift"></i> Offer Module</a
+      >
+      <a href="/admin/orders"><i class="fas fa-box"></i> View Orders</a>
+      <a href="/admin/reports"
+        ><i class="fas fa-chart-line"></i> Sales Report</a
+      >
+      <a href="/admin/coupons"><i class="fas fa-gift"></i> Coupon Management</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-wrapper">
+      <!-- Navbar -->
+      <%- include("../partials/adminHeader") %>
+
+      <div class="main-content">
+        <div class="page-head-section">
+          <button class="back-button" id="backButton">Back</button>
+        </div>
+
+        <div class="px-4">
+          <form id="offerForm">
+            <div class="row">
+              <!-- offer title  -->
+              <div class="col-md-6">
+                <label class="form-label">Offer Title</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="offerTitle"
+                  placeholder="Enter Title"
+                />
+                <small class="text-danger" id="offerTitleError"></small>
+              </div>
+
+              <!-- discount percentage  -->
+              <div class="col-md-3">
+                <label class="form-label">Discount (%)</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="discount"
+                  placeholder="Enter Discount Percentage"
+                />
+                <small class="text-danger" id="discountError"></small>
+              </div>
+
+              <!-- targeted Category  -->
+              <div class="col-md-3">
+                <label class="form-label">Targeted Category</label>
+                <select class="form-select" id="category" required>
+                  <option selected value="all">-All Categories-</option>
+                </select>
+                <small class="text-danger" id="categoryError"></small>
+              </div>
+            </div>
+
+            <div class="row mt-3">
+              <!-- start date  -->
+              <div class="col-md-3">
+                <label class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="startDate" />
+                <small class="text-danger" id="startDateError"></small>
+              </div>
+
+              <!-- end date  -->
+              <div class="col-md-3">
+                <label class="form-label">End Date</label>
+                <input type="date" class="form-control" id="endDate" />
+                <small class="text-danger" id="endDateError"></small>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="text-center mt-4">
+              <button type="submit" class="btn btn-primary px-4 w-25">
+                Save
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+    <%- include("../partials/adminFooter") %>
+
+    <% if(edit) { %>
+        <script src="/javascripts/admin/editOffer.js"></script>
+    <% } else { %>
+        <script src="/javascripts/admin/newOffer.js"></script>
+    <% } %> 
+  </body>
+</html>
