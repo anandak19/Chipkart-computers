@@ -58,7 +58,7 @@
                 <label class="form-label">Discount (%)</label>
                 <input
                   type="number"
-                  class="form-control" 
+                  class="form-control"
                   id="discount"
                   placeholder="Discount"
                 />
@@ -75,14 +75,21 @@
                 <small class="text-danger" id="minOrderAmountError"></small>
               </div>
               <div class="col-md-3">
-                <label class="form-label">Expiration Date</label>
-                <input type="date" class="form-control" id="expirationDate" />
-                <small class="text-danger" id="expirationDateError"></small>
+                <label class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="startDate" />
+                <small class="text-danger" id="startDateError"></small>
               </div>
             </div>
 
             <!-- Second Row -->
             <div class="row mt-3">
+
+              <div class="col-md-3">
+                <label class="form-label">End Date</label>
+                <input type="date" class="form-control" id="endDate" />
+                <small class="text-danger" id="endDateError"></small>
+              </div>
+
               <div class="col-md-6">
                 <label class="form-label">Description</label>
                 <input
@@ -93,21 +100,12 @@
                 />
                 <small class="text-danger" id="descriptionError"></small>
               </div>
-              <div class="col-md-3">
-                <label class="form-label">Status</label>
-                <select class="form-select" id="status">
-                  <option value="active">Active</option>
-                  <option value="expired">Expired</option>
-                  <option value="disabled">Disabled</option>
-                </select>
-                <small class="text-danger" id="statusError"></small>
-              </div>
             </div>
 
             <!-- Submit Button -->
             <div class="text-center mt-4">
               <button type="submit" class="btn btn-primary px-4 w-25">
-                Add Coupon
+                Save
               </button>
             </div>
           </form>
@@ -115,7 +113,10 @@
       </div>
     </div>
 
-    <%- include("../partials/adminFooter") %>
+    <%- include("../partials/adminFooter") %> <% if(edit) { %>
+    <script src="/javascripts/admin/editCoupon.js"></script>
+    <% } else { %>
     <script src="/javascripts/admin/newCoupon.js"></script>
+    <% } %>
   </body>
 </html>

@@ -61,6 +61,10 @@ router.get('/coupons', isAdminLogin, adminController.getCouponManagement)
 router.get('/coupons/all', adminController.getAllCoupons)
 router.get('/coupons/new', isAdminLogin, adminController.getNewCouponForm)
 router.post('/coupons/new', validateCouponDetails, adminController.saveNewCoupon)
+router.get('/coupons/edit/:id', adminController.getEditCouponForm)
+router.get('/coupons/details', adminController.getEditCouponDetails)
+router.patch('/coupons/details', validateCouponDetails, adminController.saveUpdatedCoupon)
+router.patch('/coupons/unlist/:id', adminController.toogleCouponStatus)
 
 /*
 optional  we need banner management page

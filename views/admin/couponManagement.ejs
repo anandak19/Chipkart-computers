@@ -1,91 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Panel</title>
     <%- include("../partials/adminHead") %>
-</head>
-<body>
-
+  </head>
+  <body>
     <!-- Sidebar -->
     <div class="sidebar">
-        <h3 class="text-white text-center">Chipkart Admin</h3>
-        <a href="/admin"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-        <a href="/admin/users"><i class="fas fa-users"></i> User Management</a>
-        <a href="/admin/products"><i class="fas fa-cogs"></i> Product Management</a>
-        <a href="/admin/categories"><i class="fas fa-tags"></i> Category Management</a>
-        <a href="/admin/offers"><i class="fas fa-gift"></i> Offer Module</a>
-        <a href="/admin/orders"><i class="fas fa-box"></i> View Orders</a>
-        <a href="/admin/reports"><i class="fas fa-chart-line"></i> Sales Report</a>
-        <a href="/admin/coupons" class="sidebar-active"><i class="fas fa-gift"></i> Coupon Management</a>
+      <h3 class="text-white text-center">Chipkart Admin</h3>
+      <a href="/admin"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a href="/admin/users"><i class="fas fa-users"></i> User Management</a>
+      <a href="/admin/products"
+        ><i class="fas fa-cogs"></i> Product Management</a
+      >
+      <a href="/admin/categories"
+        ><i class="fas fa-tags"></i> Category Management</a
+      >
+      <a href="/admin/offers"><i class="fas fa-gift"></i> Offer Module</a>
+      <a href="/admin/orders"><i class="fas fa-box"></i> View Orders</a>
+      <a href="/admin/reports"
+        ><i class="fas fa-chart-line"></i> Sales Report</a
+      >
+      <a href="/admin/coupons" class="sidebar-active"
+        ><i class="fas fa-gift"></i> Coupon Management</a
+      >
     </div>
 
-<!-- Main Content -->
-<div class="content-wrapper">
-        <!-- Navbar -->
-        <%- include("../partials/adminHeader") %>
+    <!-- Main Content -->
+    <div class="content-wrapper">
+      <!-- Navbar -->
+      <%- include("../partials/adminHeader") %>
 
-
-        <div class="main-content">
-            <div class="manage-page">
-                <div class="search-box">
-                  <form
-                    method="get"
-                    class="search-form"
-                  >
-                    <input
-                      type="search"
-                      name="query"
-                      id="query"
-                      placeholder="Search Coupon"
-                      required
-                    />
-                    <button type="submit">Search</button>
-                    <small id="errorMessage" class="text-danger"></small>
-                  </form>
-                </div>
-                <div class="add-new">
-                  <a href="/admin/coupons/new" class="btn btn-success">
-                    <img src="/images/icons/add-white.png" alt="" class="btn-icon" />
-                    Add New Coupon
-                  </a>
-                </div>
-              </div>
-
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>No</th>
-                    <th>Coupon Code</th>
-                    <th>Discount(%)</th>
-                    <th>Description</th>
-                    <th>Minimum Order Amount</th>
-                    <th>Created Date</th>
-                    <th>Expiration Date</th>
-                    <th>Coupon Status</th>
-                  </tr>
-                </thead>
-                <tbody  id="couponTableBody">
-                </tbody>
-              </table>
-
-              <div class="pagination">
-                <div class="pagination-btns">
-                  <button class="prev-btn">
-                    <i class="fa-solid fa-chevron-left"></i>
-                  </button>
-                  <button class="next-btn">
-                    <i class="fa-solid fa-chevron-right"></i>
-                  </button>
-                </div>
-              </div>
+      <div class="main-content">
+        <div class="manage-page">
+          <div class="search-box">
+            <form method="get" class="search-form">
+              <input
+                type="search"
+                name="query"
+                id="query"
+                placeholder="Search Coupon"
+              />
+              <button type="submit">Search</button>
+              <small id="errorMessage" class="text-danger"></small>
+            </form>
+          </div>
+          <div class="add-new">
+            <a href="/admin/coupons/new" class="btn btn-success">
+              <img src="/images/icons/add-white.png" alt="" class="btn-icon" />
+              Add New Coupon
+            </a>
+          </div>
         </div>
 
-</div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Coupon Code</th>
+              <th>Discount(%)</th>
+              <th>Description</th>
+              <th>Minimum Order Amount</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Used Count</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="couponTableBody"></tbody>
+        </table>
 
-<%- include("../partials/adminFooter") %>
-<script src="/javascripts/admin/couponManagement.js"></script>
+        <div class="pagination">
+          <div class="pagination-btns">
+            <button class="prev-btn">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button class="next-btn">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-</body>
+    <%- include("../partials/adminFooter") %> 
+      <script src="/javascripts/admin/couponManagement.js"></script>
+  </body>
 </html>

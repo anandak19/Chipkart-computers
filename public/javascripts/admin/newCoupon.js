@@ -3,16 +3,16 @@ const newCouponForm = document.getElementById("newCouponForm");
 const couponCode = document.getElementById("couponCode");
 const discount = document.getElementById("discount");
 const minOrderAmount = document.getElementById("minOrderAmount");
-const expirationDate = document.getElementById("expirationDate");
+const startDate  = document.getElementById("startDate");
+const endDate  = document.getElementById("endDate");
 const description = document.getElementById("description");
-const statusField = document.getElementById("status");
 
 const couponCodeError = document.getElementById("couponCodeError");
 const discountError = document.getElementById("discountError");
 const minOrderAmountError = document.getElementById("minOrderAmountError");
-const expirationDateError = document.getElementById("expirationDateError");
+const startDateError = document.getElementById("startDateError");
+const endDateError = document.getElementById("endDateError");
 const descriptionError = document.getElementById("descriptionError");
-const statusError = document.getElementById("statusError");
 
 newCouponForm.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -20,18 +20,18 @@ newCouponForm.addEventListener("submit", async (e) => {
   couponCodeError.innerHTML = "";
   discountError.innerHTML = "";
   minOrderAmountError.innerHTML = "";
-  expirationDateError.innerHTML = "";
+  startDateError.innerHTML = "";
+  endDateError.innerHTML = "";
   descriptionError.innerHTML = "";
-  statusError.innerHTML = "";
 
   let isValid = true;
 
   const couponCodeInput = couponCode.value.trim();
   const discountInput = discount.value.trim();
   const minOrderAmountInput = minOrderAmount.value.trim();
-  const expirationDateInput = expirationDate.value;
+  const startDateInput = startDate.value;
+  const endDateInput = endDate.value;
   const descriptionInput = description.value.trim();
-  const statusInput = statusField.value.trim();
 
 
   if (couponCodeInput.length !== 5 || !couponCodeInput) {
@@ -55,9 +55,27 @@ newCouponForm.addEventListener("submit", async (e) => {
   }
 
   const today = new Date();
-  const selectedDate = new Date(expirationDateInput);
-  if (!expirationDateInput || selectedDate <= today) {
-    expirationDateError.innerHTML = "Expiration date must be in the future.";
+
+  today.setHours(0, 0, 0, 0);
+  
+  const selectedStartDate = new Date(startDateInput);
+  const selectedEndDate = new Date(endDateInput);
+  
+  selectedStartDate.setHours(0, 0, 0, 0);
+  
+  if (!startDateInput || selectedStartDate < today) {
+    startDateError.innerHTML = "Start date must be in the future or today.";
+    return;
+  }
+  
+
+  if (!endDateInput || selectedEndDate <= today) {
+    endDateError.innerHTML = "End date must be in the future.";
+    return
+  }
+
+  if (selectedEndDate <= selectedStartDate) {
+    endDateError.innerHTML = "End date should be greater than start date.";
     return
   }
 
@@ -67,20 +85,14 @@ newCouponForm.addEventListener("submit", async (e) => {
     return;
   }
 
-  if (!statusInput) {
-    statusError.innerHTML = "Please select a status.";
-    isValid = false;
-    return;
-  }
-
   if (isValid) {
     const newCoupon = {
       couponCode: couponCodeInput,
       discount: discountInput,
       minOrderAmount: minOrderAmountInput,
-      expirationDate: expirationDateInput,
+      startDate: startDateInput,
+      endDate: endDateInput,
       description: descriptionInput,
-      couponStatus: statusInput,
     };
 
     try {

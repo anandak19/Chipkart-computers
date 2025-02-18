@@ -983,6 +983,9 @@ exports.getAllCoupons = async (req, res, next) => {
 
     const pipeline = [
       {
+        $sort: {createdAt: -1}
+      },
+      {
         $facet: {
           couponsCount: [{ $count: "total" }],
           paginatedResult: [{ $skip: skip }, { $limit: limit }],
@@ -998,7 +1001,6 @@ exports.getAllCoupons = async (req, res, next) => {
     }
 
     const result = await Coupons.aggregate(pipeline);
-    console.log(result)
 
     const totalCoupons = result[0]?.couponsCount[0]?.total || 0;
     const coupons = result[0]?.paginatedResult;
@@ -1015,9 +1017,12 @@ exports.getAllCoupons = async (req, res, next) => {
   }
 };
 
-// render add coupon page 
+// render add coupon page
 exports.getNewCouponForm = (req, res) => {
-  res.render("admin/newCoupon", { title: "Coupon Management - New Coupon", edit: false });
+  res.render("admin/newCoupon", {
+    title: "Coupon Management - New Coupon",
+    edit: false,
+  });
 };
 
 exports.saveNewCoupon = async (req, res, next) => {
@@ -1026,9 +1031,9 @@ exports.saveNewCoupon = async (req, res, next) => {
       couponCode,
       discount,
       minOrderAmount,
-      expirationDate,
+      startDate,
+      endDate,
       description,
-      couponStatus,
     } = req.body;
 
     const existingCoupon = await Coupons.findOne({ couponCode });
@@ -1042,9 +1047,9 @@ exports.saveNewCoupon = async (req, res, next) => {
       couponCode,
       discount,
       minOrderAmount,
-      expirationDate,
+      startDate,
+      endDate,
       description,
-      couponStatus,
     });
 
     await newCoupon.save();
@@ -1057,6 +1062,119 @@ exports.saveNewCoupon = async (req, res, next) => {
   }
 };
 
-exports.getNewCouponForm = (req, res) => {
-  res.render("admin/newCoupon", { title: "Coupon Management - Edit Coupon", edit: true });
+// render edit coupon page 
+exports.getEditCouponForm = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    if (!id) {
+      res.redirect("/admin/coupons");
+    }
+
+    const coupon = await Coupons.findById(id);
+    if (!coupon) {
+      res.redirect("/admin/coupons");
+    }
+
+    req.session.selectedCouponId = coupon._id;
+    res.render("admin/newCoupon", {
+      title: "Coupon Management - Edit Coupon",
+      edit: true,
+    });
+  } catch (error) {
+    console.log(error);
+    res.redirect("/admin/coupons");
+  }
 };
+
+// get the details of coupon for edit 
+exports.getEditCouponDetails = async (req, res, next) => {
+  try {
+   const couponId = req.session.selectedCouponId
+
+   if (!couponId) {
+    return res.status(400).json({ error: 'Session Expired' })
+   }
+
+   const coupon = await Coupons.findById(couponId);
+   if (!coupon) {
+    return res.status(400).json({ error: 'Coupon not found' });
+   }
+
+   return res.status(200).json({message: 'Coupon fetched successfully', coupon})
+    
+  } catch (error) {
+    console.log(error)
+    next(error)
+  }
+}
+
+// to save the updated coupon details 
+exports.saveUpdatedCoupon = async (req, res, next) => {
+  try {
+    const couponId = req.session.selectedCouponId
+    if(!couponId) {
+      return res.status(400).json({error: "Session expired"})
+    }
+
+    const coupon = await Coupons.findById(couponId)
+    if (!coupon) {
+      return res.status(404).json({error: "Coupon not found"})
+    }
+
+    const {
+      couponCode,
+      discount,
+      minOrderAmount,
+      startDate,
+      endDate,
+      description,
+    } = req.body;
+
+    const existingCoupon = await Coupons.findOne({
+      couponCode: couponCode,
+      _id: { $ne: coupon._id },
+    });
+
+    if (existingCoupon) {
+      return res.status(400).json({ error: "Coupon code already in use" });
+    }
+
+    coupon.couponCode = couponCode
+    coupon.discount = discount
+    coupon.minOrderAmount = minOrderAmount
+    coupon.startDate = startDate
+    coupon.endDate = endDate
+    coupon.description = description
+
+    await coupon.save()
+    res.status(200).json({message: "Coupon updated successfully"})
+
+  } catch (error) {
+    console.log(error)
+    next(error)
+  }
+}
+
+// to make the coupon active or inactive 
+exports.toogleCouponStatus = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    if (!id) {
+      return res.status(400).json({error: 'Select a coupon to delete'})
+    }
+
+    const coupon = await Coupons.findById(id);
+    if (!coupon) {
+     return res.status(400).json({ error: 'Coupon not found' });
+    }
+
+    coupon.isActive = !coupon.isActive
+
+    await coupon.save()
+    res.status(200).json({message: "Updated listing status"})
+  } catch (error) {
+    console.log(error)
+    next(error)
+  }
+}

@@ -5,9 +5,9 @@ const validateCouponDetails = async(req, res, next) => {
             couponCode,
             discount,
             minOrderAmount,
-            expirationDate,
+            startDate,
+            endDate,
             description,
-            couponStatus,
           } = req.body;
 
           if (!couponCode || couponCode.length !== 5) {
@@ -22,19 +22,32 @@ const validateCouponDetails = async(req, res, next) => {
             return res.status(400).json({error: "Minimum order amount must be greater than 0."})
           }
 
-          const today = new Date();
-          const selectedDate = new Date(expirationDate);
-          if (!expirationDate || selectedDate <= today) {
-            return res.status(400).json({error: "Expiration date must be in the future."})
-          }
-
           if (!description || description.length < 10) {
             return res.status(400).json({error: "Description must be at least 10 characters."})
           }
 
-          if (!couponStatus) {
-            return res.status(400).json({error: "Please select a status."})
+          const today = new Date();
+          today.setHours(0, 0, 0, 0); 
+        
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+        
+          if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            return res.status(400).json({ error: "Invalid date format" });
           }
+
+          if (start < today) {
+            return res.status(400).json({ error: "Start date must be today or a future date" });
+          }
+
+          if (end <= today) {
+            return res.status(400).json({ error: "End date must be a future date" });
+          }
+
+          if (end <= start) {
+            return res.status(400).json({ error: "End date must be after the start date" });
+          }
+
 
           return next()
         
