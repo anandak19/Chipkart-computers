@@ -27,41 +27,41 @@ const showCartItems = (cartItems) => {
       cartItem.innerHTML = `
         <div class="product-data d-flex align-items-center gap-4">
           <div class="cartItem-image">
-            <img src="${item.products.image[0].filepath}" alt="${
-        item.products.name
+            <img src="${item.image.filepath}" alt="${
+        item.productName
       }" />
           </div>
           <div class="cartItem-details flex-grow-1">
-            <h5 class="cartItem-name">${item.products.name}</h5>
-            <p class="cartItem-price">${formatPrice(item.products.price)}</p>
+            <h5 class="cartItem-name">${item.productName}</h5>
+            <p class="cartItem-price">${formatPrice(item.finalPrice)}</p>
           </div>
         </div>
 
         <div class="cartItem-quantity">
           <div class="quantity-controllers">
             <button class="qty-btn" onclick="decreaseQuantity('${
-              item.products.productId
+              item.productId
             }')">-</button>
-            <span class="qty-value">${item.products.quantity}</span>
+            <span class="qty-value">${item.quantity}</span>
             <button class="qty-btn" onclick="increaseQuantity('${
-              item.products.productId
+              item.productId
             }')">+</button>
           </div>
           <p class="qty-warning">${
-            item.products.stockStatus === "out" 
+            item.stockStatus === "out" 
             ? "Out of Stock! Please remove this item" 
-            : item.products.stockStatus === "sna"
+            : item.stockStatus === "sna"
               ? 'Stock not available'
               : ''
           }</p>
         </div>
 
         <div class="cartItem-total">
-          <p>${formatPrice(item.products.subTotalPrice)}</p>
+          <p>${formatPrice(item.subTotalPrice)}</p>
         </div>
 
         <button class="cartItem-delete" onclick="removeItem('${
-          item.products.productId
+          item.productId
         }')">
           <i class="fa-solid fa-trash"></i>
         </button>

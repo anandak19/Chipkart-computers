@@ -49,9 +49,9 @@ const showOrderItems = (orderDetails) => {
 
       row.innerHTML = `
             <td>${index + 1}</td>
-            <td><img src="${item.image[0].filepath}" alt="Product-image"></td>
-            <td>${item.name}</td>
-            <td>${item.price}</td>
+            <td><img src="${item.image.filepath}" alt="Product-image"></td>
+            <td>${item.productName}</td>
+            <td>${item.finalPrice}</td>
             <td>${item.quantity}</td>
             <td>${item.subTotalPrice}</td>
             <td>${item.isReturnRequested ? `<p class='text-danger'>Yes</p>` : `No` }</td>

@@ -175,6 +175,7 @@ exports.registerGoogleUser = async (req, res) => {
     const name = profile.displayName;
     console.log(email, name);
 
+    // check if the user exists, if not create one 
     let user = await UserSchema.findOne({ email });
     if (!user) {
       newUser = new UserSchema({
@@ -186,15 +187,18 @@ exports.registerGoogleUser = async (req, res) => {
       console.log("New user saved to the database:", user);
     }
 
+    // to identify each each sessions in db 
     req.session.userId = user._id.toString();
-    console.log(req.session);
 
     const sessionUser = await Session.findOne({"session.userId": req.session.userId});
     console.log(sessionUser);
 
     // if user is blockd 
     if(user.isBlocked) {
-      req.flash('errorMessage', `You are being blocked for the reason: ${user.blockReason}`)
+      res.cookie('errorMessage', `You are being blocked for the reason: ${user.blockReason}`, {
+        maxAge: 9000, 
+        httpOnly: true
+      });
 
       await Session.deleteMany({ "session.userId": req.session.userId });
       console.log("Sessions deleted due to block.");
@@ -216,11 +220,10 @@ exports.registerGoogleUser = async (req, res) => {
       id: user._id,
       name: user.name,
     };
-
     req.session.userEmail = user.email;
     req.session.isLogin = true;
 
-    await req.session.save(); 
+    await req.session.save();
     return res.redirect("/account");
   } catch (error) {
     console.error("Error saving user to the database:", error);
@@ -232,18 +235,15 @@ exports.registerGoogleUser = async (req, res) => {
 
 // get user login controller
 exports.getUserLogin = (req, res) => {
-  console.log(
-    "Session userEmail login:",
-    req.session.userEmail,
-    req.isAuthenticated()
-  );
-  if (req.session.userEmail || req.isAuthenticated()) {
+  if (req.session.isLogin || req.isAuthenticated()) {
     res.redirect("/");
   } else {
-    req.session.userEmail = false;
+    req.session.isLogin = false
+    const errorMessage = req.cookies.errorMessage || req.flash("errorMessage");
+    res.clearCookie("errorMessage");
     res.render("user/auth/login", {
       email: req.flash("email") || "",
-      errorMessage: req.flash("errorMessage"),
+      errorMessage: errorMessage,
       isAuth: true,
     });
   }
@@ -253,7 +253,6 @@ exports.getUserLogin = (req, res) => {
 exports.postUserLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     console.log("Started login process for email:", email);
 
     // Check if email and password are provided
@@ -298,9 +297,9 @@ exports.postUserLogin = async (req, res) => {
       id: user._id, 
       name: user.name,
     };
+    req.session.isLogin = true;
     // remove this from other routes and use the above object for the existing purpose
     req.session.userEmail = user.email;
-    req.session.isLogin = true;
     req.session.userId = user._id.toString();
 
     res.status(200).json({
@@ -324,7 +323,6 @@ exports.postUserLogin = async (req, res) => {
 exports.logoutUser = async (req, res) => {
   try {
     await logoutUser(req, res);
-
     return res.redirect("/");
   } catch (error) {
     console.error("Logout Error:", error);

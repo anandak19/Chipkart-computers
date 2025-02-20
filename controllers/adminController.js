@@ -8,6 +8,8 @@ const OrderItem = require("../models/orderItem");
 const mongoose = require("mongoose");
 const Coupons = require("../models/Coupon");
 const { getCategories } = require("../utils/categoryHelpers");
+const Offer = require("../models/Offer");
+const { addFinalPriceStage } = require("../utils/productHelpers");
 const Session = mongoose.connection.collection("sessions");
 
 exports.getDashboard = (req, res) => {
@@ -187,6 +189,7 @@ exports.getProductManagement = async (req, res) => {
       {
         $unwind: "$categoryDetails",
       },
+      addFinalPriceStage,
       {
         $skip: skip,
       },
@@ -206,6 +209,7 @@ exports.getProductManagement = async (req, res) => {
     }
 
     const productsArray = await ProductSchema.aggregate(pipeline);
+    console.log(productsArray);
 
     const totalProducts = await ProductSchema.countDocuments();
     const totalPages = Math.ceil(totalProducts / limit);
@@ -222,6 +226,7 @@ exports.getProductManagement = async (req, res) => {
   }
 };
 
+// not in use 
 exports.getAllProducts = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 0;
@@ -248,6 +253,16 @@ exports.getAllProducts = async (req, res, next) => {
         $unwind: "$categoryDetails",
       },
       {
+        $addFields: {
+          finalPrice: {
+            $subtract: [
+              "$mrp",
+              { $multiply: ["$mrp", { $divide: ["$discount", 100] }] }
+            ]
+          }
+        }
+      },
+      {
         $facet: {
           paginatedResult: [
             { $sort: { createdAt: -1 } },
@@ -271,6 +286,7 @@ exports.getAllProducts = async (req, res, next) => {
     const paginatedResult = result[0]?.paginatedResult;
     const total = result[0]?.total[0]?.totalProducts || 0;
     const hasMore = skip + paginatedResult.length < total;
+    console.log(paginatedResult)
 
     res.status(200).json({ productsArray: paginatedResult, total, hasMore });
   } catch (error) {
@@ -319,7 +335,6 @@ exports.addNewProduct = async (req, res) => {
     const { productName, categoryId, brand, description, positions } = req.body;
     // console.log(req.body)
     const mrp = parseFloat(req.body.mrp);
-    const discount = parseFloat(req.body.discount);
     const finalPrice = parseFloat(req.body.finalPrice);
     const quantity = parseFloat(req.body.quantity);
     const highlights = JSON.parse(req.body.highlights);
@@ -337,7 +352,6 @@ exports.addNewProduct = async (req, res) => {
       brand,
       description,
       mrp,
-      discount,
       finalPrice,
       quantity,
       highlights,
@@ -361,6 +375,8 @@ exports.getEditProductForm = async (req, res) => {
       console.log("Id not found");
       return res.redirect("/admin/products");
     }
+
+
     const product = await ProductSchema.findById(productId);
     if (!product) {
       console.log("product not found in database");
@@ -411,8 +427,6 @@ exports.postEditProductForm = async (req, res) => {
     const { productName, categoryId, brand, description } = req.body;
     let { positions } = req.body;
     const mrp = parseFloat(req.body.mrp);
-    const discount = parseFloat(req.body.discount);
-    const finalPrice = parseFloat(req.body.finalPrice);
     const quantity = parseFloat(req.body.quantity);
     const isFeatured = req.body.isFeatured === "true";
     const highlights = req.body.highlights
@@ -440,12 +454,6 @@ exports.postEditProductForm = async (req, res) => {
     }
     if (mrp !== undefined && mrp !== null) {
       product.mrp = mrp;
-    }
-    if (discount !== undefined && discount !== null) {
-      product.discount = discount;
-    }
-    if (finalPrice !== undefined && finalPrice !== null) {
-      product.finalPrice = finalPrice;
     }
     if (quantity !== undefined && quantity !== null) {
       product.quantity = quantity;
@@ -754,19 +762,64 @@ exports.getOfferModule = (req, res) => {
   res.render("admin/offerModule", { title: "Offer Module" });
 };
 
-exports.getNewOfferForm = (req, res) =>{
-  res.render("admin/offerForm", { title: "Offer Module - New Offer", edit: false });
-}
+exports.getNewOfferForm = (req, res) => {
+  res.render("admin/offerForm", {
+    title: "Offer Module - New Offer",
+    edit: false,
+  });
+};
 
-exports.getAvailableCategories = async(req, res, next) => {
+exports.applyNewOffer = async (req, res, next) => {
   try {
-    const categories = await getCategories()
+    const { offerTitle, discount, target, categoryId, startDate, endDate } =
+      req.body;
+
+    let category;
+    if (target === "category") {
+      category = await CategoriesSchema.findById(categoryId);
+      if (!category) {
+        return res.status(404).json({ error: "Category not found" });
+      }
+
+      const result = await ProductSchema.updateMany(
+        { categoryId: categoryId, discount: { $gt: discount } },
+        [
+          {
+            $set: {
+              discount: discount,
+              finalPrice: {
+                $subtract: ["$mrp", { $multiply: ["$mrp", discount / 100] }],
+              },
+            },
+          },
+        ]
+      );
+      console.log(result);
+      if (result.modifiedCount <= 0) {
+        return res
+          .status(400)
+          .json({ error: "Product with this category is not found" });
+      }
+
+      return res.status(200).json({
+        message: "Offer applied successfully",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+exports.getAvailableCategories = async (req, res, next) => {
+  try {
+    const categories = await getCategories();
     res.status(200).json({ data: categories });
   } catch (error) {
-    console.log(error)
-    next(error)
+    console.log(error);
+    next(error);
   }
-}
+};
 
 // -------------ORDER MANAGMENT START
 exports.getOrderManagement = (req, res) => {
@@ -998,7 +1051,7 @@ exports.getAllCoupons = async (req, res, next) => {
 
     const pipeline = [
       {
-        $sort: {createdAt: -1}
+        $sort: { createdAt: -1 },
       },
       {
         $facet: {
@@ -1077,7 +1130,7 @@ exports.saveNewCoupon = async (req, res, next) => {
   }
 };
 
-// render edit coupon page 
+// render edit coupon page
 exports.getEditCouponForm = async (req, res) => {
   try {
     const id = req.params.id;
@@ -1102,39 +1155,40 @@ exports.getEditCouponForm = async (req, res) => {
   }
 };
 
-// get the details of coupon for edit 
+// get the details of coupon for edit
 exports.getEditCouponDetails = async (req, res, next) => {
   try {
-   const couponId = req.session.selectedCouponId
+    const couponId = req.session.selectedCouponId;
 
-   if (!couponId) {
-    return res.status(400).json({ error: 'Session Expired' })
-   }
-
-   const coupon = await Coupons.findById(couponId);
-   if (!coupon) {
-    return res.status(400).json({ error: 'Coupon not found' });
-   }
-
-   return res.status(200).json({message: 'Coupon fetched successfully', coupon})
-    
-  } catch (error) {
-    console.log(error)
-    next(error)
-  }
-}
-
-// to save the updated coupon details 
-exports.saveUpdatedCoupon = async (req, res, next) => {
-  try {
-    const couponId = req.session.selectedCouponId
-    if(!couponId) {
-      return res.status(400).json({error: "Session expired"})
+    if (!couponId) {
+      return res.status(400).json({ error: "Session Expired" });
     }
 
-    const coupon = await Coupons.findById(couponId)
+    const coupon = await Coupons.findById(couponId);
     if (!coupon) {
-      return res.status(404).json({error: "Coupon not found"})
+      return res.status(400).json({ error: "Coupon not found" });
+    }
+
+    return res
+      .status(200)
+      .json({ message: "Coupon fetched successfully", coupon });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+// to save the updated coupon details
+exports.saveUpdatedCoupon = async (req, res, next) => {
+  try {
+    const couponId = req.session.selectedCouponId;
+    if (!couponId) {
+      return res.status(400).json({ error: "Session expired" });
+    }
+
+    const coupon = await Coupons.findById(couponId);
+    if (!coupon) {
+      return res.status(404).json({ error: "Coupon not found" });
     }
 
     const {
@@ -1155,41 +1209,40 @@ exports.saveUpdatedCoupon = async (req, res, next) => {
       return res.status(400).json({ error: "Coupon code already in use" });
     }
 
-    coupon.couponCode = couponCode
-    coupon.discount = discount
-    coupon.minOrderAmount = minOrderAmount
-    coupon.startDate = startDate
-    coupon.endDate = endDate
-    coupon.description = description
+    coupon.couponCode = couponCode;
+    coupon.discount = discount;
+    coupon.minOrderAmount = minOrderAmount;
+    coupon.startDate = startDate;
+    coupon.endDate = endDate;
+    coupon.description = description;
 
-    await coupon.save()
-    res.status(200).json({message: "Coupon updated successfully"})
-
+    await coupon.save();
+    res.status(200).json({ message: "Coupon updated successfully" });
   } catch (error) {
-    console.log(error)
-    next(error)
+    console.log(error);
+    next(error);
   }
-}
+};
 
-// to make the coupon active or inactive 
+// to make the coupon active or inactive
 exports.toogleCouponStatus = async (req, res, next) => {
   try {
     const id = req.params.id;
     if (!id) {
-      return res.status(400).json({error: 'Select a coupon to delete'})
+      return res.status(400).json({ error: "Select a coupon to delete" });
     }
 
     const coupon = await Coupons.findById(id);
     if (!coupon) {
-     return res.status(400).json({ error: 'Coupon not found' });
+      return res.status(400).json({ error: "Coupon not found" });
     }
 
-    coupon.isActive = !coupon.isActive
+    coupon.isActive = !coupon.isActive;
 
-    await coupon.save()
-    res.status(200).json({message: "Updated listing status"})
+    await coupon.save();
+    res.status(200).json({ message: "Updated listing status" });
   } catch (error) {
-    console.log(error)
-    next(error)
+    console.log(error);
+    next(error);
   }
-}
+};

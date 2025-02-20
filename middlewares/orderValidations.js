@@ -1,6 +1,7 @@
 const { checkProductsAvailability } = require("../utils/cartManagement");
 
 const CartSchema = require("../models/Cart");
+const Cart = require("../models/Cart");
 
 const handleCart = async (req, res, next) => {
   try {
@@ -15,6 +16,7 @@ const handleCart = async (req, res, next) => {
     const products = await checkProductsAvailability(cart);
 
     req.cart = cart
+    console.log("Selected cart", cart)
     console.log("All products available:", products);
     return next()
 

@@ -39,8 +39,9 @@
           </div>
 
           <% if(errorMessage) { %>
-            <small class="text-danger"></small>
+            <small class="text-danger"><%= errorMessage %></small>
           <% } %>
+          
           <small class="text-danger" id="loginError"></small>
 
           <button

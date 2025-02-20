@@ -435,6 +435,7 @@ exports.getAllOrders = async (req, res) => {
       orders[0].totalCount.length > 0 ? orders[0].totalCount[0].count : 0;
 
     const hasMore = skip + paginatedResults.length < totalCount;
+    console.log(paginatedResults)
 
     res.status(200).json({ success: true, orders: paginatedResults, hasMore });
   } catch (error) {

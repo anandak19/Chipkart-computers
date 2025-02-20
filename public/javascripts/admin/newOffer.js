@@ -70,7 +70,7 @@ offerForm.addEventListener("submit", (e) => {
   }
 
   const newOffer = {
-
+    
   }
 });
 

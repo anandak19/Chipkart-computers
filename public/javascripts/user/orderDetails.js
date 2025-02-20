@@ -23,12 +23,12 @@ const showOrderItems = (items) => {
 
         orderItem.innerHTML = `
         <div class="product-img-container">
-          <img src="${item.image[0].filepath}" alt="Product Image" class="product-img">
+          <img src="${item.image.filepath}" alt="Product Image" class="product-img">
         </div>
   
         <div class="product-details flex-grow-1 px-3">
-          <p class="product-name mb-1">${item.name}</p>
-          <p class="product-price mb-1">Unit Price: ₹${item.price.toLocaleString()}</p>
+          <p class="product-name mb-1">${item.productName}</p>
+          <p class="product-price mb-1">Unit Price: ₹${item.finalPrice.toLocaleString()}</p>
           <p class="product-quantity mb-0">Quantity: ${item.quantity}</p>
           ${item.isReturnRequested ? `<p class= "text-warning">Return requested </p> `: '' }
           ${item.isReturned ? `<p class= "text-danger">Returned</p> `: '' }

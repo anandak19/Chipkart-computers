@@ -4,6 +4,7 @@ const adminController = require("../controllers/adminController");
 const { upload } = require('../utils/multer');
 const { newProductValidations, updateProductValidations } = require('../middlewares/productValidation');
 const { validateCouponDetails } = require('../middlewares/coupon');
+const { validateOffer } = require('../middlewares/offerValidators');
 
 const router = express.Router()
 
@@ -24,6 +25,7 @@ router.get('/products/all',  adminController.getAllProducts)
 router.get('/products/new', adminController.getProductForm)
 router.post('/products/new', upload.array('images'), newProductValidations, adminController.addNewProduct)
 router.get('/products/edit/:id', adminController.getEditProductForm)
+// update product validation middleware should be here 
 router.post('/products/edit/:id', upload.array('images'), adminController.postEditProductForm)
 router.post('/products/toggle-listed/:id', adminController.toggleListProduct)
 
@@ -42,6 +44,7 @@ router.post('/categories/new', upload.single('image'),  adminController.postCate
 // render the offer page
 router.get('/offers', isAdminLogin, adminController.getOfferModule)
 router.get('/offers/new', isAdminLogin, adminController.getNewOfferForm)
+router.post('/offers/new', validateOffer, adminController.applyNewOffer)
 
 router.get('/categories/available', adminController.getAvailableCategories)
 

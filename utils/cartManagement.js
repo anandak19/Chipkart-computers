@@ -1,47 +1,93 @@
-const CartSchema = require('../models/Cart')
-const ProductSchema = require('../models/Product')
+const CartSchema = require("../models/Cart");
+const ProductSchema = require("../models/Product");
+const { addFinalPriceStage } = require("./productHelpers");
 
-const getUserCartItems = async(userId) => {
-    return await CartSchema.aggregate([
-        {
-            $match: { userId: userId },
-          },
-          {
-            $unwind: "$products",
-          },
-          {
-            $lookup: {
-              from: "products",
-              localField: "products.productId",
-              foreignField: "_id",
-              as: "productDetails",
+const getUserCartItems = async (userId) => {
+  const pipeline = [
+    {
+      $match: { userId: userId },
+    },
+    {
+      $unwind: "$products",
+    },
+    {
+      $lookup: {
+        from: "products",
+        localField: "products.productId",
+        foreignField: "_id",
+        as: "productDetails",
+      },
+    },
+    {
+      $unwind: "$productDetails",
+    },
+    {
+      $addFields: {
+        "productDetails.stock": "$productDetails.quantity",
+      },
+    },
+    {
+      $project: {
+        "productDetails._id": 1,
+        "productDetails.productName": 1,
+        "productDetails.mrp": 1,
+        "productDetails.discount": 1,
+        "productDetails.image": {
+          $arrayElemAt: ["$productDetails.images", 0],
+        }, // Get first image
+        "productDetails.offerStartDate": 1,
+        "productDetails.offerEndDate": 1,
+        "productDetails.stock": 1,
+        products: 1,
+        userId: 1,
+      },
+    },
+    {
+      $replaceRoot: {
+        newRoot: {
+          $mergeObjects: ["$productDetails", "$products", "$$ROOT"],
+        },
+      },
+    },
+    {
+      $project: {
+        productDetails: 0,
+        products: 0,
+        userId: 0,
+      },
+    },
+    addFinalPriceStage,
+    // to add stock status and subtotal price
+    {
+      $addFields: {
+        stockStatus: {
+          $cond: {
+            if: { $eq: ["$stock", 0] },
+            then: "out",
+            else: {
+              $cond: {
+                if: { $gt: ["$quantity", "$stock"] },
+                then: "sna",
+                else: "in",
+              },
             },
           },
-          {
-            $unwind: "$productDetails",
-          },
-          {
-            $project: {
-              _id: 1,
-              userId: 1,
-              "products.productId": 1,
-              "products.quantity": 1,
-              "products.name": "$productDetails.productName",
-              "products.price": "$productDetails.finalPrice",
-              "products.image": "$productDetails.images",
-              "products.subTotalPrice": {
-                $multiply: ["$productDetails.finalPrice", "$products.quantity"]
-              }
-            },
-          }
-    ])
-}
+        },
+        subTotalPrice: {
+          $multiply: ["$finalPrice", "$quantity"],
+        },
+      },
+    },
+  ];
 
-const getCartTotal = async(userId) => {
-  const cart = await getUserCartItems(userId)
+  return await CartSchema.aggregate(pipeline);
+};
+
+const getCartTotal = async (userId) => {
+  const cart = await getUserCartItems(userId);
 
   const cartSubTotal = cart.reduce((total, item) => {
-    return total + (item.products.subTotalPrice || 0);
+    return total + (item.subTotalPrice || 0);
   }, 0);
 
   let shippingFee = 0;
@@ -52,10 +98,10 @@ const getCartTotal = async(userId) => {
     cartTotal = cartSubTotal + shippingFee;
   }
 
-  return cartTotal
-}
+  return cartTotal;
+};
 
-const checkProductsAvailability  = async(cart) => {
+const checkProductsAvailability = async (cart) => {
   return await Promise.all(
     cart.products.map(async (item) => {
       const product = await ProductSchema.findById(item.productId);
@@ -63,24 +109,27 @@ const checkProductsAvailability  = async(cart) => {
       if (!product) {
         throw new Error(`Product with ID ${item.productId} not found`);
       }
-      console.log(item)
-      
+      console.log(item);
+
       if (!product.isListed) {
         throw new Error(`"${product.productName}" is not available`);
       }
 
-      if(product.quantity === 0){
-        throw new Error(`"${product.productName}" is out of stock!. Try again after removing it from cart`);
+      if (product.quantity === 0) {
+        throw new Error(
+          `"${product.productName}" is out of stock!. Try again after removing it from cart`
+        );
       }
 
-      if(item.quantity > product.quantity){
-        throw new Error(`Requsted quantity for the product "${product.productName}" is not available. Try again after decreesing the quantity`);
+      if (item.quantity > product.quantity) {
+        throw new Error(
+          `Requsted quantity for the product "${product.productName}" is not available. Try again after decreesing the quantity`
+        );
       }
-
 
       return product;
     })
   );
-}
+};
 
-module.exports = {getUserCartItems, getCartTotal, checkProductsAvailability}
+module.exports = { getUserCartItems, getCartTotal, checkProductsAvailability };

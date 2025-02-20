@@ -13,10 +13,10 @@ function renderOrders(orders) {
         (item) => `
         <div class="item-section d-flex align-items-center">
           <div class="item-image">
-            <img src="${item.image[0].filepath}" alt="${item.name}">
+            <img src="${item.image.filepath}" alt="${item.productName}">
           </div>
           <div class="item-details">
-            <p class="product-name">${item.name}</p>
+            <p class="product-name">${item.productName}</p>
             <p class="product-quantity">${item.quantity} Pcs</p>
             <p class="product-price">₹${item.subTotalPrice}</p>
           </div>

@@ -51,6 +51,10 @@
       <%- include("../partials/adminHeader") %>
 
       <div class="main-content">
+
+        <div class="page-head-section">
+          <button class="back-button" id="backButton">Back</button>
+        </div>
         <!-- submit this form dynamically in the js with fech api, add images too  -->
         <div class="form-wrapper">
           <form id="productForm">
@@ -87,21 +91,7 @@
                 <input type="number" id="mrp" placeholder="MRP" />
                 <small class="text-danger" id="mrpError"></small>
               </div>
-              <div class="form-group">
-                <label for="discount">Discount (%)</label>
-                <input type="number" id="discount" placeholder="Discount (%)" />
-                <small class="text-danger" id="discountError"></small>
-              </div>
-              <div class="form-group">
-                <label for="finalPrice">Final Price</label>
-                <input
-                  type="number"
-                  id="finalPrice"
-                  placeholder="Final Price"
-                  readonly
-                />
-                <small class="text-danger" id="finalPriceError"></small>
-              </div>
+
               <div class="form-group">
                 <label for="stockCount">Stock Count</label>
                 <input
@@ -250,10 +240,8 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <%- include("../partials/adminFooter") %>
 
     <script src="/javascripts/admin/productForm.js"></script>
-    <!-- Bootstrap JS and Dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
   </body>
 </html>

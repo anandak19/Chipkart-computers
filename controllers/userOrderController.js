@@ -3,7 +3,7 @@ const CartSchema = require("../models/Cart");
 const UserSchema = require("../models/User");
 const AddressShema = require("../models/Address");
 const OrderSchema = require("../models/Order");
-const OrderItem = require('../models/orderItem')
+const OrderItem = require("../models/orderItem");
 const mongoose = require("mongoose");
 require("dotenv").config();
 const {
@@ -11,6 +11,7 @@ const {
   increaseProductQuantity,
 } = require("../utils/productQtyManagement");
 const { getUserCartItems, getCartTotal } = require("../utils/cartManagement");
+const { addFinalPriceStage } = require("../utils/productHelpers");
 
 const maxQty = Number(process.env.MAX_QTY);
 
@@ -50,30 +51,60 @@ exports.getCartItems = async (req, res) => {
         $unwind: "$productDetails",
       },
       {
+        $addFields: {
+          "productDetails.stock": "$productDetails.quantity",
+        },
+      },
+      {
         $project: {
-          _id: 1,
+          "productDetails._id": 1,
+          "productDetails.productName": 1,
+          "productDetails.mrp": 1,
+          "productDetails.discount": 1,
+          "productDetails.image": {
+            $arrayElemAt: ["$productDetails.images", 0],
+          }, // Get first image
+          "productDetails.offerStartDate": 1,
+          "productDetails.offerEndDate": 1,
+          "productDetails.stock": 1,
+          products: 1,
           userId: 1,
-          "products.productId": 1,
-          "products.quantity": 1,
-          "products.name": "$productDetails.productName",
-          "products.price": "$productDetails.finalPrice",
-          "products.image": "$productDetails.images",
-          "products.subTotalPrice": {
-            $multiply: ["$productDetails.finalPrice", "$products.quantity"],
+        },
+      },
+      {
+        $replaceRoot: {
+          newRoot: {
+            $mergeObjects: ["$productDetails", "$products", "$$ROOT"],
           },
-          "products.stockStatus": {
-            "$cond": {
-              "if": { "$eq": ["$productDetails.quantity", 0] },
-              "then": "out",
-              "else": {
-                "$cond": {
-                  "if": { "$gt": ["$products.quantity", "$productDetails.quantity"] },
-                  "then": "sna",
-                  "else": "in"
-                }
-              }  
-            }
-          }
+        },
+      },
+      {
+        $project: {
+          productDetails: 0,
+          products: 0,
+          userId: 0,
+        },
+      },
+      addFinalPriceStage,
+      // to add stock status and subtotal price
+      {
+        $addFields: {
+          stockStatus: {
+            $cond: {
+              if: { $eq: ["$stock", 0] },
+              then: "out",
+              else: {
+                $cond: {
+                  if: { $gt: ["$quantity", "$stock"] },
+                  then: "sna",
+                  else: "in",
+                },
+              },
+            },
+          },
+          subTotalPrice: {
+            $multiply: ["$finalPrice", "$quantity"],
+          },
         },
       },
       {
@@ -88,6 +119,7 @@ exports.getCartItems = async (req, res) => {
 
     const productCount = cart[0].productCount[0];
     const products = cart[0]?.paginatedResult || [];
+    console.log(products)
 
     const total = productCount ? productCount.total : 0;
     const hasMore = skip + products.length < total;
@@ -349,7 +381,7 @@ exports.getCartTotal = async (req, res) => {
     const cart = await getUserCartItems(userId);
 
     const cartSubTotal = cart.reduce((total, item) => {
-      return total + (item.products.subTotalPrice || 0);
+      return total + (item.subTotalPrice || 0);
     }, 0);
 
     let shippingFee = 0;
@@ -412,29 +444,27 @@ exports.chooseDeliveryAddress = async (req, res) => {
   }
 };
 
-
 exports.getCartItemCount = async (req, res, next) => {
   try {
-    const loggedInUser = req.session.user
+    const loggedInUser = req.session.user;
     if (!loggedInUser) {
       return res.status(200).json({ count: 0 });
     }
 
-    const cart = await CartSchema.findOne({userId: loggedInUser.id})
+    const cart = await CartSchema.findOne({ userId: loggedInUser.id });
 
     if (!cart) {
       return res.status(200).json({ count: 0 });
     }
 
-    const itemCount = cart.products.length
+    const itemCount = cart.products.length;
 
     return res.status(200).json({ count: itemCount });
-    
   } catch (error) {
-    console.log(error)
-    next(error)
+    console.log(error);
+    next(error);
   }
-}
+};
 /*
 request body: paymentMethod: "COD" / "Online"
 session needed- login
@@ -462,8 +492,8 @@ exports.placeOrder = async (req, res) => {
     // cart total or total amont payable by user with out coupon discount
     const cartTotal = await getCartTotal(userId);
 
+    // get address id , default address or address choosed from session 
     let addressId = req.session.deliveryAddress;
-
     if (!req.session.deliveryAddress) {
       const address = await AddressShema.findOne(
         { userId: userId, isDefault: true },
@@ -502,17 +532,25 @@ exports.placeOrder = async (req, res) => {
     const order = await newOrder.save({ session });
     if (!order) {
       await session.abortTransaction();
-      return res.status(400).json({ error: "No delivery address found" });
+      return res.status(400).json({ error: "Faild to place order" });
     }
 
-    // save order items 
-
+    // save order items
     const cartItemsDetails = await getUserCartItems(userId);
     console.log("order item details", cartItemsDetails);
     console.log("one order item ", cartItemsDetails[0]);
     const orderItems = cartItemsDetails.map((item) => ({
       orderId: order._id,
-      ...item.products,
+
+      productName: item.productName,
+      mrp: item.mrp,
+      discount: item.discount,
+      image: item.image,
+      quantity: item.quantity,
+      finalPrice: item.finalPrice,
+      subTotalPrice: item.subTotalPrice,
+      productId: item.productId,
+
       isReturnRequested: false,
       isReturned: false,
       returnReason: null,
@@ -520,20 +558,21 @@ exports.placeOrder = async (req, res) => {
     }));
     console.log("modifid order items", orderItems);
 
-    const insertedOrderItems =  await OrderItem.insertMany(orderItems, {session});
+    const insertedOrderItems = await OrderItem.insertMany(orderItems, {
+      session,
+    });
 
     if (insertedOrderItems.length !== orderItems.length) {
       await session.abortTransaction();
-      throw new Error("Not all order items were adde");
+      throw new Error("Not all order items were added");
     }
 
-    // delete old cart 
+    // delete old cart
     await CartSchema.deleteOne({ userId }, { session });
 
     await session.commitTransaction();
 
     res.status(200).json({ message: "Order Placed Successfully" });
-
   } catch (error) {
     await session.abortTransaction();
     console.error(error);
@@ -543,10 +582,9 @@ exports.placeOrder = async (req, res) => {
   }
 };
 
-
-exports.getAddAnotherAddressPage = async (req, res) =>{
+exports.getAddAnotherAddressPage = async (req, res) => {
   res.render("user/account/addAnotherAddress");
-}
+};
 
 /*
 --controllers

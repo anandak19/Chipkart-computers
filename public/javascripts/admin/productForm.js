@@ -3,51 +3,12 @@ const productName = document.getElementById("productName");
 const category = document.getElementById("category");
 const brandName = document.getElementById("brandName");
 const mrp = document.getElementById("mrp");
-const discount = document.getElementById("discount");
-const finalPrice = document.getElementById("finalPrice");
 const stockCount = document.getElementById("stockCount");
 const feature = document.getElementById("feature");
 const highlights = document.querySelectorAll(".highlights");
 const description = document.getElementById("description");
 // image inputs
 const imageInputs = document.querySelectorAll(".image-input");
-
-const finalPriceError = document.getElementById("finalPriceError");
-// final price calculator
-const finalPriceCalculator = (originalPrice = 0, discountPercentage = 0) => {
-  if (originalPrice < 0 || discountPercentage < 0 || discountPercentage > 100) {
-    finalPrice.value = 0;
-    finalPriceError.innerText = "Invalid MRP and Discount";
-    return;
-  }
-  finalPriceError.innerText = "";
-  const discountAmount = (originalPrice * discountPercentage) / 100;
-  const discountedPrice = originalPrice - discountAmount;
-  if (finalPrice < discountedPrice) {
-    finalPrice.value = 0;
-    finalPriceError.innerText = "Invalid MRP and Discount";
-    return;
-  }
-  finalPrice.value = Math.ceil(discountedPrice);
-};
-// calculator call on discount input
-discount.addEventListener("input", (e) => {
-  const originalPrice = mrp?.value || 0;
-  const discountPercentage = e.target.value;
-  finalPriceCalculator(
-    parseFloat(originalPrice),
-    parseFloat(discountPercentage)
-  );
-});
-// calculator call on mrp input
-mrp.addEventListener("input", (e) => {
-  const originalPrice = e.target.value;
-  const discountPercentage = discount?.value || 0;
-  finalPriceCalculator(
-    parseFloat(originalPrice),
-    parseFloat(discountPercentage)
-  );
-});
 
 // croper js image croping
 const modal = document.getElementById("modal");
@@ -111,7 +72,6 @@ const productNameError = document.getElementById("productNameError");
 const categoryError = document.getElementById("categoryError");
 const brandNameError = document.getElementById("brandNameError");
 const mrpError = document.getElementById("mrpError");
-const discountError = document.getElementById("discountError");
 const stockCountError = document.getElementById("stockCountError");
 const highlightsError = document.getElementById("highlightsError");
 const descriptionError = document.getElementById("descriptionError");
@@ -149,14 +109,6 @@ const validateProductForm = (highlightValues) => {
     return false;
   } else {
     mrpError.textContent = "";
-  }
-
-  // Discount Validation
-  if (!discount.value || parseFloat(discount.value) < 0) {
-    discountError.textContent = "Please provide a valid discount";
-    return false;
-  } else {
-    discountError.textContent = "";
   }
 
   // Stock Count Validation
@@ -231,8 +183,6 @@ if (saveProductBtn) {
     formData.append("categoryId", category.value);
     formData.append("brand", brandName.value.trim());
     formData.append("mrp", mrp.value.trim());
-    formData.append("discount", discount.value.trim());
-    formData.append("finalPrice", finalPrice.value);
     formData.append("quantity", stockCount.value.trim());
     formData.append("isFeatured", feature.value.trim());
     formData.append("highlights", JSON.stringify(highlightValues));
@@ -290,8 +240,6 @@ if (updateProductBtn) {
     formData.append("categoryId", category.value);
     formData.append("brand", brandName.value.trim());
     formData.append("mrp", mrp.value.trim());
-    formData.append("discount", discount.value.trim());
-    formData.append("finalPrice", finalPrice.value);
     formData.append("quantity", stockCount.value.trim());
     formData.append("isFeatured", discount.value.trim());
     formData.append("highlights", JSON.stringify(highlightValues));

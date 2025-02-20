@@ -3,6 +3,7 @@ const ProductSchema = require("../models/Product");
 const UserReviewsSchema = require("../models/UserReview");
 const mongoose = require("mongoose");
 const { calculateAverageRating } = require("../utils/helper");
+const { getProductWithFinalPrice, addFinalPriceStage } = require("../utils/productHelpers");
 const { ObjectId } = require("mongoose").Types;
 
 exports.getHome = (req, res) => {
@@ -15,10 +16,17 @@ exports.getFeaturedProducts = async (req, res) => {
     find the products that are listed and featured is true
     return the all the products
     */
-    const featuredProducts = await ProductSchema.find({
-      isListed: true,
-      isFeatured: true,
-    });
+    // const featuredProducts = await ProductSchema.find({
+    //   isListed: true,
+    //   isFeatured: true,
+    // });
+
+    const featuredProducts = await ProductSchema.aggregate([
+      {
+        $match: { isListed: true, isFeatured: true },
+      },
+      addFinalPriceStage,
+    ]);
 
     res.status(200).json({
       success: true,
@@ -42,11 +50,19 @@ exports.getLatestProducts = async (req, res) => {
     limit the count of products to 10
     return the the products
     */
-    const latestProducts = await ProductSchema.find({
-      isListed: true,
-    })
-      .sort({ createdAt: -1 })
-      .limit(10);
+
+    const latestProducts = await ProductSchema.aggregate([
+      {
+        $match: { isListed: true },
+      },
+      addFinalPriceStage,
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
+        $limit: 10,
+      },
+    ]);
 
     res.status(200).json({
       success: true,
@@ -316,6 +332,9 @@ exports.getAvailableProducts2 = async (req, res) => {
       },
     });
 
+    // add final price
+    pipeline.push(addFinalPriceStage);
+
     // --to remove unnessasary fields
     pipeline.push({
       $project: {
@@ -375,11 +394,11 @@ exports.getAvailableProducts2 = async (req, res) => {
 exports.getProductDetailsPage = async (req, res) => {
   try {
     const productId = req.params.id;
-    const product = await ProductSchema.findById(productId);
-
-    if (!product) {
-      return res.status(404).send("Product not found");
+    if (!productId) {
+      return res.status(404).json({error: 'Choose a product first'})
     }
+    const product = await getProductWithFinalPrice(productId)
+
     res.render("user/productDetailPage", { product });
   } catch (error) {
     console.log(error);
@@ -566,11 +585,15 @@ exports.getRelatedProducts = async (req, res) => {
 
     const { categoryId } = currentProduct;
 
-    const relatedProducts = await ProductSchema.find({
-      categoryId,
-      _id: { $ne: currentProduct._id },
-      isListed: true,
-    }).limit(10);
+    const relatedProducts = await ProductSchema.aggregate([
+      {
+        $match: {categoryId: categoryId, _id: {$ne: currentProduct._id}, isListed: true}
+      },
+      {
+        $limit: 10
+      },
+      addFinalPriceStage
+    ])
 
     res.status(200).json({
       success: true,
@@ -585,27 +608,24 @@ exports.getRelatedProducts = async (req, res) => {
   }
 };
 
-
 exports.getTopCategories = async (req, res, next) => {
   try {
-
     const topCategories = await CategoriesSchema.aggregate([
       {
-        $match: {isListed: true}
+        $match: { isListed: true },
       },
       {
-        $sort: {createdAt: 1}
+        $sort: { createdAt: 1 },
       },
       {
-        $limit: 5
-      }
-    ])
+        $limit: 5,
+      },
+    ]);
 
-    console.log(topCategories)
-    res.status(200).json({topCategories})
-
+    console.log(topCategories);
+    res.status(200).json({ topCategories });
   } catch (error) {
-    console.log(error)
-    next(error)
+    console.log(error);
+    next(error);
   }
-}
+};

@@ -66,28 +66,12 @@ const validateBrand = (brand) => {
     return null
 }
 
-const validateFinalPrice = (mrp, discount, finalPrice) => {
-  if (
-    mrp < 0 ||
-    discount < 0 ||
-    discount > 100 ||
-    finalPrice > mrp ||
-    isNaN(mrp) ||
-    isNaN(discount) ||
-    isNaN(finalPrice)
-  ) {
-    return "Invalid MRP, discount, or final price";
+const validateMrp = (mrp) => {
+  if (mrp < 0 || isNaN(mrp)) {
+    return "invalid MRP"
   }
-  const discountAmount = (mrp * discount) / 100;
-  const discountedPrice = mrp - discountAmount;
-  const expectedFinalPrice = Math.ceil(discountedPrice);
-
-  if (expectedFinalPrice !== finalPrice) {
-    return "Invalid final price";
-  }
-
   return null;
-};
+}
 
 const validateQuantity = (quantity) => {
   if (!quantity || isNaN(quantity) || quantity < 0) {
@@ -117,7 +101,7 @@ module.exports = {
     validateProductName,
     validateCategory,
     validateBrand,
-    validateFinalPrice,
+    validateMrp,
     validateQuantity,
     validateHiglights,
     validateDescription

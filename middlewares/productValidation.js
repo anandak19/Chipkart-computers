@@ -7,6 +7,7 @@ const {
   validateHiglights,
   validateDescription,
   validateProductName,
+  validateMrp,
 } = require("../utils/productValidators");
 const ProductSchema = require("../models/Product");
 const CartSchema = require("../models/Cart");
@@ -15,8 +16,6 @@ const newProductValidations = async (req, res, next) => {
   try {
     const { productName, categoryId, brand, description } = req.body;
     const mrp = parseFloat(req.body.mrp);
-    const discount = parseFloat(req.body.discount);
-    const finalPrice = parseFloat(req.body.finalPrice);
     const quantity = parseFloat(req.body.quantity);
     const highlights = JSON.parse(req.body.highlights);
 
@@ -25,7 +24,7 @@ const newProductValidations = async (req, res, next) => {
       (await validateNewProductName(productName)) ||
       (await validateCategory(categoryId)) ||
       validateBrand(brand) ||
-      validateFinalPrice(mrp, discount, finalPrice) ||
+      validateMrp(mrp) ||
       validateQuantity(quantity) ||
       validateHiglights(highlights) ||
       validateDescription(description);
