@@ -67,6 +67,7 @@
               </div>
 
               <!-- targeted Category  -->
+              <% if(!edit) { %>
               <div class="col-md-3">
                 <label class="form-label">Targeted Category</label>
                 <select class="form-select" id="category" required>
@@ -74,6 +75,18 @@
                 </select>
                 <small class="text-danger" id="categoryError"></small>
               </div>
+              <% } else {%>
+                <div class="col-md-3">
+                  <label class="form-label">Targeted Category</label>
+                  <input
+                  type="text"
+                  class="form-control"
+                  id="category"
+                  readonly
+                />
+                  <small class="text-danger" id="categoryError"></small>
+                </div>
+              <% } %>  
             </div>
 
             <div class="row mt-3">
@@ -100,15 +113,12 @@
             </div>
           </form>
         </div>
-
       </div>
     </div>
-    <%- include("../partials/adminFooter") %>
-
-    <% if(edit) { %>
-        <script src="/javascripts/admin/editOffer.js"></script>
+    <%- include("../partials/adminFooter") %> <% if(edit) { %>
+    <script src="/javascripts/admin/editOffer.js"></script>
     <% } else { %>
-        <script src="/javascripts/admin/newOffer.js"></script>
-    <% } %> 
+    <script src="/javascripts/admin/newOffer.js"></script>
+    <% } %>
   </body>
 </html>

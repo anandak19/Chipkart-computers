@@ -185,5 +185,5 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 proceedBtn.addEventListener("click", () => {
-  window.location.replace("/checkout");
+  window.location.replace("/checkout?cart=true");
 });

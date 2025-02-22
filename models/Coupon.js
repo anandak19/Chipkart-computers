@@ -18,9 +18,9 @@ const CouponSchema = new Schema(
   }
 );
 
-CouponSchema.virtual("isExpired").get(function () {
-  return new Date() > this.endDate;
-});
+CouponSchema.virtual("isAvailable").get(function () {
+  return this.startDate < new Date() && new Date() > this.endDate
+})
 
 const Coupons = mongoose.model("Coupons", CouponSchema);
 

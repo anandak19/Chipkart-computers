@@ -11,7 +11,8 @@ const {
   increaseProductQuantity,
 } = require("../utils/productQtyManagement");
 const { getUserCartItems, getCartTotal } = require("../utils/cartManagement");
-const { addFinalPriceStage } = require("../utils/productHelpers");
+const { addFinalPriceStage, getProductWithFinalPrice } = require("../utils/productHelpers");
+const Coupons = require("../models/Coupon");
 
 const maxQty = Number(process.env.MAX_QTY);
 
@@ -119,7 +120,7 @@ exports.getCartItems = async (req, res) => {
 
     const productCount = cart[0].productCount[0];
     const products = cart[0]?.paginatedResult || [];
-    console.log(products)
+    console.log(products);
 
     const total = productCount ? productCount.total : 0;
     const hasMore = skip + products.length < total;
@@ -407,16 +408,65 @@ exports.getCheckoutPage = async (req, res) => {
     }
 
     const userId = req.user._id;
-    const cart = await CartSchema.findOne({ userId });
 
-    if (!cart || cart.products.length === 0) {
-      return res.redirect("/cart");
+    const { cart, productId } = req.query;
+
+    if (cart) {
+      const userCart = await CartSchema.findOne({ userId });
+
+      if (!cart || userCart.products.length === 0) {
+        return res.redirect("/cart");
+      }
+
+      req.session.cartCheckout = true;
+      req.session.checkoutProductId = null
+    } else if (productId) {
+      const product = await ProductSchema.findById(productId);
+
+      if (!product) {
+        return res.redirect("/cart");
+      }
+
+      req.session.checkoutProductId = product._id;
+      req.session.cartCheckout = false
     }
 
     res.render("user/account/checkout");
   } catch (error) {
     console.error("Error fetching cart:", error);
     res.status(500).send("Internal Server Error");
+  }
+};
+
+// return checkout amout , after decreasing discount if it has discount 
+exports.getCheckoutAmount = async (req, res, next) => {
+  try {
+
+    let toPay
+
+    if (req.session.cartCheckout) {
+      toPay = await getCartTotal(req.user._id)
+    }else if(req.session.checkoutProductId) {
+      product = await getProductWithFinalPrice(req.session.checkoutProductId)
+      toPay = product.finalPrice
+    }
+
+    let discountAmount = 0;
+    if (req.session.appliedCouponId) {
+      let coupon = await Coupons.findById(req.session.appliedCouponId);
+      if (coupon) {
+        discountAmount = (coupon.discount * toPay) / 100;
+        toPay -= discountAmount;
+      }
+    }
+
+    toPay = Math.max(0, toPay);
+
+    res.json({ total: toPay, discountApplied: discountAmount });
+
+  } catch (error) {
+    console.log(error)
+    next(error)
   }
 };
 
@@ -492,7 +542,7 @@ exports.placeOrder = async (req, res) => {
     // cart total or total amont payable by user with out coupon discount
     const cartTotal = await getCartTotal(userId);
 
-    // get address id , default address or address choosed from session 
+    // get address id , default address or address choosed from session
     let addressId = req.session.deliveryAddress;
     if (!req.session.deliveryAddress) {
       const address = await AddressShema.findOne(
@@ -526,7 +576,7 @@ exports.placeOrder = async (req, res) => {
       addressId,
       totalAmount: cartTotal,
       totalPayable: cartTotal,
-      paymentMethod,
+      paymentMethod: 'COD',
     });
 
     const order = await newOrder.save({ session });

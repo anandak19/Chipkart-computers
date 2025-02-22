@@ -10,7 +10,7 @@ const OrderSchema = new Schema(
     totalAmount: { type: Number, required: true },
     discount: { type: Number, default: 0 },
     totalPayable: { type: Number, required: true },
-    paymentStatus: {type: String, required: true, enum: ["Pending", "Success", "Faild"], default: "Pending", trim: true },
+    paymentStatus: {type: String, required: true, enum: ["Pending", "Paid", "Faild"], default: "Pending", trim: true },
     razorpayPaymentId: { type: String, default: null },
     paymentMethod: {type: String, required: true, enum: ["COD", "Online"], trim: true },
     appliedCoupon: { type: String, default: null },

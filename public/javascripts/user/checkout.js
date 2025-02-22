@@ -85,11 +85,11 @@ const getUsersAddress = async () => {
 // get the cart total amount
 const getTotalPayable = async () => {
   try {
-    const response = await fetch("cart/total");
+    const response = await fetch("/checkout/amount");
     const data = await response.json();
     if (response.ok) {
       console.log(data);
-      payableAmount.innerText = `₹${data.cartTotal.toLocaleString("en-IN")}`;
+      payableAmount.innerText = `₹${data.total.toLocaleString("en-IN")}`;
     } else {
       console.error(data.error);
       toastr.warning(data.error, "Warning");

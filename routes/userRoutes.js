@@ -6,7 +6,7 @@ const { isLogin, varifyLoginUserSession, getUser, checkIsblocked } = require('..
 const { validateProduct, checkProductAvailability } = require('../middlewares/productValidation')
 const { validateNewReview } = require('../middlewares/review')
 const { validateAddressFields } = require('../middlewares/accountValidators')
-const { handleCart } = require('../middlewares/orderValidations')
+const { compareOrderItems } = require('../middlewares/orderValidations')
 
 
 const router = express.Router()
@@ -92,10 +92,16 @@ router.delete('/cart/remove', varifyLoginUserSession, userOrderController.delete
 // cart count in header 
 router.get('/cart/count', userOrderController.getCartItemCount)
 
+// eg for product checkout: /checkout?productId=sdfsfksdfhsdfh
+// eg of cart checkout: /checkout?cart=true 
 router.get('/checkout', getUser,  userOrderController.getCheckoutPage)
+router.get('/checkout/amount', varifyLoginUserSession, userOrderController.getCheckoutAmount)
 // api calls
 router.post('/checkout/address', userOrderController.chooseDeliveryAddress)
-router.post('/checkout/confirm', varifyLoginUserSession, checkIsblocked, handleCart, userOrderController.placeOrder)
+router.post('/checkout/confirm', varifyLoginUserSession, checkIsblocked, compareOrderItems, userOrderController.placeOrder)
+// online payment 
+router.post('/checkout/create-order', varifyLoginUserSession, compareOrderItems)
+
 router.get('/checkout/address/new', userOrderController.getAddAnotherAddressPage)
 
 module.exports = router

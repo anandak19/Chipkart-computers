@@ -8,6 +8,7 @@ const productSchema = new mongoose.Schema({
     discount: { type: Number, default: 0 },
     offerStartDate: { type: Date, required: true },
     offerEndDate: { type: Date, required: true },
+    offerId: { type: mongoose.Schema.Types.ObjectId, ref: "Offer", default: null },
     quantity: { type: Number, required: true, min: 0 },
     isFeatured:  { type: Boolean, required: true, default: false },
     highlights: { type: [String], required: true },

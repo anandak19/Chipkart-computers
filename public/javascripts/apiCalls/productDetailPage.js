@@ -190,3 +190,9 @@ window.addEventListener("load", () => {
   fetchReviews();
   getRelatedProducts();
 });
+
+
+// method to buy now 
+function buyNow(productId) {
+  window.location.replace(`/checkout?productId=${productId}`);
+} 

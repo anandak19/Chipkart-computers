@@ -10,6 +10,7 @@ const Coupons = require("../models/Coupon");
 const { getCategories } = require("../utils/categoryHelpers");
 const Offer = require("../models/Offer");
 const { addFinalPriceStage } = require("../utils/productHelpers");
+const Categories = require("../models/Category");
 const Session = mongoose.connection.collection("sessions");
 
 exports.getDashboard = (req, res) => {
@@ -226,7 +227,7 @@ exports.getProductManagement = async (req, res) => {
   }
 };
 
-// not in use 
+// not in use
 exports.getAllProducts = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 0;
@@ -257,10 +258,10 @@ exports.getAllProducts = async (req, res, next) => {
           finalPrice: {
             $subtract: [
               "$mrp",
-              { $multiply: ["$mrp", { $divide: ["$discount", 100] }] }
-            ]
-          }
-        }
+              { $multiply: ["$mrp", { $divide: ["$discount", 100] }] },
+            ],
+          },
+        },
       },
       {
         $facet: {
@@ -286,7 +287,7 @@ exports.getAllProducts = async (req, res, next) => {
     const paginatedResult = result[0]?.paginatedResult;
     const total = result[0]?.total[0]?.totalProducts || 0;
     const hasMore = skip + paginatedResult.length < total;
-    console.log(paginatedResult)
+    console.log(paginatedResult);
 
     res.status(200).json({ productsArray: paginatedResult, total, hasMore });
   } catch (error) {
@@ -375,7 +376,6 @@ exports.getEditProductForm = async (req, res) => {
       console.log("Id not found");
       return res.redirect("/admin/products");
     }
-
 
     const product = await ProductSchema.findById(productId);
     if (!product) {
@@ -690,7 +690,7 @@ exports.getUpdateCategoryForm = async (req, res) => {
     }
     const category = await CategoriesSchema.findById(categoryId);
     if (!category) {
-      return res.status(404).send("Category not found.");
+      res.redirect("/admin/categories");
     }
 
     req.session.categoryId = category._id;
@@ -756,7 +756,19 @@ exports.postUpdateCategoryForm = async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+exports.getAvailableCategories = async (req, res, next) => {
+  try {
+    const categories = await getCategories();
+    res.status(200).json({ data: categories });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
 // -----category management end------
+
+// ----------offer management start--------
 
 exports.getOfferModule = (req, res) => {
   res.render("admin/offerModule", { title: "Offer Module" });
@@ -773,53 +785,286 @@ exports.applyNewOffer = async (req, res, next) => {
   try {
     const { offerTitle, discount, target, categoryId, startDate, endDate } =
       req.body;
+    const newDiscount = parseInt(discount);
 
     let category;
+
     if (target === "category") {
       category = await CategoriesSchema.findById(categoryId);
       if (!category) {
         return res.status(404).json({ error: "Category not found" });
       }
+    }
 
+    // create new offer
+    const newOffer = new Offer({
+      offerTitle,
+      discount,
+      target,
+      categoryId: category._id,
+      startDate,
+      endDate,
+    });
+
+    // save new offer
+    const savedOffer = await newOffer.save();
+    if (!savedOffer) {
+      return res.status(404).json({ error: "Faild to create new offer" });
+    }
+
+    // if the target is category,
+    if (target === "category") {
       const result = await ProductSchema.updateMany(
-        { categoryId: categoryId, discount: { $gt: discount } },
+        { categoryId: categoryId, discount: { $lt: newDiscount } },
         [
           {
             $set: {
-              discount: discount,
-              finalPrice: {
-                $subtract: ["$mrp", { $multiply: ["$mrp", discount / 100] }],
-              },
+              discount: newDiscount,
+              offerStartDate: startDate,
+              offerEndDate: endDate,
+              offerId: savedOffer._id,
             },
           },
         ]
       );
-      console.log(result);
-      if (result.modifiedCount <= 0) {
-        return res
-          .status(400)
-          .json({ error: "Product with this category is not found" });
-      }
 
-      return res.status(200).json({
-        message: "Offer applied successfully",
+      if (result.modifiedCount <= 0) {
+        return res.status(400).json({
+          error: "This category already going through a bigger offer than this",
+        });
+      }
+    } else if (target === "all") {
+      const result = await ProductSchema.updateMany(
+        { discount: { $lt: newDiscount } },
+        [
+          {
+            $set: {
+              discount: newDiscount,
+              offerStartDate: startDate,
+              offerEndDate: endDate,
+              offerId: savedOffer._id,
+            },
+          },
+        ]
+      );
+
+      if (result.modifiedCount <= 0) {
+        return res.status(400).json({
+          error:
+            "All products are already going through a bigger offer than this",
+        });
+      }
+    } else {
+      return res.status(400).json({
+        error: "No Offer applied",
       });
     }
+
+    return res.status(200).json({
+      message: "Offer applied successfully",
+    });
   } catch (error) {
     console.log(error);
     next(error);
   }
 };
 
-exports.getAvailableCategories = async (req, res, next) => {
+exports.getAllOffers = async (req, res, next) => {
   try {
-    const categories = await getCategories();
-    res.status(200).json({ data: categories });
+    const { search } = req.query;
+    const page = parseInt(req.query.page) || 0;
+    const limit = 5;
+    const skip = page * limit;
+
+    const pipeline = [
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
+        $facet: {
+          offersCount: [{ $count: "total" }],
+          paginatedResult: [{ $skip: skip }, { $limit: limit }],
+        },
+      },
+    ];
+
+    if (search) {
+      const query = search.trim();
+      pipeline.unshift({
+        $match: {
+          offerTitle: { $regex: query, $options: "i" },
+        },
+      });
+    }
+
+    const result = await Offer.aggregate(pipeline);
+
+    const totalOffers = result[0]?.offersCount[0]?.total || 0;
+    const offers = result[0]?.paginatedResult;
+    const hasMore = skip + offers.length < totalOffers;
+
+    res.status(200).json({
+      totalOffers,
+      offers,
+      hasMore,
+    });
   } catch (error) {
     console.log(error);
     next(error);
   }
 };
+
+exports.getEditOfferForm = async (req, res) => {
+  try {
+    const offerId = req.params.id;
+
+    if (!offerId) {
+      console.log("no offer id");
+      return res.redirect("/admin/offers");
+    }
+
+    const offer = await Offer.findById(offerId);
+
+    if (!offer) {
+      console.log("no offer found");
+      return res.redirect("/admin/offers");
+    }
+
+    req.session.offerId = offer._id;
+
+    res.render("admin/offerForm", {
+      title: "Offer Module - Edit Offer",
+      edit: true,
+    });
+  } catch (error) {
+    console.log(error);
+    res.redirect("/admin/offers");
+  }
+};
+
+exports.getSingleOfferDetails = async (req, res, next) => {
+  try {
+    const offerId = req.session.offerId;
+
+    if (!offerId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Offer ID is missing." });
+    }
+
+    let offer = await Offer.findById(offerId).lean();
+
+    if (!offer) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Offer not found." });
+    }
+
+    if (offer.target === "category") {
+      const category = await Categories.findById(offer.categoryId);
+      if (!category) {
+        return res.status(404).json({ error: "Offer category not found" });
+      }
+
+      offer.category = category.categoryName;
+    }else{
+      offer.category = 'All'
+    }
+
+    return res.status(200).json({ offer });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+exports.saveUpdatedOffer = async (req, res, next) => {
+  try {
+    const { offerTitle, discount, startDate, endDate } = req.body;
+    const newDiscount = parseInt(discount);
+
+    const offerId = req.session.offerId;
+
+    if (!offerId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Offer ID is missing." });
+    }
+
+    const offer = await Offer.findById(offerId);
+
+    if (!offer) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Offer not found." });
+    }
+
+    offer.offerTitle = offerTitle ?? offer.offerTitle;
+    offer.discount = discount ?? offer.discount;
+    offer.startDate = startDate ?? offer.startDate;
+    offer.endDate = endDate ?? offer.endDate;
+    await offer.save();
+
+    // find all product with this offer and update 
+    const result = await ProductSchema.updateMany(
+      { offerId: offer._id },
+      {
+        $set: {
+          discount: newDiscount,
+          offerStartDate: startDate ?? null,
+          offerEndDate: endDate ?? null,
+        },
+      }
+    );
+
+    return res.status(200).json({
+      message: "Offer updated successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+exports.tooggleOfferStatus = async (req, res, next) => {
+  try {
+
+    const offerId = req.params.id;
+    if (!offerId) {
+      return res.status(400).send("offer id not found.");
+    }
+
+    const offer = await Offer.findById(offerId);
+    if (!offer) {
+      return res.status(404).send("offer not found.");
+    }
+
+    offer.isActive = !offer.isActive;
+    const active = offer.isActive
+    await offer.save();
+
+
+    await ProductSchema.updateMany(
+      { offerId: offer._id },
+      {
+        $set: {
+          discount: active ? offer.discount: 0,
+          offerStartDate: active ? offer.startDate : null,
+          offerEndDate: active ? offer.endDate : null,
+        },
+      }
+    );
+
+    return res.status(200).json({
+      message: "Offer status updated successfully",
+    });
+
+  } catch (error) {
+    console.log(error)
+    next(error)
+  }
+}
+// ----------offer management end--------
 
 // -------------ORDER MANAGMENT START
 exports.getOrderManagement = (req, res) => {

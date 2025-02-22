@@ -85,7 +85,7 @@
             <div class="buttons">
               <% if (product.quantity > 0) { %>
                 <button class="add-to-cart" onClick="addToCart('<%= product._id %>')">Add to Cart</button>
-                <button class="buy-now">Buy Now</button>
+                <button class="buy-now" onClick="buyNow('<%= product._id %>')">Buy Now</button>
               <% } else { %>
                 <button class="bg-dark" style="cursor: not-allowed;" disabled>Out of Stock</button>
               <% } %>

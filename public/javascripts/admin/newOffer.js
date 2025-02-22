@@ -14,7 +14,7 @@ const startDateError = document.getElementById("startDateError");
 const endDateError = document.getElementById("endDateError");
 
 // on submitting offer form
-offerForm.addEventListener("submit", (e) => {
+offerForm.addEventListener("submit", async(e) => {
   e.preventDefault();
 
   offerTitleError.innerHTML = "";
@@ -45,6 +45,7 @@ offerForm.addEventListener("submit", (e) => {
     return
   }
 
+
   const today = new Date();
 
   today.setHours(0, 0, 0, 0);
@@ -70,8 +71,33 @@ offerForm.addEventListener("submit", (e) => {
   }
 
   const newOffer = {
-    
+    offerTitle: offerTitleInput,
+    discount: discountInput,
+    target: categoryInput === 'all'? 'all': 'category',
+    categoryId: categoryInput,
+    startDate: selectedStartDate,
+    endDate: selectedEndDate
   }
+
+  try {
+    const res = await fetch('/admin/offers/new', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(newOffer)
+    })
+
+    const result = await res.json()
+    if (res.ok) {
+      alert(result.message)
+    }else{
+      alert(result.error)
+    }
+    
+  } catch (error) {
+    console.error(error);
+    alert('Somthing went wrong')
+  }
+
 });
 
 // method to get category and show
