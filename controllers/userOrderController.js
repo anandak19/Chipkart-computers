@@ -436,9 +436,9 @@ exports.getCheckoutPage = async (req, res) => {
       req.session.cartCheckout = false;
     }
 
-    res.render("user/account/checkout");
+    res.render("user/account/orders/checkout");
   } catch (error) {
-    console.error("Error fetching cart:", error);
+    console.error("Error fetching checkout:", error);
     res.status(500).send("Internal Server Error");
   }
 };
@@ -629,7 +629,7 @@ exports.placeOrder = async (req, res) => {
 };
 
 exports.getAddAnotherAddressPage = async (req, res) => {
-  res.render("user/account/addAnotherAddress");
+  res.render("user/account/address/addAnotherAddress");
 };
 
 /*

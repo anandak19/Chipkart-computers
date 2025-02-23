@@ -153,7 +153,7 @@ exports.getAddresses = (req, res) => {
 };
 
 exports.getAddressForm = (req, res) => {
-  res.render("user/account/newAddress", { currentPage: "address" });
+  res.render("user/account/address/newAddress", { currentPage: "address" });
 };
 
 // add new address
@@ -208,7 +208,7 @@ exports.addAddress = async (req, res) => {
 exports.getEditAddressPage = async (req, res) => {
   const { id } = req.params;
   req.session.editAddressId = id;
-  res.render("user/account/editAddress", { currentPage: "address" });
+  res.render("user/account/address/editAddress", { currentPage: "address" });
 };
 
 exports.getAddressDetails = async (req, res) => {
@@ -376,7 +376,7 @@ exports.getUsersAllAddress = async (req, res) => {
 
 // ORDER HISTORY
 exports.getOrderHistory = (req, res) => {
-  res.render("user/account/orderHistory", { currentPage: "orders" });
+  res.render("user/account/orders/orderHistory", { currentPage: "orders" });
 };
 
 exports.getAllOrders = async (req, res) => {
@@ -459,7 +459,7 @@ exports.getOrderDetaillsPage = async (req, res) => {
 
     req.session.ordId = orderDetails._id;
 
-    res.render("user/account/orderDetails", {
+    res.render("user/account/orders/orderDetails", {
       currentPage: "orders",
       orderDetails,
     });
@@ -562,7 +562,7 @@ exports.getReturnProductPage = async (req, res) => {
       return res.status(404).json({ error: "Order Items not found" });
     }
 
-    res.render("user/account/returnProduct", { currentPage: "orders", items });
+    res.render("user/account/orders/returnProduct", { currentPage: "orders", items });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Panel</title>
-    <%- include("../partials/adminHead") %>
+    <%- include("../../partials/adminHead") %>
     <link rel="stylesheet" href="/styles/adminPages/newCoupon.css" />
   </head>
   <body>
@@ -32,7 +32,7 @@
     <!-- Main Content -->
     <div class="content-wrapper">
       <!-- Navbar -->
-      <%- include("../partials/adminHeader") %>
+      <%- include("../../partials/adminHeader") %>
 
       <div class="main-content">
         <div class="page-head-section">
@@ -113,7 +113,7 @@
       </div>
     </div>
 
-    <%- include("../partials/adminFooter") %> <% if(edit) { %>
+    <%- include("../../partials/adminFooter") %> <% if(edit) { %>
     <script src="/javascripts/admin/editCoupon.js"></script>
     <% } else { %>
     <script src="/javascripts/admin/newCoupon.js"></script>

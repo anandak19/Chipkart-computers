@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Panel</title>
 
-    <%- include("../partials/adminHead") %>
+    <%- include("../../partials/adminHead") %>
   </head>
   <body>
     <!-- Sidebar -->
@@ -32,7 +32,7 @@
     <!-- Main Content -->
     <div class="content-wrapper">
       <!-- Navbar -->
-      <%- include("../partials/adminHeader") %>
+      <%- include("../../partials/adminHeader") %>
 
       <div class="main-content">
         <div class="page-head-section">
@@ -115,7 +115,7 @@
         </div>
       </div>
     </div>
-    <%- include("../partials/adminFooter") %> <% if(edit) { %>
+    <%- include("../../partials/adminFooter") %> <% if(edit) { %>
     <script src="/javascripts/admin/editOffer.js"></script>
     <% } else { %>
     <script src="/javascripts/admin/newOffer.js"></script>

@@ -6,29 +6,30 @@
     <title>My Addresses</title>
     <link rel="stylesheet" href="/styles/account.css" />
     <link rel="stylesheet" href="/styles/userPages/deliveryAddress.css" />
-    <%- include("../../partials/head") %>
+    <%- include("../../../partials/head") %>
   </head>
   <body>
-    <%- include("../../partials/userHeader") %>
+    <%- include("../../../partials/userHeader") %>
 
     <div class="account-wrapper page-wrapper">
       <div class="content-wrapper profile-container">
-        <%- include("../../partials/userSidebar") %>
+        <%- include("../../../partials/userSidebar") %>
 
         <div class="profile-data">
           <div class="profie-content-wrapper">
             <div class="content-section">
               <div class="account-title">
-                <p class="page-title">Add New Address</p>
-                <a class="add-addressBtn" href="/account/address">
+                <p class="page-title">Edit Address</p>
+                <button class="add-addressBtn" onclick="history.back()">
                   <i class="fa-solid fa-circle-arrow-left"></i> Back
-                </a>
+                </button>
               </div>
               <div class="delivery-address-wrapper">
                 <div class="container mt-4">
-                  <form class="row g-3" id="addressForm">
+                  <form class="row g-3" id="editAddressForm">
                     <div class="col-md-4">
-                      <label for="addressType" class="form-label">Address Type</label
+                      <label for="addressType" class="form-label"
+                        >Address Type</label
                       >
                       <select class="form-select no-border" id="addressType">
                         <option value="" selected disabled>
@@ -154,7 +155,7 @@
       </div>
     </div>
 
-    <%- include("../../partials/userFooter") %>
-    <script src="/javascripts/user/addressNew.js"></script>
+    <%- include("../../../partials/userFooter") %>
+    <script src="/javascripts/user/editAddress.js"></script>
   </body>
 </html>

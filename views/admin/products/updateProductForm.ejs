@@ -48,10 +48,9 @@
     <!-- Main Content -->
     <div class="content-wrapper">
       <!-- Navbar -->
-      <%- include("../partials/adminHeader") %>
+      <%- include("../../partials/adminHeader") %>
 
       <div class="main-content">
-
         <div class="page-head-section">
           <button class="back-button" id="backButton">Back</button>
         </div>
@@ -66,6 +65,7 @@
                   type="text"
                   id="productName"
                   placeholder="Product Name"
+                  value="<%= product.productName %>"
                 />
                 <small class="text-danger" id="productNameError"></small>
               </div>
@@ -74,7 +74,7 @@
                 <select id="category">
                   <option value="">-Select Category-</option>
                   <% categoryArray.forEach((category) => { %>
-                  <option value="<%= category.id %>">
+                  <option value="<%= category.id %>" <%= category.id.toString() === product.categoryId ? 'selected': '' %>>
                     <%= category.categoryName %>
                   </option>
                   <% }) %>
@@ -83,12 +83,12 @@
               </div>
               <div class="form-group">
                 <label for="brandName">Brand Name</label>
-                <input type="text" id="brandName" placeholder="Brand Name" />
+                <input type="text" id="brandName" placeholder="Brand Name" value="<%= product.brand %>"/>
                 <small class="text-danger" id="brandNameError"></small>
               </div>
               <div class="form-group">
                 <label for="mrp">MRP</label>
-                <input type="number" id="mrp" placeholder="MRP" />
+                <input type="number" id="mrp" placeholder="MRP" value="<%= product.mrp %>"/>
                 <small class="text-danger" id="mrpError"></small>
               </div>
 
@@ -98,15 +98,17 @@
                   type="number"
                   id="stockCount"
                   placeholder="Stock Count"
+                  value="<%= product.quantity %>"
                 />
                 <small class="text-danger" id="stockCountError"></small>
               </div>
               <div class="form-group">
                 <label for="feature">Feature this Item</label>
-                <select id="feature">
-                  <option value="false">No</option>
-                  <option value="true">Yes</option>
+                <select id="feature" name="isFeatured">
+                  <option value="false" <%= !Boolean(product.isFeatured) ? 'selected' : '' %>>No</option>
+                  <option value="true" <%= Boolean(product.isFeatured) ? 'selected' : '' %>>Yes</option>
                 </select>
+                
                 <small class="text-danger" id="featureError"></small>
               </div>
             </div>
@@ -120,6 +122,7 @@
                   id="highlight1"
                   class="highlights"
                   placeholder="Highlight 1"
+                  value="<%= product.highlights[0] %>"
                 />
               </div>
               <div class="form-group">
@@ -129,6 +132,7 @@
                   id="highlight2"
                   class="highlights"
                   placeholder="Highlight 2"
+                  value="<%= product.highlights[1] %>"
                 />
               </div>
               <div class="form-group">
@@ -138,6 +142,7 @@
                   id="highlight3"
                   class="highlights"
                   placeholder="Highlight 3"
+                  value="<%= product.highlights[2] %>"
                 />
                 <small class="text-danger" id="highlightsError"></small>
               </div>
@@ -148,6 +153,7 @@
                   id="highlight4"
                   class="highlights"
                   placeholder="Highlight 4"
+                  value="<%= product.highlights[3] %>"
                 />
               </div>
             </div>
@@ -159,7 +165,7 @@
                 <textarea
                   id="description"
                   placeholder="Product Description"
-                ></textarea>
+                > <%= product.description %> </textarea>
                 <small class="text-danger" id="descriptionError"></small>
               </div>
             </div>
@@ -168,9 +174,10 @@
             <div class="product-image-section">
               <div class="form-group image-group">
                 <p class="image-label">Add Primary Image</p>
+                  <button class="btn btn-danger deleteImgBtns" data-id="<%= product.images[0]._id %>" ><i class="fa-regular fa-trash-can" style="color: #ffffff;"></i></button>
                 <label class="image-box" for="imageA">
                   <p>Choose an image</p>
-                  <img id="image0" alt="" />
+                        <img id="image0" alt="" src="<%= product.images[0].filepath %>" />
                 </label>
                 <input
                   type="file"
@@ -182,9 +189,14 @@
               </div>
               <div class="form-group image-group">
                 <p class="image-label">Add Image 2</p>
+                <% if (product.images[1] && product.images[1].filepath) { %>
+                  <button class="btn btn-danger deleteImgBtns" data-id="<%= product.images[1]._id %>" ><i class="fa-regular fa-trash-can" style="color: #ffffff;"></i></button>
+                <% } %>
                 <label class="image-box" for="imageB">
                   <p>Choose an image</p>
-                  <img id="image1" alt="" />
+                    <% if (product.images[1] && product.images[1].filepath) { %>
+                      <img id="image1" alt="" src="<%= product.images[1].filepath %>" />
+                    <% } %>
                 </label>
                 <input
                   type="file"
@@ -195,9 +207,14 @@
               </div>
               <div class="form-group image-group">
                 <p class="image-label">Add Image 3</p>
+                <% if (product.images[2] && product.images[2].filepath) { %>
+                  <button class="btn btn-danger deleteImgBtns" data-id="<%= product.images[2]._id %>" ><i class="fa-regular fa-trash-can" style="color: #ffffff;"></i></button>
+                <% } %>
                 <label class="image-box" for="imageC">
                   <p>Choose an image</p>
-                  <img id="image2" alt="" />
+                  <% if (product.images[2] && product.images[2].filepath) { %>
+                    <img id="image2" alt="" src="<%= product.images[2].filepath %>" />
+                  <% } %>
                 </label>
                 <input
                   type="file"
@@ -208,9 +225,10 @@
               </div>
               <div class="form-group image-group">
                 <p class="image-label">Add Image 4</p>
+                  <button class="btn btn-danger deleteImgBtns" data-id="<%= product.images[3]._id %>" ><i class="fa-regular fa-trash-can" style="color: #ffffff;"></i></button>
                 <label class="image-box" for="imageD">
                   <p>Choose an image</p>
-                  <img id="image3" alt="" />
+                    <img id="image3" alt="Image 3" src="<%= product.images[3].filepath %>" />
                 </label>
                 <input
                   type="file"
@@ -221,7 +239,8 @@
               </div>
             </div>
             <div class="submit-btn">
-              <button id="saveProductBtn">Save</button>
+            <p></p>
+              <button id="updateProductBtn">Update and Save</button>
               <% if( errorMessage ) {%>
               <small class="text-danger"><%= errorMessage %></small>
               <% } %> <% if( successMessage ) {%>
@@ -239,9 +258,12 @@
       </div>
     </div>
 
+    <script>
+        window.productId = '<%= product._id %>';
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-    <%- include("../partials/adminFooter") %>
+    <%- include("../../partials/adminFooter") %>
+    <script src="/javascripts/admin/updateProduct.js"></script>
 
-    <script src="/javascripts/admin/productForm.js"></script>
   </body>
 </html>

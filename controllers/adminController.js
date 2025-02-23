@@ -215,7 +215,7 @@ exports.getProductManagement = async (req, res) => {
     const totalProducts = await ProductSchema.countDocuments();
     const totalPages = Math.ceil(totalProducts / limit);
 
-    res.render("admin/productManagement", {
+    res.render("admin/products/productManagement", {
       title: "Product Management",
       productsArray,
       currentPage: page,
@@ -314,7 +314,7 @@ exports.getProductForm = (req, res) => {
     ])
       .then((categoryArray) => {
         console.log(categoryArray);
-        res.render("admin/productForm", {
+        res.render("admin/products/productForm", {
           title: "Product Management - New",
           categoryArray,
           errorMessage: req.flash("errorMessage"),
@@ -400,7 +400,7 @@ exports.getEditProductForm = async (req, res) => {
 
     req.session.selectedProductId = product._id;
 
-    res.render("admin/updateProductForm", {
+    res.render("admin/products/updateProductForm", {
       title: "Product Management - Edit Product",
       categoryArray,
       product,
@@ -573,7 +573,7 @@ exports.getCategoryManagement = async (req, res) => {
     const categoriesArray = await CategoriesSchema.find();
     console.log(categoriesArray);
     // render the categoris with out paginations
-    res.render("admin/categoryManagement", {
+    res.render("admin/category/categoryManagement", {
       title: "Category Management",
       categoriesArray,
     });
@@ -611,7 +611,7 @@ exports.getCategories = async (req, res) => {
 };
 
 exports.getCategoryForm = (req, res) => {
-  res.render("admin/formCategory", {
+  res.render("admin/category/formCategory", {
     title: "Category Management - New",
     errorMessage: req.flash("errorMessage"),
     successMessage: req.flash("successMessage"),
@@ -694,7 +694,7 @@ exports.getUpdateCategoryForm = async (req, res) => {
     }
 
     req.session.categoryId = category._id;
-    res.render("admin/formUpdateCategory", {
+    res.render("admin/category/formUpdateCategory", {
       title: "Category Management - Edit",
       errorMessage: req.flash("errorMessage"),
       successMessage: req.flash("successMessage"),
@@ -771,11 +771,11 @@ exports.getAvailableCategories = async (req, res, next) => {
 // ----------offer management start--------
 
 exports.getOfferModule = (req, res) => {
-  res.render("admin/offerModule", { title: "Offer Module" });
+  res.render("admin/offer/offerModule", { title: "Offer Module" });
 };
 
 exports.getNewOfferForm = (req, res) => {
-  res.render("admin/offerForm", {
+  res.render("admin/offer/offerForm", {
     title: "Offer Module - New Offer",
     edit: false,
   });
@@ -1068,7 +1068,7 @@ exports.tooggleOfferStatus = async (req, res, next) => {
 
 // -------------ORDER MANAGMENT START
 exports.getOrderManagement = (req, res) => {
-  res.render("admin/orderManagement", { title: "Order Management" });
+  res.render("admin/orders/orderManagement", { title: "Order Management" });
 };
 
 exports.getAllOrders = async (req, res) => {
@@ -1171,7 +1171,7 @@ exports.renderOrderDetailsPage = async (req, res) => {
 
     req.session.orderId = orderDetails._id;
 
-    res.render("admin/orderDetails", { title: "Order Details", orderDetails });
+    res.render("admin/orders/orderDetails", { title: "Order Details", orderDetails });
   } catch (error) {
     console.log(error);
     res.redirect("/orders/all");
@@ -1278,11 +1278,11 @@ exports.approveReturnItem = async (req, res) => {
 // -------------ORDER MANAGMENT END
 
 exports.getSalesReport = (req, res) => {
-  res.render("admin/salesReport", { title: "Sales Report" });
+  res.render("admin/reports/salesReport", { title: "Sales Report" });
 };
 
 exports.getCouponManagement = (req, res) => {
-  res.render("admin/couponManagement", { title: "Coupon Management" });
+  res.render("admin/coupons/couponManagement", { title: "Coupon Management" });
 };
 
 // get all available coupons
@@ -1332,7 +1332,7 @@ exports.getAllCoupons = async (req, res, next) => {
 
 // render add coupon page
 exports.getNewCouponForm = (req, res) => {
-  res.render("admin/newCoupon", {
+  res.render("admin/coupons/newCoupon", {
     title: "Coupon Management - New Coupon",
     edit: false,
   });
@@ -1390,7 +1390,7 @@ exports.getEditCouponForm = async (req, res) => {
     }
 
     req.session.selectedCouponId = coupon._id;
-    res.render("admin/newCoupon", {
+    res.render("admin/coupons/newCoupon", {
       title: "Coupon Management - Edit Coupon",
       edit: true,
     });
