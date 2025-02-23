@@ -99,7 +99,7 @@ router.get('/checkout/amount', varifyLoginUserSession, userOrderController.getCh
 // api calls
 router.post('/checkout/address', userOrderController.chooseDeliveryAddress)
 router.post('/checkout/confirm', varifyLoginUserSession, checkIsblocked, compareOrderItems, userOrderController.placeOrder)
-// online payment 
+// online payment
 router.post('/checkout/create-order', varifyLoginUserSession, compareOrderItems)
 
 router.get('/checkout/address/new', userOrderController.getAddAnotherAddressPage)

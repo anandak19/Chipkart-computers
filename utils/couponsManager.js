@@ -3,13 +3,13 @@ const Coupons = require("../models/Coupon");
 const Order = require("../models/Order");
 const UserCoupon = require("../models/UserCoupon");
 
-const addUserCoupon = async (orderId) => {
+const addUserCoupon = async (orderId, session) => {
   try {
     if (!orderId) {
       throw new Error("Order ID is required");
     }
 
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(orderId).session(session);
 
     if (!order) {
       throw new Error("Order not found");
@@ -23,7 +23,7 @@ const addUserCoupon = async (orderId) => {
     const userId = order.userId;
 
     // user coupons
-    const userCoupon = await UserCoupon.findById({ userId });
+    const userCoupon = await UserCoupon.find({ userId }).session(session);
     
     // couponid couponCode
     const availableCoupons = await Coupons.aggregate([
@@ -35,19 +35,23 @@ const addUserCoupon = async (orderId) => {
           minOrderAmount: { $lte: totalPayable },
         },
       },
-    ]);
+    ], {session});
 
     const unusedCoupon = availableCoupons.find(
       (coupon) =>
         !userCoupon.some((used) => used.coupon.couponCode === coupon.couponCode)
     );
 
+    if (!unusedCoupon) {
+      return null;
+    }
+    
     const newCoupon = new UserCoupon({
       userId: new mongoose.Types.ObjectId(userId),
       couponCode: unusedCoupon.couponCode,
     });
 
-    await newCoupon.save();
+    await newCoupon.save({session});
 
     return unusedCoupon.discount;
   } catch (error) {

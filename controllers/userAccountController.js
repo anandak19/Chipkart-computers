@@ -149,7 +149,7 @@ exports.postChangePassword = async (req, res) => {
 
 // DELIVERY ADDRESS
 exports.getAddresses = (req, res) => {
-  res.render("user/account/userAddress", { currentPage: "address" });
+  res.render("user/account/address/userAddress", { currentPage: "address" });
 };
 
 exports.getAddressForm = (req, res) => {

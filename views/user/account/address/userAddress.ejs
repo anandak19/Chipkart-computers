@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Addresses</title>
+    <link rel="stylesheet" href="/styles/account.css" />
+    <link rel="stylesheet" href="/styles/userPages/deliveryAddress.css">
+    <%- include("../../../partials/head") %>
+  </head>
+  <body>
+    <%- include("../../../partials/userHeader") %>
+
+    <div class="account-wrapper page-wrapper">
+      <div class="content-wrapper profile-container">
+        <%- include("../../../partials/userSidebar") %>
+
+        <div class="profile-data">
+          <div class="profie-content-wrapper">
+            <div class="content-section">
+              <div class="account-title">
+                <p class="page-title">Delivery Address</p>
+                <a class="add-addressBtn" href="/account/address/new">
+                  <i class="fa fa-plus"></i> Add New
+                </a>
+              </div>
+              <div class="delivery-address-wrapper" id="addressContainer">
+                <p>Loading..</p>
+                <!-- <div class="address-card">
+                  <button class="active-btn">Default</button>
+                  <div class="address-content">
+                    <h3>John Doe</h3>
+                    <p>+1 234 567 890</p>
+                    <p>123 Main St, Apartment 4B, New York, NY 10001, USA</p>
+                  </div>
+                  <div class="actions">
+                    <a href=""><i class="fas fa-pen"></i> </a>
+                    <button class="delete-btn"><i class="fa-solid fa-trash"></i></button>
+                  </div>
+                </div> -->
+
+              </div>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%- include("../../../partials/userFooter") %>
+    <script src="/javascripts/user/address.js"></script>
+  </body>
+</html>

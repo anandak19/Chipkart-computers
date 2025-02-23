@@ -11,8 +11,13 @@ const {
   increaseProductQuantity,
 } = require("../utils/productQtyManagement");
 const { getUserCartItems, getCartTotal } = require("../utils/cartManagement");
-const { addFinalPriceStage, getProductWithFinalPrice } = require("../utils/productHelpers");
+const {
+  addFinalPriceStage,
+  getProductWithFinalPrice,
+} = require("../utils/productHelpers");
 const Coupons = require("../models/Coupon");
+const { calculateCheckoutAmount, getDeliveryAddress } = require("../utils/sessionUtils");
+const { addUserCoupon } = require("../utils/couponsManager");
 
 const maxQty = Number(process.env.MAX_QTY);
 
@@ -419,7 +424,7 @@ exports.getCheckoutPage = async (req, res) => {
       }
 
       req.session.cartCheckout = true;
-      req.session.checkoutProductId = null
+      req.session.checkoutProductId = null;
     } else if (productId) {
       const product = await ProductSchema.findById(productId);
 
@@ -428,7 +433,7 @@ exports.getCheckoutPage = async (req, res) => {
       }
 
       req.session.checkoutProductId = product._id;
-      req.session.cartCheckout = false
+      req.session.cartCheckout = false;
     }
 
     res.render("user/account/checkout");
@@ -438,35 +443,14 @@ exports.getCheckoutPage = async (req, res) => {
   }
 };
 
-// return checkout amout , after decreasing discount if it has discount 
+// return checkout amout , after decreasing discount if it has discount
 exports.getCheckoutAmount = async (req, res, next) => {
   try {
-
-    let toPay
-
-    if (req.session.cartCheckout) {
-      toPay = await getCartTotal(req.user._id)
-    }else if(req.session.checkoutProductId) {
-      product = await getProductWithFinalPrice(req.session.checkoutProductId)
-      toPay = product.finalPrice
-    }
-
-    let discountAmount = 0;
-    if (req.session.appliedCouponId) {
-      let coupon = await Coupons.findById(req.session.appliedCouponId);
-      if (coupon) {
-        discountAmount = (coupon.discount * toPay) / 100;
-        toPay -= discountAmount;
-      }
-    }
-
-    toPay = Math.max(0, toPay);
-
-    res.json({ total: toPay, discountApplied: discountAmount });
-
+    const checkoutData = await calculateCheckoutAmount(req);
+    res.status(200).json(checkoutData);
   } catch (error) {
-    console.log(error)
-    next(error)
+    console.log(error);
+    next(error);
   }
 };
 
@@ -535,48 +519,41 @@ exports.placeOrder = async (req, res) => {
     const { paymentMethod } = req.body;
     const cart = req.cart;
 
+    // if no payment method is choosen 
     if (!paymentMethod) {
       return res.status(404).json({ error: "Please choose a payment method." });
     }
 
-    // cart total or total amont payable by user with out coupon discount
-    const cartTotal = await getCartTotal(userId);
+    // contains the total payable and discount amount 
+    const checkoutData = await calculateCheckoutAmount(req)
 
     // get address id , default address or address choosed from session
-    let addressId = req.session.deliveryAddress;
-    if (!req.session.deliveryAddress) {
-      const address = await AddressShema.findOne(
-        { userId: userId, isDefault: true },
-        "_id"
-      );
-      addressId = address ? address._id : null;
-    } else {
-      const address = await AddressShema.findOne({ _id: addressId }, "_id");
-      addressId = address ? address._id : null;
-    }
+    const addressId = await getDeliveryAddress(req)
 
-    if (!addressId) {
-      return res.status(400).json({ error: "No delivery address found" });
-    }
-
-    // decrese the quantity of each product from db
-    for (const item of cart.products) {
-      const updatedProduct = await decreaseProductQuantity(
-        item.productId,
-        item.quantity,
-        session
-      );
-      if (!updatedProduct) {
-        throw new Error(`Product with ID ${item.productId} is not available`);
+    
+    // decrese the quantity of each product or selected product from db
+    if (req.session.cartCheckout) {
+      for (const item of cart.products) {
+        const updatedProduct = await decreaseProductQuantity(
+          item.productId,
+          item.quantity,
+          session
+        );
+        if (!updatedProduct) {
+          throw new Error(`Product with ID ${item.productId} is not available`);
+        }
       }
+    }else if (req.session.checkoutProductId) {
+      const updatedProduct = await decreaseProductQuantity( cart[0]._id, 1, session )
     }
 
+    // create new order 
     const newOrder = new OrderSchema({
       userId,
       addressId,
-      totalAmount: cartTotal,
-      totalPayable: cartTotal,
-      paymentMethod: 'COD',
+      totalAmount: checkoutData.total + checkoutData.discountApplied,
+      totalPayable: checkoutData.total,
+      paymentMethod: paymentMethod,
     });
 
     const order = await newOrder.save({ session });
@@ -585,44 +562,63 @@ exports.placeOrder = async (req, res) => {
       return res.status(400).json({ error: "Faild to place order" });
     }
 
-    // save order items
-    const cartItemsDetails = await getUserCartItems(userId);
-    console.log("order item details", cartItemsDetails);
-    console.log("one order item ", cartItemsDetails[0]);
-    const orderItems = cartItemsDetails.map((item) => ({
-      orderId: order._id,
+    // save order items, if cart-save cart items and delete the cart, if product-save product to orderItems 
+    if (req.session.cartCheckout) {
+      // get cart items with calculated final price 
+      const cartItemsDetails = await getUserCartItems(userId);
+      console.log("order item details", cartItemsDetails);
+      console.log("one order item ", cartItemsDetails[0]);
+      // create each order items with follwing field 
+      const orderItems = cartItemsDetails.map((item) => ({
+        orderId: order._id,
+  
+        productName: item.productName,
+        mrp: item.mrp,
+        discount: item.discount,
+        image: item.image,
+        quantity: item.quantity,
+        finalPrice: item.finalPrice,
+        subTotalPrice: item.subTotalPrice,
+        productId: item.productId,
+      }));
+      console.log("modifid order items", orderItems);
+  
+      const insertedOrderItems = await OrderItem.insertMany(orderItems, {
+        session,
+      });
+  
+      // check if all items in the order where inserted to db 
+      if (insertedOrderItems.length !== orderItems.length) {
+        await session.abortTransaction();
+        throw new Error("Not all order items were added");
+      }
+  
+      // delete old cart
+      await CartSchema.deleteOne({ userId }, { session });
+      
+    } else if(req.session.checkoutProductId) {
+      console.log("single item", cart)
+      const newOrderItem = new OrderItem({
+        orderId: order._id,
+        productName: cart[0].productName,
+        mrp: cart[0].mrp,
+        discount: cart[0].discount,
+        image: cart[0].images[0],
+        quantity: 1,
+        finalPrice: checkoutData.total,
+        subTotalPrice: checkoutData.total,
+        productId: cart[0]._id,
+      })
 
-      productName: item.productName,
-      mrp: item.mrp,
-      discount: item.discount,
-      image: item.image,
-      quantity: item.quantity,
-      finalPrice: item.finalPrice,
-      subTotalPrice: item.subTotalPrice,
-      productId: item.productId,
-
-      isReturnRequested: false,
-      isReturned: false,
-      returnReason: null,
-      returnDate: null,
-    }));
-    console.log("modifid order items", orderItems);
-
-    const insertedOrderItems = await OrderItem.insertMany(orderItems, {
-      session,
-    });
-
-    if (insertedOrderItems.length !== orderItems.length) {
-      await session.abortTransaction();
-      throw new Error("Not all order items were added");
+      await newOrderItem.save({session})
     }
 
-    // delete old cart
-    await CartSchema.deleteOne({ userId }, { session });
-
+    // check if the user got any discount coupon in this order 
+    const discount = await addUserCoupon(order._id, session)
+    
     await session.commitTransaction();
 
-    res.status(200).json({ message: "Order Placed Successfully" });
+    res.status(200).json({ message: "Order Placed Successfully", creditedCouponDiscount: discount || null });
   } catch (error) {
     await session.abortTransaction();
     console.error(error);

@@ -1,6 +1,7 @@
 const addressContainer = document.getElementById("addressContainer");
 const backBtn = document.getElementById("backBtn");
 const payableAmount = document.getElementById("payableAmount");
+const placeOrderBtn = document.getElementById("placeOrderBtn");
 
 backBtn.addEventListener("click", () => {
   window.location.href = "/cart";
@@ -38,7 +39,9 @@ const renderAddressses = (addressArray) => {
                 <input type="radio" name="address" class="form-check-input address-radio" data-id="${
                   address._id
                 }" ${address.isDefault ? "checked" : ""}/>
-                <button id="editAddressBtn" class="btn btn-light editAddressBtn" data-id="${address._id}">
+                <button id="editAddressBtn" class="btn btn-light editAddressBtn" data-id="${
+                  address._id
+                }">
                     <i class="fas fa-edit"></i>
                 </button>
             </div>
@@ -54,18 +57,16 @@ const renderAddressses = (addressArray) => {
       });
     });
 
-    document.querySelectorAll(".editAddressBtn").forEach(button => {
-      button.addEventListener('click', async function () {
+    document.querySelectorAll(".editAddressBtn").forEach((button) => {
+      button.addEventListener("click", async function () {
         const addressId = this.getAttribute("data-id");
         if (addressId) {
-          window.location.href = `/account/address/edit/${addressId}`
-        }else{
-          alert("faild to get edit page")
+          window.location.href = `/account/address/edit/${addressId}`;
+        } else {
+          alert("faild to get edit page");
         }
-          
-      })
-    })
-
+      });
+    });
   }
 };
 
@@ -100,22 +101,23 @@ const getTotalPayable = async () => {
   }
 };
 
-let paymentMethod
+let paymentMethod;
 document.addEventListener("DOMContentLoaded", () => {
   getUsersAddress();
   getTotalPayable();
 
-  const paymentButtons = document.querySelectorAll('input[name="paymentMethod"]');
+  const paymentButtons = document.querySelectorAll(
+    'input[name="paymentMethod"]'
+  );
 
   paymentButtons.forEach((button) => {
     button.addEventListener("change", function () {
-      paymentMethod = this.value
+      paymentMethod = this.value;
     });
   });
-
 });
 
-// method to saved choosen address to session 
+// method to saved choosen address to session
 async function checkedAddres(addressId) {
   try {
     const response = await fetch("/checkout/address", {
@@ -133,33 +135,26 @@ async function checkedAddres(addressId) {
   }
 }
 
-// method to place the order
-const placeOrderBtn = document.getElementById('placeOrderBtn')
-placeOrderBtn.addEventListener('click', async() => {
-  console.log(paymentMethod)
-
-  if (!paymentMethod) {
-    toastr.info("Please Choose a payment method");
-    return
-  }
-
+// place order with cod
+const placeOrderWithCod = async (paymentMethod) => {
   try {
     placeOrderBtn.disabled = true;
     placeOrderBtn.textContent = "Processing...";
 
-    const response = await fetch('/checkout/confirm', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+    const response = await fetch("/checkout/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({paymentMethod: paymentMethod})
-    })
-    const data = await response.json()
+    });
+
+    const data = await response.json();
     if (response.ok) {
       toastr.success(data.message);
       placeOrderBtn.textContent = "Order Placed";
       setTimeout(() => {
         window.location.href = "/account/orders";
-      }, 2000); 
-    }else{
+      }, 2000);
+    } else {
       placeOrderBtn.disabled = false;
       placeOrderBtn.textContent = "Place The Order";
       toastr.error(data.error);
@@ -168,10 +163,33 @@ placeOrderBtn.addEventListener('click', async() => {
     placeOrderBtn.disabled = false;
     placeOrderBtn.textContent = "Place The Order";
     console.error(error);
-    alert("Somthing went wrong")
+    alert("Somthing went wrong");
   }
-})
+};
 
+const placeOrderWithOnline = async (paymentMethod) => {
+  alert("Razorpay is working on...")
+}
+
+// method to place the order
+placeOrderBtn.addEventListener("click", async () => {
+  console.log(paymentMethod);
+
+  if (!paymentMethod) {
+    toastr.info("Please Choose a payment method");
+    return;
+  }
+
+  if (paymentMethod === "COD") {
+    placeOrderWithCod(paymentMethod);
+  } else if (paymentMethod === "Online") {
+    placeOrderWithOnline(paymentMethod)
+  }else{
+    toastr.info("Please Choose a valid payment method");
+  }
+});
+
+// to redirect to new address entering page
 function newAddressClicked() {
   window.location.href = "/checkout/address/new";
 }

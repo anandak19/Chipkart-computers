@@ -11,7 +11,6 @@ const compareOrderItems = async (req, res, next) => {
     if (req.session.checkoutProductId) {
 
       const product = await Product.findById(req.session.checkoutProductId)
-
       if (!product) {
         return res.status(400).json({ error: "Product not found" });
       }
@@ -23,15 +22,12 @@ const compareOrderItems = async (req, res, next) => {
       if (product.quantity === 0) {
         return res.status(400).json({error: `"${product.productName}" is out of stock!`})
       }
-
-    
       req.cart = [product]
 
     } else if (req.session.cartCheckout) {
       req.session.checkoutProductId = null;
 
       const cart = await CartSchema.findOne({ userId });
-
       if (!cart || !cart.products || cart.products.length === 0) {
         return res.status(400).json({ error: "Cart is empty" });
       }
