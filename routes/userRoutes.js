@@ -70,6 +70,7 @@ router.get('/account/orders', isLogin, userAccountController.getOrderHistory)
 router.get('/account/orders/all', varifyLoginUserSession, userAccountController.getAllOrders)
 router.get('/account/orders/all/ord/:id', userAccountController.getOrderDetaillsPage)
 router.get('/account/orders/all/ord/info/address', userAccountController.getDeliveryInfo)
+router.get('/account/orders/all/ord/info/rewards', userAccountController.getRewards)
 // updated
 router.get('/account/orders/all/ord/info/itemes', userAccountController.getOrderItems)
 router.post('/account/orders/all/ord/cancel/order', userAccountController.cancelOrderByUser)
@@ -98,6 +99,7 @@ router.get('/checkout', getUser,  userOrderController.getCheckoutPage)
 router.get('/checkout/amount', varifyLoginUserSession, userOrderController.getCheckoutAmount)
 // api calls
 router.post('/checkout/address', userOrderController.chooseDeliveryAddress)
+// place order with cod 
 router.post('/checkout/confirm', varifyLoginUserSession, checkIsblocked, compareOrderItems, userOrderController.placeOrder)
 // online payment
 router.post('/checkout/create-order', varifyLoginUserSession, compareOrderItems)

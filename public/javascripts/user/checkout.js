@@ -151,9 +151,7 @@ const placeOrderWithCod = async (paymentMethod) => {
     if (response.ok) {
       toastr.success(data.message);
       placeOrderBtn.textContent = "Order Placed";
-      setTimeout(() => {
-        window.location.href = "/account/orders";
-      }, 2000);
+      window.location.href = data.redirectUrl
     } else {
       placeOrderBtn.disabled = false;
       placeOrderBtn.textContent = "Place The Order";

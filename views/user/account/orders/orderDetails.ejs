@@ -19,7 +19,7 @@
           <div class="profie-content-wrapper">
             <div class="content-section">
               <div class="account-title">
-                <p class="page-title">Order Details</p>
+                <p class="page-title">Order Summary</p>
                 <a class="back-btn" href="/account/orders">
                   <i class="fa-solid fa-circle-arrow-left"></i> Back
                 </a>
@@ -66,7 +66,13 @@
                         <p class="text-success mt-4">Delivered</p>
                         <% } %> <% if (orderDetails.orderStatus === 'Delivered')
                         { %>
-                          <button class="btn btn-warning btn-sm" id="returnBtn" onclick="returnProduct()">Return a Product</button>
+                        <button
+                          class="btn btn-warning btn-sm"
+                          id="returnBtn"
+                          onclick="returnProduct()"
+                        >
+                          Return a Product
+                        </button>
                         <% } %>
                       </div>
                     </div>
@@ -129,9 +135,9 @@
                   </div>
                 </div>
 
-                <div class="container mt-4" style="padding: 0">
+                <div class="container-fluid mt-4" style="padding: 0">
+                  <p class="page-title">Order Items</p>
                   <div id="orderItemsContainer">
-                    
                     <!-- <div
                       class="order-item card shadow-sm p-3 d-flex flex-row align-items-center"
                     >
@@ -153,8 +159,14 @@
                         <p>Sub Total: <span>50,000</span></p>
                       </div>
                     </div> -->
-                  
                   </div>
+                </div>
+
+                <div class="container-fluid mt-4" style="padding-left: 0" id="couponDiv">
+                  <!-- <div class="coupon-strip">
+                    <p>You got <span>20%</span> Off Coupon in this order</p>
+                    <small>Coupon Will be credited at the time of delivery</small>
+                  </div> -->
                 </div>
               </div>
             </div>
@@ -212,6 +224,25 @@
     </div>
 
     <%- include("../../../partials/userFooter") %>
+    <script>
+      const orderMessage = "<%= orderMessage %>";
+      const couponMessage = "<%= couponMessage %>";
+
+      if (orderMessage) {
+        toastr.success(orderMessage);
+      }
+
+      if (couponMessage) {
+        toastr.success(
+          couponMessage,
+          "Success",
+          {
+            closeButton: true,
+            timeOut: 5000,
+          }
+        );
+      }
+    </script>
     <script src="/javascripts/user/orderDetails.js"></script>
   </body>
 </html>

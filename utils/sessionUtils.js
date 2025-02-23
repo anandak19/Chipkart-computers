@@ -33,11 +33,14 @@ const calculateCheckoutAmount = async (req) => {
 const getDeliveryAddress = async (req) => {
   try {
     let addressId = req.session.deliveryAddress;
+    const userId = req.user._id;
     if (!req.session.deliveryAddress) {
+
       const address = await Address.findOne(
         { userId: userId, isDefault: true },
         "_id"
       );
+      
       addressId = address ? address._id : null;
     } else {
       const address = await Address.findOne({ _id: addressId }, "_id");
@@ -50,6 +53,7 @@ const getDeliveryAddress = async (req) => {
 
     return addressId
   } catch (error) {
+    console.log(error)
     throw new Error("Error fetching delivery address");
   }
 };

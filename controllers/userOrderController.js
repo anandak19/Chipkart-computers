@@ -524,7 +524,7 @@ exports.placeOrder = async (req, res) => {
       return res.status(404).json({ error: "Please choose a payment method." });
     }
 
-    // contains the total payable and discount amount 
+    // contains the total payable and discount amount
     const checkoutData = await calculateCheckoutAmount(req)
 
     // get address id , default address or address choosed from session
@@ -614,11 +614,18 @@ exports.placeOrder = async (req, res) => {
     }
 
     // check if the user got any discount coupon in this order 
-    const discount = await addUserCoupon(order._id, session)
+    const couponDiscount = await addUserCoupon(order._id, session);
     
+    const redirectUrl = `/account/orders/all/ord/${order._id}`
+    req.session.orderMessage = `Order Placed Successfully`
+    if (couponDiscount) {
+      req.session.couponMessage = `Congratulations! You will get a new coupon in this order`
+    }
+
     await session.commitTransaction();
 
-    res.status(200).json({ message: "Order Placed Successfully", creditedCouponDiscount: discount || null });
+    res.status(200).json({ message: "Order Placed Successfully", redirectUrl });
+
   } catch (error) {
     await session.abortTransaction();
     console.error(error);

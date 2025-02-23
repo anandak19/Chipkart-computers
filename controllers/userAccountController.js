@@ -13,6 +13,8 @@ const Order = require("../models/Order");
 const { getOrderItemsDetails } = require("../utils/orderManagement");
 const OrderItem = require("../models/orderItem");
 const { default: mongoose } = require("mongoose");
+const UserCoupon = require("../models/UserCoupon");
+const Coupons = require("../models/Coupon");
 
 // make a session validate middleware later that sends json response
 
@@ -435,7 +437,7 @@ exports.getAllOrders = async (req, res) => {
       orders[0].totalCount.length > 0 ? orders[0].totalCount[0].count : 0;
 
     const hasMore = skip + paginatedResults.length < totalCount;
-    console.log(paginatedResults)
+    console.log(paginatedResults);
 
     res.status(200).json({ success: true, orders: paginatedResults, hasMore });
   } catch (error) {
@@ -458,10 +460,17 @@ exports.getOrderDetaillsPage = async (req, res) => {
     }
 
     req.session.ordId = orderDetails._id;
+    const orderMessage = req.session.orderMessage || null;
+    const couponMessage = req.session.couponMessage || null;
+
+    delete req.session.orderMessage;
+    delete req.session.couponMessage;
 
     res.render("user/account/orders/orderDetails", {
       currentPage: "orders",
       orderDetails,
+      orderMessage,
+      couponMessage,
     });
   } catch (error) {
     console.log(error);
@@ -490,6 +499,49 @@ exports.getDeliveryInfo = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.getRewards = async (req, res, next) => {
+  try {
+    const orderId = req.session.ordId;
+    if (!orderId) {
+      return res.status(400).json({ error: "Session expired" });
+    }
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    const userCoupon = await UserCoupon.findOne({ orderId: orderId });
+
+    if (!userCoupon) {
+      return res.status(400).json({ message: "No coupons credited in this order" });
+    }
+
+    let message;
+    if (!userCoupon.isRedeemed && !userCoupon.isCredited) {
+      message = "Coupon will credited to you at the time of delivery";
+    } else if (!userCoupon.isRedeemed && userCoupon.isCredited) {
+      message = "View My Coupons to view your coupon code";
+    } else if (userCoupon.isRedeemed && userCoupon.isCredited) {
+      message = "You have used this coupon";
+    } else {
+      message = "Congrats! Keep Shoping";
+    }
+
+    const coupon = await Coupons.findOne({ couponCode: userCoupon.couponCode });
+
+    if (!coupon) {
+      return res.status(404).json({ error: "Coupon not found" });
+    }
+
+    const { discount } = coupon;
+
+    res.status(200).json({ message, discount });
+  } catch (error) {
+    console.error(error);
+    next(error);
   }
 };
 
@@ -562,7 +614,10 @@ exports.getReturnProductPage = async (req, res) => {
       return res.status(404).json({ error: "Order Items not found" });
     }
 
-    res.render("user/account/orders/returnProduct", { currentPage: "orders", items });
+    res.render("user/account/orders/returnProduct", {
+      currentPage: "orders",
+      items,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });

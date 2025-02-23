@@ -15,45 +15,62 @@ const addUserCoupon = async (orderId, session) => {
       throw new Error("Order not found");
     }
 
-    if (order.paymentStatus !== "Paid") {
-      throw new Error("Payment did't completed");
-    }
-
     const totalPayable = order.totalPayable;
     const userId = order.userId;
 
     // user coupons
-    const userCoupon = await UserCoupon.find({ userId }).session(session);
-    
-    // couponid couponCode
-    const availableCoupons = await Coupons.aggregate([
-      {
-        $match: {
-          isActive: true,
-          startDate: { $lte: new Date() },
-          endDate: { $gte: new Date() },
-          minOrderAmount: { $lte: totalPayable },
-        },
-      },
-    ], {session});
+    const userCoupon =
+      (await UserCoupon.find({ userId }).session(session)) ?? [];
+    console.log("User coupon", userCoupon);
 
-    const unusedCoupon = availableCoupons.find(
-      (coupon) =>
-        !userCoupon.some((used) => used.coupon.couponCode === coupon.couponCode)
+    // couponid couponCode
+    const now = new Date();
+    now.setMilliseconds(0);
+
+    const availableCoupons = await Coupons.aggregate(
+      [
+        {
+          $match: {
+            isActive: true,
+            startDate: { $lte: now },
+            endDate: { $gte: now },
+            minOrderAmount: { $lte: totalPayable },
+          },
+        },
+        {
+          $sort: { discount: 1 },
+        },
+      ],
+      { session }
     );
 
-    if (!unusedCoupon) {
-      return null;
+    console.log("Avail coupon", availableCoupons);
+
+    // if the user has coupon call this
+    let unusedCoupon = null;
+
+    if (userCoupon.length > 0) {
+      unusedCoupon = availableCoupons.find(
+        (coupon) =>
+          !userCoupon.some(
+            (used) => used.couponCode === coupon.couponCode
+          )
+      );
+    } else {
+      unusedCoupon = availableCoupons[0] || null;
     }
     
-    const newCoupon = new UserCoupon({
-      userId: new mongoose.Types.ObjectId(userId),
-      couponCode: unusedCoupon.couponCode,
-    });
+    if (unusedCoupon) {
+      const newCoupon = new UserCoupon({
+        userId: new mongoose.Types.ObjectId(userId),
+        couponCode: unusedCoupon.couponCode,
+        orderId: orderId
+      });
+      await newCoupon.save({ session });
+    }
 
-    await newCoupon.save({session});
 
-    return unusedCoupon.discount;
+    return unusedCoupon?.discount ?? null;
   } catch (error) {
     console.error("Error fetching categories:", error.message);
     throw error;
