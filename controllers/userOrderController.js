@@ -5,7 +5,10 @@ const AddressShema = require("../models/Address");
 const OrderSchema = require("../models/Order");
 const OrderItem = require("../models/orderItem");
 const mongoose = require("mongoose");
+const { razorpay } = require("../config/razorpay");
+const crypto = require("crypto");
 require("dotenv").config();
+
 const {
   decreaseProductQuantity,
   increaseProductQuantity,
@@ -16,7 +19,10 @@ const {
   getProductWithFinalPrice,
 } = require("../utils/productHelpers");
 const Coupons = require("../models/Coupon");
-const { calculateCheckoutAmount, getDeliveryAddress } = require("../utils/sessionUtils");
+const {
+  calculateCheckoutAmount,
+  getDeliveryAddress,
+} = require("../utils/sessionUtils");
 const { addUserCoupon } = require("../utils/couponsManager");
 
 const maxQty = Number(process.env.MAX_QTY);
@@ -419,7 +425,7 @@ exports.getCheckoutPage = async (req, res) => {
     if (cart) {
       const userCart = await CartSchema.findOne({ userId });
 
-      if (!cart || userCart.products.length === 0) {
+      if (!cart || userCart?.products.length === 0) {
         return res.redirect("/cart");
       }
 
@@ -427,7 +433,7 @@ exports.getCheckoutPage = async (req, res) => {
       req.session.checkoutProductId = null;
     } else if (productId) {
       const product = await ProductSchema.findById(productId);
-
+ 
       if (!product) {
         return res.redirect("/cart");
       }
@@ -505,7 +511,7 @@ session needed- login
 optional session needed - choose address
 */
 
-// to place an order without coupon
+// to place an order without coupon COD
 exports.placeOrder = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -519,18 +525,17 @@ exports.placeOrder = async (req, res) => {
     const { paymentMethod } = req.body;
     const cart = req.cart;
 
-    // if no payment method is choosen 
+    // if no payment method is choosen
     if (!paymentMethod) {
       return res.status(404).json({ error: "Please choose a payment method." });
     }
 
     // contains the total payable and discount amount
-    const checkoutData = await calculateCheckoutAmount(req)
+    const checkoutData = await calculateCheckoutAmount(req);
 
     // get address id , default address or address choosed from session
-    const addressId = await getDeliveryAddress(req)
+    const addressId = await getDeliveryAddress(req);
 
-    
     // decrese the quantity of each product or selected product from db
     if (req.session.cartCheckout) {
       for (const item of cart.products) {
@@ -543,11 +548,15 @@ exports.placeOrder = async (req, res) => {
           throw new Error(`Product with ID ${item.productId} is not available`);
         }
       }
-    }else if (req.session.checkoutProductId) {
-      const updatedProduct = await decreaseProductQuantity( cart[0]._id, 1, session )
+    } else if (req.session.checkoutProductId) {
+      const updatedProduct = await decreaseProductQuantity(
+        cart[0]._id,
+        1,
+        session
+      );
     }
 
-    // create new order 
+    // create new order
     const newOrder = new OrderSchema({
       userId,
       addressId,
@@ -562,16 +571,16 @@ exports.placeOrder = async (req, res) => {
       return res.status(400).json({ error: "Faild to place order" });
     }
 
-    // save order items, if cart-save cart items and delete the cart, if product-save product to orderItems 
+    // save order items, if cart-save cart items and delete the cart, if product-save product to orderItems
     if (req.session.cartCheckout) {
-      // get cart items with calculated final price 
+      // get cart items with calculated final price
       const cartItemsDetails = await getUserCartItems(userId);
       console.log("order item details", cartItemsDetails);
       console.log("one order item ", cartItemsDetails[0]);
-      // create each order items with follwing field 
+      // create each order items with follwing field
       const orderItems = cartItemsDetails.map((item) => ({
         orderId: order._id,
-  
+
         productName: item.productName,
         mrp: item.mrp,
         discount: item.discount,
@@ -582,22 +591,21 @@ exports.placeOrder = async (req, res) => {
         productId: item.productId,
       }));
       console.log("modifid order items", orderItems);
-  
+
       const insertedOrderItems = await OrderItem.insertMany(orderItems, {
         session,
       });
-  
-      // check if all items in the order where inserted to db 
+
+      // check if all items in the order where inserted to db
       if (insertedOrderItems.length !== orderItems.length) {
         await session.abortTransaction();
         throw new Error("Not all order items were added");
       }
-  
+
       // delete old cart
       await CartSchema.deleteOne({ userId }, { session });
-      
-    } else if(req.session.checkoutProductId) {
-      console.log("single item", cart)
+    } else if (req.session.checkoutProductId) {
+      console.log("single item", cart);
       const newOrderItem = new OrderItem({
         orderId: order._id,
         productName: cart[0].productName,
@@ -608,28 +616,210 @@ exports.placeOrder = async (req, res) => {
         finalPrice: checkoutData.total,
         subTotalPrice: checkoutData.total,
         productId: cart[0]._id,
-      })
+      });
 
-      await newOrderItem.save({session})
+      await newOrderItem.save({ session });
     }
 
-    // check if the user got any discount coupon in this order 
+    // check if the user got any discount coupon in this order
     const couponDiscount = await addUserCoupon(order._id, session);
-    
-    const redirectUrl = `/account/orders/all/ord/${order._id}`
-    req.session.orderMessage = `Order Placed Successfully`
+
+    const redirectUrl = `/account/orders/all/ord/${order._id}`;
+    req.session.orderMessage = `Order Placed Successfully`;
     if (couponDiscount) {
-      req.session.couponMessage = `Congratulations! You will get a new coupon in this order`
+      req.session.couponMessage = `Congratulations! You will get a new coupon in this order`;
     }
 
     await session.commitTransaction();
 
     res.status(200).json({ message: "Order Placed Successfully", redirectUrl });
-
   } catch (error) {
     await session.abortTransaction();
     console.error(error);
     return res.status(500).json({ error: error.message });
+  } finally {
+    session.endSession();
+  }
+};
+
+// create order to pay using razorpay
+exports.createRazorypayOrder = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    if (!req.user) {
+      return res.status(404).json({ error: "User not found in request." });
+    }
+
+    const cart = req.cart;
+
+    // contains the total payable and discount amount
+    const checkoutData = await calculateCheckoutAmount(req);
+
+    // get address id , default address or address choosed from session
+    await getDeliveryAddress(req);
+
+    const options = {
+      amount: checkoutData.total * 100,
+      currency: "INR",
+      receipt: `order_rcptid_${Date.now()}`,
+    };
+
+    const order = await razorpay.orders.create(options);
+    console.log("razors replay", order);
+    await session.commitTransaction();
+    res.status(200).json({ order });
+  } catch (error) {
+    await session.abortTransaction();
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  } finally {
+    session.endSession();
+  }
+};
+ 
+exports.varifyPayment = async (req, res) => {
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+      req.body;
+      const cart = req.cart;
+      const userId = req.user._id;
+    console.log(req.body);
+
+    if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
+      return res.status(400).json({ success: false, message: "Invalid payment details received" });
+    }
+
+
+    // Generate expected signature
+    const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
+    hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
+    const expectedSignature = hmac.digest("hex");
+
+    if (expectedSignature === razorpay_signature) {
+      console.log("Payment Verified Successfully!");
+
+      const checkoutData = await calculateCheckoutAmount(req);
+      const addressId = await getDeliveryAddress(req);
+
+      // decrese product from db 
+      if (req.session.cartCheckout) {
+        for (const item of cart.products) {
+          const updatedProduct = await decreaseProductQuantity(
+            item.productId,
+            item.quantity,
+            session
+          );
+          if (!updatedProduct) {
+            throw new Error(`Product with ID ${item.productId} is not available`);
+          }
+        }
+      } else if (req.session.checkoutProductId) {
+        const updatedProduct = await decreaseProductQuantity(
+          cart[0]._id,
+          1,
+          session
+        );
+      }
+
+      // create new order 
+      const newOrder = new OrderSchema({
+        userId,
+        addressId,
+        totalAmount: checkoutData.total + checkoutData.discountApplied,
+        discount: checkoutData.discountApplied,
+        totalPayable: checkoutData.total,
+        paymentStatus: "Paid",
+        paymentMethod: "Online",
+        razorpayPaymentId: razorpay_payment_id
+      });
+
+      const order = await newOrder.save({ session });
+      if (!order) {
+        await session.abortTransaction();
+        return res.status(400).json({ error: "Faild to place order" });
+      }
+
+          // save order items, if cart-save cart items and delete the cart, if product-save product to orderItems
+    if (req.session.cartCheckout) {
+      // get cart items with calculated final price
+      const cartItemsDetails = await getUserCartItems(userId);
+      console.log("order item details", cartItemsDetails);
+      console.log("one order item ", cartItemsDetails[0]);
+      // create each order items with follwing field
+      const orderItems = cartItemsDetails.map((item) => ({
+        orderId: order._id,
+
+        productName: item.productName,
+        mrp: item.mrp,
+        discount: item.discount,
+        image: item.image,
+        quantity: item.quantity,
+        finalPrice: item.finalPrice,
+        subTotalPrice: item.subTotalPrice,
+        productId: item.productId,
+      }));
+      console.log("modifid order items", orderItems);
+
+      const insertedOrderItems = await OrderItem.insertMany(orderItems, {
+        session,
+      });
+
+      // check if all items in the order where inserted to db
+      if (insertedOrderItems.length !== orderItems.length) {
+        await session.abortTransaction();
+        throw new Error("Not all order items were added");
+      }
+
+      // delete old cart
+      await CartSchema.deleteOne({ userId }, { session });
+    } else if (req.session.checkoutProductId) {
+      console.log("single item", cart);
+      const newOrderItem = new OrderItem({
+        orderId: order._id,
+        productName: cart[0].productName,
+        mrp: cart[0].mrp,
+        discount: cart[0].discount,
+        image: cart[0].images[0],
+        quantity: 1,
+        finalPrice: checkoutData.total,
+        subTotalPrice: checkoutData.total,
+        productId: cart[0]._id,
+      });
+
+      await newOrderItem.save({ session });
+    }
+
+
+    const couponDiscount = await addUserCoupon(order._id, session);
+
+    const redirectUrl = `/account/orders/all/ord/${order._id}`;
+    req.session.orderMessage = `Order Placed Successfully`;
+    if (couponDiscount) {
+      req.session.couponMessage = `Congratulations! You will get a new coupon in this order`;
+    }
+
+    await session.commitTransaction();
+
+      res.status(200).json({ message: "Order Placed Successfully", redirectUrl });
+    } else {
+      console.log("Payment Verification Failed!");
+      await session.abortTransaction();
+      res
+        .status(400)
+        .json({ success: false, message: "Payment verification failed!" });
+    }
+  } catch (error) {
+    console.error(error);
+    await session.abortTransaction();
+    res
+      .status(500)
+      .json({ success: false, message: "Error verifying payment" });
   } finally {
     session.endSession();
   }

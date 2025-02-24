@@ -144,14 +144,14 @@ const placeOrderWithCod = async (paymentMethod) => {
     const response = await fetch("/checkout/confirm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({paymentMethod: paymentMethod})
+      body: JSON.stringify({ paymentMethod: paymentMethod }),
     });
 
     const data = await response.json();
     if (response.ok) {
       toastr.success(data.message);
       placeOrderBtn.textContent = "Order Placed";
-      window.location.href = data.redirectUrl
+      window.location.href = data.redirectUrl;
     } else {
       placeOrderBtn.disabled = false;
       placeOrderBtn.textContent = "Place The Order";
@@ -166,8 +166,61 @@ const placeOrderWithCod = async (paymentMethod) => {
 };
 
 const placeOrderWithOnline = async (paymentMethod) => {
-  alert("Razorpay is working on...")
-}
+  try {
+    const res = await fetch("/checkout/create-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    console.log("response of razrpy", res);
+    const result = await res.json();
+    console.log("resutl", result);
+    if (res.ok) {
+      const { order } = result;
+
+      const options = {
+        key: "rzp_test_ZiDJEpnShu93LF",
+        amount: order.amount,
+        currency: "INR",
+        name: "Chipkart",
+        description: "Razorpay payment for chipkart computers",
+        order_id: order.id,
+        handler: async function (response) {
+          console.log(response);
+
+          try {
+            const varificationRes = await fetch("/checkout/varify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(response),
+            });
+
+            const varificationResult = await varificationRes.json();
+
+            if (varificationRes.ok) {
+              placeOrderBtn.disabled = true;
+              toastr.success(varificationResult.message);
+              placeOrderBtn.textContent = "Order Placed";
+              window.location.href = varificationResult.redirectUrl;
+            } else {
+              placeOrderBtn.disabled = false;
+              placeOrderBtn.textContent = "Place The Order";
+              toastr.error(varificationResult.error);
+            }
+          } catch (error) {
+            console.error("Error verifying payment:", error);
+            toastr.error("Something went wrong. Please try again.");
+          }
+        },
+      };
+
+      var rzp = new Razorpay(options);
+      rzp.open();
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Error placing order on razorpay");
+  }
+};
 
 // method to place the order
 placeOrderBtn.addEventListener("click", async () => {
@@ -181,8 +234,8 @@ placeOrderBtn.addEventListener("click", async () => {
   if (paymentMethod === "COD") {
     placeOrderWithCod(paymentMethod);
   } else if (paymentMethod === "Online") {
-    placeOrderWithOnline(paymentMethod)
-  }else{
+    placeOrderWithOnline(paymentMethod);
+  } else {
     toastr.info("Please Choose a valid payment method");
   }
 });

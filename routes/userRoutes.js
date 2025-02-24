@@ -102,7 +102,9 @@ router.post('/checkout/address', userOrderController.chooseDeliveryAddress)
 // place order with cod 
 router.post('/checkout/confirm', varifyLoginUserSession, checkIsblocked, compareOrderItems, userOrderController.placeOrder)
 // online payment
-router.post('/checkout/create-order', varifyLoginUserSession, compareOrderItems)
+router.post('/checkout/create-order', varifyLoginUserSession, compareOrderItems, userOrderController.createRazorypayOrder)
+// varify payment and place the order by online 
+router.post('/checkout/varify-payment', varifyLoginUserSession, compareOrderItems,  userOrderController.varifyPayment)
 
 router.get('/checkout/address/new', userOrderController.getAddAnotherAddressPage)
 
