@@ -6,6 +6,7 @@ const mongoose = require('mongoose')
 const Session = mongoose.connection.collection('sessions')
 const { validatePassword } = require("../utils/validations");
 const logoutUser = require("../utils/logoutUser");
+const { createNewUser } = require("../utils/userHelpers");
 require("dotenv").config();
 
 // Geting signup page
@@ -178,12 +179,8 @@ exports.registerGoogleUser = async (req, res) => {
     // check if the user exists, if not create one 
     let user = await UserSchema.findOne({ email });
     if (!user) {
-      newUser = new UserSchema({
-        name,
-        email,
-        isVerified: true,
-      });
-      user = await newUser.save();
+      // create new user and create a wallet for user 
+      user = await createNewUser(name, email, undefined, undefined, true)
       console.log("New user saved to the database:", user);
     }
 

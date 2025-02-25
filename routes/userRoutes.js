@@ -72,13 +72,14 @@ router.get('/account/orders/all/ord/:id', userAccountController.getOrderDetaills
 router.get('/account/orders/all/ord/info/address', userAccountController.getDeliveryInfo)
 router.get('/account/orders/all/ord/info/rewards', userAccountController.getRewards)
 // updated
+
 router.get('/account/orders/all/ord/info/itemes', userAccountController.getOrderItems)
 router.post('/account/orders/all/ord/cancel/order', userAccountController.cancelOrderByUser)
 router.get('/account/orders/all/ord/items/return', userAccountController.getReturnProductPage)
 router.post('/account/orders/all/ord/items/return', userAccountController.returnSelectedProducts)
 
 // ORDERS ROUTES START
-router.get('/account/wallet', userAccountController.getWallet)
+router.get('/account/wallet', getUser, userAccountController.getWallet)
 router.get('/account/coupons', userAccountController.getCoupons)
 
 // ORDER BASED ROUTES
@@ -90,8 +91,9 @@ router.post('/cart/add', varifyLoginUserSession, checkIsblocked, checkProductAva
 router.patch('/cart/increase', varifyLoginUserSession, checkIsblocked, checkProductAvailability, userOrderController.increaseCartItemQuantity)
 router.patch('/cart/decrease', varifyLoginUserSession, checkIsblocked, checkProductAvailability, userOrderController.decreaseCartItemQuantity)
 router.delete('/cart/remove', varifyLoginUserSession, userOrderController.deleteCartItem)
-// cart count in header 
+// cart count in header
 router.get('/cart/count', userOrderController.getCartItemCount)
+
 
 // eg for product checkout: /checkout?productId=sdfsfksdfhsdfh
 // eg of cart checkout: /checkout?cart=true 

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Wallet</title>
     <link rel="stylesheet" href="/styles/account.css" />
+    <link rel="stylesheet" href="/styles/userPages/wallet.css">
     <%- include("../../partials/head") %>
   </head>
   <body>
@@ -19,6 +20,28 @@
             <div class="content-section">
               <div class="account-title">
                 <p class="page-title">My Wallet</p>
+                <div class="balance-div">
+                  <p class="balance-text">Balance: <span style="color: green;">₹<%= wallet.balanceLeft %></span></p>
+                </div>
+              </div>
+
+              <div class="transactions-container">
+                
+                <div class="transaction-card">
+                  <div class="amount">
+                    <p class="text-success">+ ₹560</p>
+                  </div>
+
+                  <div class="payment-type">
+                    <p>From Cancelled Order</p>
+                  </div>
+
+                  <div class="meta-data">
+                    <p>25/02/2025</p>
+                    <p>TXN-2505-254262</p>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>

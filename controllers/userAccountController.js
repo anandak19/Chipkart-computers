@@ -1,7 +1,15 @@
-const UserSchema = require("../models/User");
-const AddressSchema = require("../models/Address");
+const { default: mongoose } = require("mongoose");
 const bcrypt = require("bcrypt");
+
+const Order = require("../models/Order");
+const AddressSchema = require("../models/Address");
+const OrderItem = require("../models/orderItem");
+const UserCoupon = require("../models/UserCoupon");
+const UserSchema = require("../models/User");
+const Coupons = require("../models/Coupon");
+
 const logoutUser = require("../utils/logoutUser");
+const { getOrderItemsDetails } = require("../utils/orderManagement");
 const {
   validateDob,
   validateName,
@@ -9,12 +17,7 @@ const {
   validateEmail,
   validatePassword,
 } = require("../utils/validations");
-const Order = require("../models/Order");
-const { getOrderItemsDetails } = require("../utils/orderManagement");
-const OrderItem = require("../models/orderItem");
-const { default: mongoose } = require("mongoose");
-const UserCoupon = require("../models/UserCoupon");
-const Coupons = require("../models/Coupon");
+const Wallet = require("../models/Wallet");
 
 // make a session validate middleware later that sends json response
 
@@ -693,8 +696,18 @@ exports.returnSelectedProducts = async (req, res) => {
 };
 
 // WALLET
-exports.getWallet = (req, res) => {
-  res.render("user/account/wallet", { currentPage: "wallet" });
+exports.getWallet = async(req, res) => {
+  try {
+    const wallet = await Wallet.findOne({userId: req.user._id})
+    if(!wallet) {
+      return res.redirect('/account')
+    }
+    console.log(wallet)
+    
+    res.render("user/account/wallet", { currentPage: "wallet", wallet });
+  } catch (error) {
+    res.redirect('/account')
+  }
 };
 
 // COUPONS

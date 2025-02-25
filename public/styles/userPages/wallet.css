@@ -1,0 +1,35 @@
+.balance-text {
+    font-weight: 600;
+    font-size: 1.3rem;
+}
+
+.transactions-container{
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.transaction-card{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    background-color: white;
+}
+
+.amount p{
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.payment-type p {
+    font-size: 0.9rem;
+}
+
+.meta-data p{
+    font-size: 0.8rem;
+    text-align: right;
+}

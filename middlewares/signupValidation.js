@@ -6,6 +6,7 @@ const {
   validateEmail,
   validatePassword,
 } = require("../utils/validations");
+const { createNewUser } = require("../utils/userHelpers");
 
 const signupValidations = async (req, res, next) => {
   try {
@@ -31,8 +32,7 @@ const signupValidations = async (req, res, next) => {
     password = await bcrypt.hash(password, 10);
 
     // save the user to database 
-    const newUser = new UserSchema({ name, phoneNumber, email, password })
-    const savedUser = await newUser.save()
+    const savedUser = await createNewUser(name, email, phoneNumber, password, false)
     req.user = savedUser
     // ------write this code in the startOtpvarifiction 
     // req.session.userEmail = email;
