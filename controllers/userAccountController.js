@@ -9,7 +9,10 @@ const UserSchema = require("../models/User");
 const Coupons = require("../models/Coupon");
 
 const logoutUser = require("../utils/logoutUser");
-const { getOrderItemsDetails } = require("../utils/orderManagement");
+const {
+  getOrderItemsDetails,
+  cancelOrder,
+} = require("../utils/orderManagement");
 const {
   validateDob,
   validateName,
@@ -18,6 +21,7 @@ const {
   validatePassword,
 } = require("../utils/validations");
 const Wallet = require("../models/Wallet");
+const WalletTransaction = require("../models/WalletTransaction");
 
 // make a session validate middleware later that sends json response
 
@@ -519,7 +523,9 @@ exports.getRewards = async (req, res, next) => {
     const userCoupon = await UserCoupon.findOne({ orderId: orderId });
 
     if (!userCoupon) {
-      return res.status(400).json({ message: "No coupons credited in this order" });
+      return res
+        .status(400)
+        .json({ message: "No coupons credited in this order" });
     }
 
     let message;
@@ -582,16 +588,8 @@ exports.cancelOrderByUser = async (req, res) => {
     if (!orderId) {
       return res.status(400).json({ error: "Session expired" });
     }
-    const orderDetails = await Order.findById(orderId);
-    if (!orderDetails) {
-      return res.status(400).json({ error: "Order not found" });
-    }
-
-    orderDetails.isCancelled = true;
-    orderDetails.orderStatus = "Cancelled";
-    orderDetails.cancelReason = cancelReason;
-
-    await orderDetails.save();
+    // call the cancel order method here
+    await cancelOrder(orderId, cancelReason);
 
     res.status(200).json({ message: "Order cancelled successfully" });
   } catch (error) {
@@ -696,23 +694,108 @@ exports.returnSelectedProducts = async (req, res) => {
 };
 
 // WALLET
-exports.getWallet = async(req, res) => {
+exports.getWallet = async (req, res) => {
   try {
-    const wallet = await Wallet.findOne({userId: req.user._id})
-    if(!wallet) {
-      return res.redirect('/account')
+    const wallet = await Wallet.findOne({ userId: req.user._id });
+    if (!wallet) {
+      return res.redirect("/account");
     }
-    console.log(wallet)
-    
+    console.log(wallet);
+
     res.render("user/account/wallet", { currentPage: "wallet", wallet });
   } catch (error) {
-    res.redirect('/account')
+    res.redirect("/account");
+  }
+};
+
+exports.getAllWalletTransactions = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const page = Number(req.query.page) || 0;
+    const limit = 5;
+    const skip = page * limit;
+
+    if (!userId) {
+      return res.status(400).json({ error: "Error geting user" });
+    }
+
+    const result = await WalletTransaction.aggregate([
+      {
+        $match: { userId: userId },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
+        $facet: {
+          paginatedResult: [{ $skip: skip }, { $limit: limit }],
+          totalCount: [{ $count: "count" }],
+        },
+      },
+    ]);
+
+    const paginatedResult = result[0].paginatedResult;
+    const totalCount =
+      result[0].totalCount.length > 0 ? result[0].totalCount[0].count : 0;
+
+    const hasMore = skip + paginatedResult.length < totalCount;
+    res
+      .status(200)
+      .json({ success: true, transactions: paginatedResult, hasMore });
+  } catch (error) {
+    console.log(error);
+    next(error);
   }
 };
 
 // COUPONS
 exports.getCoupons = (req, res) => {
   res.render("user/account/coupons", { currentPage: "coupons" });
+};
+
+exports.getAllUserCoupons = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+
+    const userCoupons = await UserCoupon.aggregate([
+      {
+        $match: { userId: userId, isRedeemed: false, isCredited: true },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
+        $lookup: {
+          from: "coupons",
+          localField: "couponCode",
+          foreignField: "couponCode",
+          as: "couponDetails",
+        },
+      },
+      {
+        $unwind: "$couponDetails",
+      },
+      {
+        $replaceRoot: {
+          newRoot: { $mergeObjects: ["$$ROOT", "$couponDetails"] },
+        },
+      },
+      {
+        $project: {
+          couponDetails: 0,
+        },
+      },
+    ]);
+
+    if (!userCoupons) {
+      return res.status(400).json({ error: "Faild to get the user coupons" });
+    }
+
+    res.status(200).json({ userCoupons });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
 };
 
 /*

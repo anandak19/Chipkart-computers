@@ -1,0 +1,26 @@
+.coupons-container{
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    margin-top: 18px;
+    gap: 12px;
+}
+
+.coupon-card{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    color: #ffffff;
+    font-weight: 600;
+    background: linear-gradient(135deg, #ff4b96, #ff3a5b);
+    border-radius: 10px;
+}
+
+.coupon-code p span{
+    background-color: #ffffff;
+    padding: 4px 12px;
+    color: #000;
+    border-radius: 4px;
+}

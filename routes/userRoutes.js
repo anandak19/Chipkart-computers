@@ -74,13 +74,17 @@ router.get('/account/orders/all/ord/info/rewards', userAccountController.getRewa
 // updated
 
 router.get('/account/orders/all/ord/info/itemes', userAccountController.getOrderItems)
-router.post('/account/orders/all/ord/cancel/order', userAccountController.cancelOrderByUser)
+router.post('/account/orders/all/ord/cancel/order', varifyLoginUserSession, userAccountController.cancelOrderByUser)
 router.get('/account/orders/all/ord/items/return', userAccountController.getReturnProductPage)
 router.post('/account/orders/all/ord/items/return', userAccountController.returnSelectedProducts)
 
 // ORDERS ROUTES START
 router.get('/account/wallet', getUser, userAccountController.getWallet)
+router.get('/account/wallet/all', getUser, userAccountController.getAllWalletTransactions)
+
+// coupons based routes
 router.get('/account/coupons', userAccountController.getCoupons)
+router.get('/account/coupons/all', varifyLoginUserSession, userAccountController.getAllUserCoupons)
 
 // ORDER BASED ROUTES
 router.get('/cart',  userOrderController.getCartPage)// isLogin,

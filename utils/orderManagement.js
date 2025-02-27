@@ -1,5 +1,9 @@
 const mongoose = require("mongoose");
 const OrderSchema = require("../models/Order");
+const Wallet = require("../models/Wallet");
+const Users = require("../models/User");
+const Order = require("../models/Order");
+const WalletTransaction = require("../models/WalletTransaction");
 
 const getOrderItemsDetails = async(orderId) => {
   try {
@@ -43,4 +47,71 @@ const getOrderItemsDetails = async(orderId) => {
   }
 };
 
-module.exports = { getOrderItemsDetails };
+
+const refundUserAmount = async(amount, userId, reason) => {
+  try {
+    const user = await Users.findById(userId)
+    if(!user) {
+      throw new Error('Error finding user')
+    }
+
+    const userWallet = await Wallet.findOne({userId: user._id})
+
+    if (!userWallet) {
+      throw new Error('Error finding users wallet')
+    }
+
+    userWallet.totalCredited += amount
+    userWallet.balanceLeft += amount
+
+    const updatedWallet = await userWallet.save()
+
+    if (!updatedWallet) {
+      throw new Error("Error adding amount to wallet")
+    }
+
+    // update to trasactions 
+    const newWalletTransaction = new WalletTransaction({
+      userId: user._id,
+      userWalletId: userWallet._id,
+      amount,
+      transactionType: 'credit',
+      reason,
+    })
+
+    await newWalletTransaction.save()
+    
+  } catch (error) {
+    throw new Error('Internal error adding amount to wallet')
+  }
+}
+
+const cancelOrder = async (orderId, cancelReason) => {
+  try {
+    const orderDetails = await Order.findById(orderId);
+    if (!orderDetails) {
+      res.status(404);
+      throw new Error(`Order not found`);
+    }
+
+    if (orderDetails.orderStatus === 'Delivered') {
+      res.status(400);
+      throw new Error(`Order was already delivered`);
+    }
+
+    if (orderDetails.paymentStatus === 'Paid') {
+      refundUserAmount(orderDetails.totalPayable, orderDetails.userId, 'orderCancel')
+    }
+
+    orderDetails.isCancelled = true;
+    orderDetails.orderStatus = "Cancelled";
+    orderDetails.cancelReason = cancelReason;
+    await orderDetails.save();
+    
+  } catch (error) {
+    res.status(500);
+    throw new Error(`Error cancelling order`);
+  }
+}
+
+module.exports = { getOrderItemsDetails, cancelOrder };

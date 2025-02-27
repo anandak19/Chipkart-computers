@@ -3,7 +3,7 @@ const CategoriesSchema = require("../models/Category");
 const ProductSchema = require("../models/Product");
 const OrderSchema = require("../models/Order");
 const AddressSchema = require("../models/Address");
-const { getOrderItemsDetails } = require("../utils/orderManagement");
+const { getOrderItemsDetails, cancelOrder } = require("../utils/orderManagement");
 const OrderItem = require("../models/orderItem");
 const mongoose = require("mongoose");
 const Coupons = require("../models/Coupon");
@@ -1241,16 +1241,8 @@ exports.cancelOrderByAdmin = async (req, res) => {
     if (!orderId) {
       return res.status(400).json({ error: "Session expired" });
     }
-    const orderDetails = await OrderSchema.findById(orderId);
-    if (!orderDetails) {
-      return res.status(400).json({ error: "Order not found" });
-    }
 
-    orderDetails.isCancelled = true;
-    orderDetails.orderStatus = "Cancelled";
-    orderDetails.cancelReason = cancelReason;
-
-    await orderDetails.save();
+    await cancelOrder(orderId, cancelReason)
 
     res.status(200).json({ message: "Order cancelled successfully" });
   } catch (error) {

@@ -60,10 +60,10 @@
 /* coupon styles  */
 .coupon-strip {
     background: linear-gradient(135deg, #fc74ac, #fc6b83);
+    border-radius: 10px;
+    padding: 12px;
     color: #fff;
     text-align: center;
-    padding: 12px;
-    border-radius: 10px;
     font-family: "Poppins", sans-serif;
     position: relative;
     overflow: hidden;
