@@ -256,13 +256,26 @@
 .wishlist-icon {
   font-size: 24px;
   cursor: pointer;
-  color: gray;
+  color: rgb(159, 159, 159);
   transition: color 0.3s ease-in-out;
 }
 
-.wishlist-icon.wishlisted {
-  color: #ffa20e;
+.wishlist-icon:hover{
+  color: #ff3730;
 }
+
+.wishlist-default{
+  color: rgb(159, 159, 159);
+}
+
+.wishlist-selected{
+  color: #ff3730;
+}
+
+
+
+
+
 
 .product-actions .add-cart:hover,
 .product-actions .wishlist:hover {

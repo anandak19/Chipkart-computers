@@ -28,7 +28,7 @@ const WalletTransactionSchema = new Schema(
     transactionId: {
       type: String,
       unique: true,
-      default: () => `TXN-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      default: () => `TXN-${Date.now()}${Math.floor(Math.random() * 1000)}`,
     },
   },
   {

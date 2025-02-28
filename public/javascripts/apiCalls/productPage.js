@@ -65,8 +65,8 @@ const showProducts = (products, total, hasMore) => {
                 ? `<button class="out-of-stock" disabled>Out of Stock</button>`
                 : `<button class="add-cart" onClick="addToCart('${product._id}')">Add Cart</button>`
             }
-              <span class="wishlist-icon" data-wishlisted="false">
-                <i class="fa-regular fa-heart"></i>
+              <span class="wishlist-icon ${product.isWishlisted? 'wishlist-selected': 'wishlist-default'}" onClick="addWishlist('${product._id}')">
+              <i class="fa-heart ${product.isWishlisted? 'fa-solid': 'fa-regular'}"></i>
               </span>
             </div>
           </div>
@@ -76,6 +76,7 @@ const showProducts = (products, total, hasMore) => {
     });
   }
 };
+
 
 // // wishlited icon
 // {/* <i class="fa-solid fa-heart"></i> */}
@@ -228,3 +229,25 @@ prevBtn.addEventListener("click", () => {
   page--;
   applyFilters();
 });
+
+
+// add to wishlist 
+async function addWishlist(id) {
+  const url = `/products/wishlist/add/${id}`
+  try {
+    const res = await fetch(url, {
+      method: 'POST'
+    })
+
+    const result = await res.json() 
+    if (res.ok) {
+      console.log(result)
+      applyFilters();
+    }else{
+      alert(result.error)
+    }
+  } catch (error) {
+    console.error(error);
+    alert('Error adding to wishlist')
+  }
+}

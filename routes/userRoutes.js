@@ -27,7 +27,7 @@ router.get('/products/latest', userController.getLatestProducts)
 // render all product page with Categories 
 router.get('/products', userController.getProductsPage)
 // api to get available products with optional filters and pagiantion 
-router.get('/products/p', userController.getAvailableProducts2)
+router.get('/products/p', userController.getAvailableProducts2)  // working ...
 // api to get product details page 
 router.get('/products/:id', userController.getProductDetailsPage)
 // render add review page           isLogin,
@@ -40,6 +40,9 @@ router.get('/products/:id/review', validateProduct, userController.getReviews)
 router.get('/products/:id/related', validateProduct, userController.getRelatedProducts)
 // get top category images 
 router.get('/category/top', userController.getTopCategories)
+// add to wishlist
+router.post('/products/wishlist/add/:id', varifyLoginUserSession, validateProduct, userController.addWishlist)
+router.get('/products/wishlist/all', varifyLoginUserSession, userController.getWishlistItems)
 
 
 
@@ -103,9 +106,10 @@ router.get('/cart/count', userOrderController.getCartItemCount)
 // eg of cart checkout: /checkout?cart=true 
 router.get('/checkout', getUser,  userOrderController.getCheckoutPage)
 router.get('/checkout/amount', varifyLoginUserSession, userOrderController.getCheckoutAmount)
+router.post('/checkout/applay-coupon', varifyLoginUserSession, userOrderController.applayCoupon)
 // api calls
 router.post('/checkout/address', userOrderController.chooseDeliveryAddress)
-// place order with cod 
+// place order with cod
 router.post('/checkout/confirm', varifyLoginUserSession, checkIsblocked, compareOrderItems, userOrderController.placeOrder)
 // online payment
 router.post('/checkout/create-order', varifyLoginUserSession, compareOrderItems, userOrderController.createRazorypayOrder)

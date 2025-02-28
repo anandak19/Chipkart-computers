@@ -22,8 +22,8 @@ const calculateCheckoutAmount = async (req) => {
       }
     }
 
-    toPay = Math.max(0, toPay);
-    return { total: toPay, discountApplied: discountAmount };
+    toPay = Math.floor(Math.max(0, toPay)) ;
+    return { total: toPay, discountApplied: Math.floor(discountAmount)};
   } catch (error) {
     console.log(error);
     throw new Error("Error calculating checkout amount");

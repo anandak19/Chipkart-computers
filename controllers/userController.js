@@ -3,7 +3,12 @@ const ProductSchema = require("../models/Product");
 const UserReviewsSchema = require("../models/UserReview");
 const mongoose = require("mongoose");
 const { calculateAverageRating } = require("../utils/helper");
-const { getProductWithFinalPrice, addFinalPriceStage } = require("../utils/productHelpers");
+const {
+  getProductWithFinalPrice,
+  addFinalPriceStage,
+} = require("../utils/productHelpers");
+const WishlistItems = require("../models/WishlistItems");
+const Users = require("../models/User");
 const { ObjectId } = require("mongoose").Types;
 
 exports.getHome = (req, res) => {
@@ -362,6 +367,40 @@ exports.getAvailableProducts2 = async (req, res) => {
       });
     }
 
+    // add wishlist true if product is wishlisted 
+    if (req.session.user.id) {
+      const userId = req.session.user.id;
+      pipeline.push(
+        {
+          $lookup: {
+            from: "wishlistitems",
+            let: { productId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$productId", "$$productId"] },
+                      { $eq: ["$userId", userId] },
+                    ],
+                  },
+                },
+              },
+            ],
+            as: "wishlistData",
+          },
+        },
+        {
+          $addFields: {
+            isWishlisted: { $gt: [{ $size: "$wishlistData" }, 0] }
+          }
+        },
+        {
+            $project: { wishlistData: 0 } 
+        }
+      );
+    }
+
     // Add skip and limit stages for pagination
     pipeline.push({
       $facet: {
@@ -395,9 +434,17 @@ exports.getProductDetailsPage = async (req, res) => {
   try {
     const productId = req.params.id;
     if (!productId) {
-      return res.status(404).json({error: 'Choose a product first'})
+      return res.status(404).json({ error: "Choose a product first" });
     }
-    const product = await getProductWithFinalPrice(productId)
+    const product = await getProductWithFinalPrice(productId);
+
+    product.isWishlisted = false;
+    if (req.session.user.id) {
+      const wishlistItem = await WishlistItems.findOne({productId, userId: req.session.user.id})
+      if (wishlistItem) {
+        product.isWishlisted = true;
+      }
+    }
 
     res.render("user/productDetailPage", { product });
   } catch (error) {
@@ -587,13 +634,17 @@ exports.getRelatedProducts = async (req, res) => {
 
     const relatedProducts = await ProductSchema.aggregate([
       {
-        $match: {categoryId: categoryId, _id: {$ne: currentProduct._id}, isListed: true}
+        $match: {
+          categoryId: categoryId,
+          _id: { $ne: currentProduct._id },
+          isListed: true,
+        },
       },
       {
-        $limit: 10
+        $limit: 10,
       },
-      addFinalPriceStage
-    ])
+      addFinalPriceStage,
+    ]);
 
     res.status(200).json({
       success: true,
@@ -624,6 +675,98 @@ exports.getTopCategories = async (req, res, next) => {
 
     console.log(topCategories);
     res.status(200).json({ topCategories });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+// not tested
+exports.addWishlist = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const productId = req.productId;
+    if (!userId || !productId) {
+      return res.status(400).json({ error: "Error geting user or product" });
+    }
+
+    const existingItem = await WishlistItems.findOne({userId, productId})
+
+    if (existingItem) { 
+      const deletedItem = await WishlistItems.findOneAndDelete({userId, productId})
+      return res.status(200).json({ message: "Item removed from wishlist" });
+    }
+
+    const newWishlistItem = new WishlistItems({
+      userId,
+      productId,
+    });
+
+    const savedItem = await newWishlistItem.save();
+    if (!savedItem) {
+      return res
+        .status(400)
+        .json({ error: "Error adding product to wishlist" });
+    }
+
+    res.status(200).json({ message: "Added to wishlist" });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+// not tested
+exports.getWishlistItems = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const page = Number(req.query.page) || 0;
+    const limit = 5;
+    const skip = limit * page;
+
+    if (!userId) {
+      return res.status(400).json({ error: "Error geting user" });
+    }
+
+    const result = await WishlistItems.aggregate([
+      {
+        $match: { userId: userId },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "productId",
+          foreignField: "_id",
+          as: "productDetails",
+        },
+      },
+      {
+        $unwind: "$productDetails",
+      },
+      {
+        $replaceRoot: {
+          newRoot: { $mergeObjects: ["$productDetails", "$$ROOT"] },
+        },
+      },
+      {
+        $project: { productDetails: 0 },
+      },
+      {
+        $facet: {
+          paginatedResult: [{ $skip: skip }, { $limit: limit }],
+          total: [{ $count: "total" }],
+        },
+      },
+    ]);
+
+    const productsCount = result[0]?.total[0]?.total || 0;
+    const products = result[0]?.paginatedResult || [];
+    const hasMore = skip + products.length < productsCount;
+
+    res.status(200).json({ productsCount, products, hasMore });
   } catch (error) {
     console.log(error);
     next(error);

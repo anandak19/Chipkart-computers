@@ -38,7 +38,7 @@
                 src="<%= product.images[0].filepath ? product.images[0].filepath : '/images/default/default.jpg' %>"
                 alt="Product Image"
               />
-              <div class="wishlist-icon">
+              <div class="wishlist-icon <%= product.isWishlisted ? 'wishlisted': '' %>" onclick="addWishlist('<%= product._id %>')">
                 <i class="fa fa-heart"></i>
               </div>
             </div>

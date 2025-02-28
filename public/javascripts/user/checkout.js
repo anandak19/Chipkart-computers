@@ -91,6 +91,12 @@ const getTotalPayable = async () => {
     if (response.ok) {
       console.log(data);
       payableAmount.innerText = `₹${data.total.toLocaleString("en-IN")}`;
+
+      if (data.discountApplied !== 0) {
+        const couponOffer = document.getElementById("couponOffer");
+        couponOffer.innerText = `Coupon applied! Saved ₹${data.discountApplied}`;
+        
+      }
     } else {
       console.error(data.error);
       toastr.warning(data.error, "Warning");
@@ -244,3 +250,34 @@ placeOrderBtn.addEventListener("click", async () => {
 function newAddressClicked() {
   window.location.href = "/checkout/address/new";
 }
+
+// method to applay cupon
+const couponForm = document.getElementById("couponForm");
+couponForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const couponInput = document.getElementById("couponInput").value;
+
+  if (couponInput.trim().length <= 3) {
+    toastr.info("Please enter a valid coupon code and try again");
+    return;
+  }
+
+  try {
+    const res = await fetch("/checkout/applay-coupon", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ couponCode: couponInput.trim() }),
+    });
+
+    const result = await res.json();
+
+    if (res.ok) {
+      getTotalPayable();
+    } else {
+      toastr.info(result.error || "Error applaying coupon");
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Somthing went wrong");
+  }
+});

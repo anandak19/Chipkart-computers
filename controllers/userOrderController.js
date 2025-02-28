@@ -5,6 +5,8 @@ const AddressShema = require("../models/Address");
 const OrderSchema = require("../models/Order");
 const OrderItem = require("../models/orderItem");
 const mongoose = require("mongoose");
+const Coupons = require("../models/Coupon");
+const UserCoupon = require("../models/UserCoupon");
 const { razorpay } = require("../config/razorpay");
 const crypto = require("crypto");
 require("dotenv").config();
@@ -18,7 +20,6 @@ const {
   addFinalPriceStage,
   getProductWithFinalPrice,
 } = require("../utils/productHelpers");
-const Coupons = require("../models/Coupon");
 const {
   calculateCheckoutAmount,
   getDeliveryAddress,
@@ -460,6 +461,49 @@ exports.getCheckoutAmount = async (req, res, next) => {
   }
 };
 
+exports.applayCoupon = async (req, res, next) => {
+  try {
+
+    if (req.session.appliedCouponId) {
+      return res.status(404).json({error: "You can only use one coupon is a single order"})
+    }
+
+    const {couponCode} = req.body
+    if(!couponCode){
+      return res.status(400).json({error: "Coupon code needed"})
+    }
+
+    const userCoupon = await UserCoupon.findOne({couponCode})
+
+    if (!userCoupon) {
+      return res.status(404).json({error: 'You didt have any coupon with this code'})
+    }
+
+    const coupon = await Coupons.findOne({couponCode, isActive: true})
+
+    if (!coupon) {
+      return res.status(404).json({error: 'Coupon not found'})
+    }
+
+    const today = new Date()
+    const endDate = new Date(coupon.endDate)
+
+    if (today > endDate) {
+      return res.status(400).json({error: 'Coupon validity expired'})
+    }
+
+    req.session.appliedCouponId = coupon._id
+    userCoupon.isRedeemed = true
+    await userCoupon.save()
+
+    res.status(200).json({message: 'Coupon applied successfully'})
+    
+  } catch (error) {
+    console.log(error)
+    next(error)
+  }
+}
+
 // save changed delivery address to session
 exports.chooseDeliveryAddress = async (req, res) => {
   try {
@@ -631,7 +675,8 @@ exports.placeOrder = async (req, res) => {
     }
 
     await session.commitTransaction();
-
+    
+    req.session.appliedCouponId = null
     res.status(200).json({ message: "Order Placed Successfully", redirectUrl });
   } catch (error) {
     await session.abortTransaction();
@@ -739,6 +784,7 @@ exports.varifyPayment = async (req, res) => {
         razorpayPaymentId: razorpay_payment_id
       });
 
+      req.session.appliedCouponId = null
       const order = await newOrder.save({ session });
       if (!order) {
         await session.abortTransaction();

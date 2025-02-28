@@ -196,3 +196,24 @@ window.addEventListener("load", () => {
 function buyNow(productId) {
   window.location.replace(`/checkout?productId=${productId}`);
 } 
+
+
+// add to wishlist 
+async function addWishlist(id) {
+  const url = `/products/wishlist/add/${id}`
+  try {
+    const res = await fetch(url, {
+      method: 'POST'
+    })
+
+    const result = await res.json()
+    if (res.ok) {
+      window.location.reload()
+    }else{
+      alert(result.error)
+    }
+  } catch (error) {
+    console.error(error);
+    alert('Error adding to wishlist')
+  }
+}

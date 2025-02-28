@@ -24,7 +24,7 @@ const OrderSchema = new Schema(
 
 OrderSchema.pre("save", async function (next) {
   if (!this.orderId) {
-    this.orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+    this.orderId = `ORD-${Date.now()}${Math.floor(Math.random() * 1000)}`
   }
 
   if (!this.deliveryDate) {
