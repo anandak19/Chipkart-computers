@@ -41,8 +41,10 @@ router.get('/products/:id/related', validateProduct, userController.getRelatedPr
 // get top category images 
 router.get('/category/top', userController.getTopCategories)
 // add to wishlist
+router.get('/account/wishlist', userController.getWishListPage)
+router.get('/wishlist/count', userController.getWishlistCount)
+router.get('/account/wishlist/all', varifyLoginUserSession, userController.getWishlistItems)
 router.post('/products/wishlist/add/:id', varifyLoginUserSession, validateProduct, userController.addWishlist)
-router.get('/products/wishlist/all', varifyLoginUserSession, userController.getWishlistItems)
 
 
 

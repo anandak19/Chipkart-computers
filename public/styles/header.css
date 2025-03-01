@@ -86,7 +86,7 @@ header {
   margin-left: 10px;
 }
 
-.header-main .user-side .user-collection .cart {
+.header-main .user-side .user-collection .cart, .wishlist {
   position: relative;
   display: inline-block;
 }

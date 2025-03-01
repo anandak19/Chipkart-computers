@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Wishlist</title>
+    <%- include("../../partials/head") %>
+    <link rel="stylesheet" href="/styles/userPages/wishlist.css" />
+  </head>
+  <body>
+    <%- include("../../partials/userHeader") %>
+
+    <div class="page-wrapper">
+      <div class="content-wrapper wishlist-page">
+        <div class="wishlist-container">
+          <h3>Wish Listed</h3>
+
+          <div class="wishlist-items-container">
+            <!-- <div class="wishlist-item">
+              <div class="item-details">
+                <div class="item-image">
+                  <img src="/images/sample-product.jpg" alt="" />
+                </div>
+
+                <div class="item-data">
+                  <h3>Long product name</h3>
+                  <p class="price">20,000</p>
+                </div>
+              </div>
+
+              <div class="actions-btns">
+                <button>Add to Cart</button>
+                <button>Remove Item</button>
+              </div>
+            </div> -->
+          </div>
+
+
+        </div>
+      </div>
+    </div>
+
+    <%- include("../../partials/userFooter") %>
+    <script src="/javascripts/apiCalls/common.js"></script>
+    <script src="/javascripts/user/wishlist.js"></script>
+  </body>
+</html>

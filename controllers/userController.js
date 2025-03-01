@@ -681,7 +681,33 @@ exports.getTopCategories = async (req, res, next) => {
   }
 };
 
-// not tested
+exports.getWishListPage = (req, res) => {
+  res.render("user/account/wishlist");
+}
+
+exports.getWishlistCount = async(req, res, next) => {
+try {
+  const loggedInUser = req.session.user;
+  if (!loggedInUser) {
+    return res.status(200).json({ count: 0 });
+  }
+
+  const wishlist = await WishlistItems.find({ userId: loggedInUser.id });
+
+  if (!wishlist) {
+    return res.status(200).json({ count: 0 });
+  }
+
+  const itemCount = wishlist.length;
+
+  return res.status(200).json({ count: itemCount });
+  
+} catch (error) {
+  console.log(error);
+  next(error);
+}
+}
+
 exports.addWishlist = async (req, res, next) => {
   try {
     const userId = req.user._id;
@@ -716,7 +742,6 @@ exports.addWishlist = async (req, res, next) => {
   }
 };
 
-// not tested
 exports.getWishlistItems = async (req, res, next) => {
   try {
     const userId = req.user._id;
@@ -753,7 +778,7 @@ exports.getWishlistItems = async (req, res, next) => {
       },
       {
         $project: { productDetails: 0 },
-      },
+      },addFinalPriceStage,
       {
         $facet: {
           paginatedResult: [{ $skip: skip }, { $limit: limit }],
