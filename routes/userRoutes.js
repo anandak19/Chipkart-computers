@@ -46,8 +46,6 @@ router.get('/wishlist/count', userController.getWishlistCount)
 router.get('/account/wishlist/all', varifyLoginUserSession, userController.getWishlistItems)
 router.post('/products/wishlist/add/:id', varifyLoginUserSession, validateProduct, userController.addWishlist)
 
-
-
 // ---user account based routes--- 
 // isLogin middleware will come here 
 // personal details 

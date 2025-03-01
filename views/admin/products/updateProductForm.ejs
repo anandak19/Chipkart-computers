@@ -174,7 +174,6 @@
             <div class="product-image-section">
               <div class="form-group image-group">
                 <p class="image-label">Add Primary Image</p>
-                  <button class="btn btn-danger deleteImgBtns" data-id="<%= product.images[0]._id %>" ><i class="fa-regular fa-trash-can" style="color: #ffffff;"></i></button>
                 <label class="image-box" for="imageA">
                   <p>Choose an image</p>
                         <img id="image0" alt="" src="<%= product.images[0].filepath %>" />
@@ -185,18 +184,14 @@
                   class="image-input"
                   accept="image/*"
                 />
+                <button class="btn btn-danger deleteImgBtns" onclick="deleteImage('<%= product.images[0]._id %>')"  ><i class="fa-regular fa-trash-can" style="color: #ffffff;"></i></button>
                 <small class="text-danger" id="imageError"></small>
               </div>
               <div class="form-group image-group">
                 <p class="image-label">Add Image 2</p>
-                <% if (product.images[1] && product.images[1].filepath) { %>
-                  <button class="btn btn-danger deleteImgBtns" data-id="<%= product.images[1]._id %>" ><i class="fa-regular fa-trash-can" style="color: #ffffff;"></i></button>
-                <% } %>
                 <label class="image-box" for="imageB">
                   <p>Choose an image</p>
-                    <% if (product.images[1] && product.images[1].filepath) { %>
                       <img id="image1" alt="" src="<%= product.images[1].filepath %>" />
-                    <% } %>
                 </label>
                 <input
                   type="file"
@@ -204,17 +199,14 @@
                   class="image-input"
                   accept="image/*"
                 />
+                  <button class="btn btn-danger deleteImgBtns" onclick="deleteImage('<%= product.images[1]._id %>')" ><i class="fa-regular fa-trash-can" style="color: #ffffff;"></i></button>
               </div>
               <div class="form-group image-group">
                 <p class="image-label">Add Image 3</p>
-                <% if (product.images[2] && product.images[2].filepath) { %>
-                  <button class="btn btn-danger deleteImgBtns" data-id="<%= product.images[2]._id %>" ><i class="fa-regular fa-trash-can" style="color: #ffffff;"></i></button>
-                <% } %>
+
                 <label class="image-box" for="imageC">
                   <p>Choose an image</p>
-                  <% if (product.images[2] && product.images[2].filepath) { %>
                     <img id="image2" alt="" src="<%= product.images[2].filepath %>" />
-                  <% } %>
                 </label>
                 <input
                   type="file"
@@ -222,10 +214,11 @@
                   class="image-input"
                   accept="image/*"
                 />
+
+                  <button class="btn btn-danger deleteImgBtns" onclick="deleteImage('<%= product.images[2]._id %>')" ><i class="fa-regular fa-trash-can" style="color: #ffffff;"></i></button>
               </div>
               <div class="form-group image-group">
                 <p class="image-label">Add Image 4</p>
-                  <button class="btn btn-danger deleteImgBtns" data-id="<%= product.images[3]._id %>" ><i class="fa-regular fa-trash-can" style="color: #ffffff;"></i></button>
                 <label class="image-box" for="imageD">
                   <p>Choose an image</p>
                     <img id="image3" alt="Image 3" src="<%= product.images[3].filepath %>" />
@@ -236,6 +229,7 @@
                   class="image-input"
                   accept="image/*"
                 />
+                <button class="btn btn-danger deleteImgBtns" onclick="deleteImage('<%= product.images[3]._id %>')"><i class="fa-regular fa-trash-can" style="color: #ffffff;"></i></button>
               </div>
             </div>
             <div class="submit-btn">

@@ -433,6 +433,8 @@ exports.postEditProductForm = async (req, res) => {
       ? JSON.parse(req.body.highlights)
       : [];
 
+    const imageToDelete = req.body.imageToDelete ? JSON.parse(req.body.imageToDelete): []
+
     const product = await ProductSchema.findById(productId);
     if (!product) {
       return res
@@ -465,9 +467,23 @@ exports.postEditProductForm = async (req, res) => {
       product.highlights = highlights;
     }
 
-    let newImages = [];
-    console.log(product.isFeatured);
+    // delete images code ---
+    if (imageToDelete) {
+      console.log(imageToDelete)
+      product.images.forEach((image, index) => {
+        const imageId = String(image._id)
 
+        if (imageToDelete.includes(imageId)) {
+          product.images[index].filepath = null;
+          product.images[index].filename = null;
+          console.log("one image deleted")
+        }
+      });
+    }
+
+    let newImages = [];
+
+    // filter only number values and convert to Number type  - from positions
     if (positions) {
       positions = positions
         .filter(
@@ -478,6 +494,7 @@ exports.postEditProductForm = async (req, res) => {
     }
 
     if (req.files && req.files.length > 0) {
+      console.log("updated images in req.files", req.files)
       // Loop through the uploaded files and create new image objects
       newImages = req.files.map((file, index) => ({
         filename: file.filename,
@@ -498,7 +515,6 @@ exports.postEditProductForm = async (req, res) => {
     }
 
     await product.save();
-    console.log("updated product: ", product);
     res
       .status(200)
       .json({ success: true, message: "Product updated successfully" });

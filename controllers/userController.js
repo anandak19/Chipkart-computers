@@ -740,7 +740,7 @@ exports.addWishlist = async (req, res, next) => {
     console.log(error);
     next(error);
   }
-};
+}
 
 exports.getWishlistItems = async (req, res, next) => {
   try {
