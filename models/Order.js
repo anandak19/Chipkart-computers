@@ -5,7 +5,7 @@ const { Schema } = mongoose;
 const OrderSchema = new Schema(
   {
     orderId: {type: String, unique: true },
-    userId: {type: String, ref: "User", required: true},
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     addressId: {type: String, ref: "Address", required: true},
     totalAmount: { type: Number, required: true },
     discount: { type: Number, default: 0 },

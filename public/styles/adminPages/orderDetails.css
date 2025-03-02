@@ -195,6 +195,13 @@
 .approve-btn {
   background-color: #333;
   color: #ffffff;
+  border: none;
+}
+
+.reject-btn{
+  background-color: #d20000;
+  color: #ffffff;
+  border: none;
 }
 
 .approved-btn{

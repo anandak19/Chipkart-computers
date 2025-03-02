@@ -29,8 +29,6 @@ router.get('/products/edit/:id', adminController.getEditProductForm)
 router.post('/products/edit/:id', upload.array('images'), adminController.postEditProductForm)
 router.post('/products/toggle-listed/:id', adminController.toggleListProduct)
 
-router.delete('/products/edit/image/:id', adminController.deleteSingleProductImage)
-
 //category management
 router.get('/categories', isAdminLogin, adminController.getCategoryManagement)
 router.get('/categories/all', adminController.getCategories)
@@ -62,13 +60,19 @@ router.get('/orders/info', adminController.getUserDataAndDeliveryInfo)
 router.get('/orders/items', adminController.getOrderItems)
 router.post('/orders/cancel/order', adminController.cancelOrderByAdmin)
 router.post('/orders/return/approve/:id', adminController.approveReturnItem)
+router.post('/orders/return/reject/:id', adminController.approveReturnItem)
 
 // router.get('/orders/all/:orderId', adminController.renderOrderDetailsPage)
 router.get('/orders/all/:orderId', isAdminLogin, adminController.renderOrderDetailsPage)
 router.post('/orders/update-status', adminController.updateOrderStatus)
 
+// REPORTS START
 // render the sales report page 
 router.get('/reports', isAdminLogin, adminController.getSalesReport)
+router.get('/reports/data', adminController.fetchSalesReportData)
+// REPORTS END
+
+
 // render the coupen management page 
 router.get('/coupons', isAdminLogin, adminController.getCouponManagement)
 

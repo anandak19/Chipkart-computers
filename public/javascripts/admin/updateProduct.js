@@ -208,26 +208,9 @@ if (updateProductBtn) {
   });
 }
 
-function deleteImage(imageId) {
+function deleteImage(imageId, elemId) {
   if (!imageToDelete.includes(imageId)) {
     imageToDelete.push(imageId);
-    alert(`image of id ${imageId} deleted`);
+    document.getElementById(elemId).src = ''
   }
 }
-
-// document.addEventListener('DOMContentLoaded', () => {
-//   // delete one image
-//   const deleteImgBtns = document.querySelectorAll(".deleteImgBtns");
-
-//   // on click, the image id of image to delete is pushed to imageToDelete array
-//   deleteImgBtns.forEach((deleteBtn) => {
-//     deleteBtn.addEventListener("click", async (e) => {
-//       const imageId = e.target.getAttribute("data-id");
-//       if (!imageToDelete.includes(imageId)) {
-//         imageToDelete.push(imageId);
-//         alert(`image of id ${imageId} deleted`)
-//       }
-//     });
-//   });
-
-// })

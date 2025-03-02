@@ -11,6 +11,8 @@ const { getCategories } = require("../utils/categoryHelpers");
 const Offer = require("../models/Offer");
 const { addFinalPriceStage } = require("../utils/productHelpers");
 const Categories = require("../models/Category");
+const { getReportAmounts, getSalesCount, getAllOrdersDetails, getReportOverview } = require("../utils/salesHelpers/reportHelpers");
+const UserCoupon = require("../models/UserCoupon");
 const Session = mongoose.connection.collection("sessions");
 
 exports.getDashboard = (req, res) => {
@@ -524,39 +526,6 @@ exports.postEditProductForm = async (req, res) => {
   }
 };
 
-exports.deleteSingleProductImage = async (req, res, next) => {
-  try {
-    const productId = req.session.selectedProductId;
-    if (!productId) {
-      return res.status(400).json({ error: "Session expired" });
-    }
-
-    const product = await ProductSchema.findById(productId);
-    if (!product) {
-      return res.status(404).json({ error: "Product not found in the system" });
-    }
-
-    const { id: imageId } = req.params;
-
-    const imageIndex = product.images.findIndex(
-      (img) =>
-        img._id.toString() === new mongoose.Types.ObjectId(imageId).toString()
-    );
-    console.log("index", imageIndex);
-
-    product.images[imageIndex].filename = null;
-    product.images[imageIndex].filepath = null;
-
-    console.log("new product", product);
-
-    await product.save();
-
-    res.status(200).json({ message: "Image deleted successfully" });
-  } catch (error) {
-    console.log(error);
-    next(error);
-  }
-};
 
 exports.toggleListProduct = async (req, res) => {
   try {
@@ -1159,7 +1128,15 @@ exports.updateOrderStatus = async (req, res) => {
 
     if (status === "Delivered") {
       order.deliveryDate = new Date();
+      const strOrderId = String(order._id)
+      const userCoupon = await UserCoupon.findOne({orderId: strOrderId})
+      if (userCoupon) {
+        userCoupon.isCredited = true
+        await userCoupon.save()
+      }
     }
+
+
 
     await order.save();
 
@@ -1283,11 +1260,104 @@ exports.approveReturnItem = async (req, res) => {
   }
 };
 
+// not completed ---
+exports.rejectReturnItemRefund = async (req, res, next) => {
+  try {
+    let { id: itemId } = req.params;
+
+    const orderItem = await OrderItem.findById(itemId);
+
+    //add somthing here
+
+    await orderItem.save();
+
+    res.status(200).json({ message: "Return refund rejected successfully" });
+  } catch (error) {
+    console.log(error);
+    next(error)
+  }
+};
+
 // -------------ORDER MANAGMENT END
 
+// REPORT START 
 exports.getSalesReport = (req, res) => {
   res.render("admin/reports/salesReport", { title: "Sales Report" });
 };
+ 
+exports.fetchSalesReportData = async(req, res, next) => {
+  try {
+    const {
+      period,
+      startDate: startDateQuery,
+      endDate: endDateQuery,
+    } = req.query;
+
+    const now = new Date();
+    let startDate = new Date("1970-01-01T00:00:00.000Z")
+    let endDate = now
+
+    if (startDateQuery && endDateQuery) {
+      //date wise operations
+      startDate = new Date(startDateQuery)
+      endDate = new Date(endDateQuery)
+      endDate.setUTCHours(23, 59, 59, 999);
+    }
+    else if(period){
+      // period wise operation 
+      switch(period) {
+        case 'day':
+          startDate = new Date()
+          startDate.setUTCHours(0, 0, 0, 0)
+          endDate = new Date();
+          endDate.setUTCHours(23, 59, 59, 999);
+          break;
+
+        case 'week':
+          startDate = new Date(now.setDate(now.getDate() - now.getDay())); 
+          startDate.setUTCHours(0, 0, 0, 0);
+          endDate = new Date(now.setDate(now.getDate() + (6 - now.getDay()))); 
+          endDate.setUTCHours(23, 59, 59, 999);
+          break;
+
+        case "thisMonth":
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0); 
+          endDate.setUTCHours(23, 59, 59, 999); 
+          break;
+        
+        case 'lastMonth':
+          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+          endDate.setUTCHours(23, 59, 59, 999);
+          break;
+
+        default: 
+          return res
+          .status(400)
+          .json({ error: "Invalid period parameter or missing date range" });
+      }
+
+    }
+
+    //get total revenue
+    //get total coupon discount deductions
+    //get total orders count
+    const reportOverview = await getReportOverview(startDate, endDate)
+
+    //get the all orders of this 
+    const allOrders = await getAllOrdersDetails(startDate, endDate)
+    
+    res.status(200).json({reportOverview, allOrders})
+
+    
+  } catch (error) {
+    console.log(error)
+    next(error)
+  }
+};
+
+// REPORT END 
 
 exports.getCouponManagement = (req, res) => {
   res.render("admin/coupons/couponManagement", { title: "Coupon Management" });

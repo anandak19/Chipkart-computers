@@ -62,7 +62,7 @@ const addUserCoupon = async (orderId, session) => {
     
     if (unusedCoupon) {
       const newCoupon = new UserCoupon({
-        userId: new mongoose.Types.ObjectId(userId),
+        userId: userId,
         couponCode: unusedCoupon.couponCode,
         orderId: orderId
       });

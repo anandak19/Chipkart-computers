@@ -391,7 +391,7 @@ exports.getOrderHistory = (req, res) => {
 exports.getAllOrders = async (req, res) => {
   try {
     // find all the orders of user
-    const userId = String(req.user._id);
+    const userId = req.user._id;
     let { page } = req.query;
     page = page ? Number(page) : 0;
     let limit = 3;

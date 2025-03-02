@@ -58,16 +58,20 @@ const showOrderItems = (orderDetails) => {
             <td>${item.returnReason}</td>
             ${
               item.isReturnRequested
-              ? `
-              <td><button class='${item.isReturned ? 'approved-btn': 'approve-btn' }' data-id="${
+              ? 
+              `
+              <td style="display: flex; flex-direction: column; gap: 4px">
+              <button class='${item.isReturned ? 'approved-btn': 'approve-btn' }' data-id="${
               item._id
-              }"> ${item.isReturned ? 'Confirmed': 'Approve'}</button></td>
+              }"> ${item.isReturned ? 'Confirmed': 'Approve'}</button>
+
+              ${item.isReturned ? '' : `<button class='reject-btn' data-id="${item._id}> Reject </button>`}
+              
               `
               : `
               <td>No request</td>
               `
             }
-
 
         `;
       orderItemTable.appendChild(row);
@@ -100,10 +104,24 @@ const showOrderItems = (orderDetails) => {
         }
       } catch (error) {
         console.error("Error:", error);
-        alert("Error approving return request");
+        alert("Error approving refund request");
       }
     });
   });
+
+  document.querySelectorAll('.reject-btn').forEach((button) => {
+    button.addEventListener("click", async function () {
+      const itemId = this.getAttribute("data-id");
+
+      try {
+        //api goes here
+        
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Error rejecting refund");
+      }
+    })
+  })
 };
 
 // method to get the orderd items
