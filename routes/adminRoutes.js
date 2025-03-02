@@ -70,8 +70,8 @@ router.post('/orders/update-status', adminController.updateOrderStatus)
 // render the sales report page 
 router.get('/reports', isAdminLogin, adminController.getSalesReport)
 router.get('/reports/data', adminController.fetchSalesReportData)
+router.get('/reports/data/dowload/pdf', adminController.downloadSalesReportPdf)
 // REPORTS END
-
 
 // render the coupen management page 
 router.get('/coupons', isAdminLogin, adminController.getCouponManagement)

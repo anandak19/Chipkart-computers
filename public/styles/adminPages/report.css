@@ -1,0 +1,123 @@
+.filters-strip {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+    display: flex;
+    gap: 15px;
+    justify-content: space-between;
+}
+
+.period-filter, .date-range {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.date-range{
+    width: max-content;
+    display: none;
+}
+
+label {
+    font-weight: 600;
+    width: max-content;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+}
+
+select, input[type="date"] {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.btn-generate {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.btn-generate:hover {
+    background-color: #0056b3;
+}
+
+/* //summary  */
+.report-container{
+    background-color: #ffffff;
+    margin-top: 12px;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+}
+
+.report-summary {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.total-revenue {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    flex: 1;
+    min-width: 220px;
+    max-width: 250px;
+}
+
+.total-revenue p {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.total-revenue span {
+    font-size: 20px;
+    font-weight: bold;
+    color: #007bff;
+}
+
+/* table  */
+.all-orders-container {
+    margin-top: 20px;
+    overflow-x: auto; /* Enables horizontal scroll on small screens */
+}
+
+.orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.orders-table thead {
+    background-color: #007bff;
+    color: white;
+}
+
+.orders-table th, 
+.orders-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.orders-table th {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.orders-table tbody tr:hover {
+    background-color: #f1f1f1;
+}

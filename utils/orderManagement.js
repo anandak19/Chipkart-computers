@@ -114,4 +114,4 @@ const cancelOrder = async (orderId, cancelReason) => {
   }
 }
 
-module.exports = { getOrderItemsDetails, cancelOrder };
+module.exports = { getOrderItemsDetails, cancelOrder, refundUserAmount };

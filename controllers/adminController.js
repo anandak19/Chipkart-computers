@@ -3,7 +3,11 @@ const CategoriesSchema = require("../models/Category");
 const ProductSchema = require("../models/Product");
 const OrderSchema = require("../models/Order");
 const AddressSchema = require("../models/Address");
-const { getOrderItemsDetails, cancelOrder } = require("../utils/orderManagement");
+const {
+  getOrderItemsDetails,
+  cancelOrder,
+  refundUserAmount,
+} = require("../utils/orderManagement");
 const OrderItem = require("../models/orderItem");
 const mongoose = require("mongoose");
 const Coupons = require("../models/Coupon");
@@ -11,9 +15,19 @@ const { getCategories } = require("../utils/categoryHelpers");
 const Offer = require("../models/Offer");
 const { addFinalPriceStage } = require("../utils/productHelpers");
 const Categories = require("../models/Category");
-const { getReportAmounts, getSalesCount, getAllOrdersDetails, getReportOverview } = require("../utils/salesHelpers/reportHelpers");
+const {
+  getReportAmounts,
+  getSalesCount,
+  getAllOrdersDetails,
+  getReportOverview,
+} = require("../utils/salesHelpers/reportHelpers");
 const UserCoupon = require("../models/UserCoupon");
 const Session = mongoose.connection.collection("sessions");
+
+const ejs = require("ejs");
+const puppeteer = require("puppeteer");
+const path = require("path");
+const Order = require("../models/Order");
 
 exports.getDashboard = (req, res) => {
   res.render("admin/dashbord", { title: "Admin Dashboard" });
@@ -435,7 +449,9 @@ exports.postEditProductForm = async (req, res) => {
       ? JSON.parse(req.body.highlights)
       : [];
 
-    const imageToDelete = req.body.imageToDelete ? JSON.parse(req.body.imageToDelete): []
+    const imageToDelete = req.body.imageToDelete
+      ? JSON.parse(req.body.imageToDelete)
+      : [];
 
     const product = await ProductSchema.findById(productId);
     if (!product) {
@@ -471,14 +487,14 @@ exports.postEditProductForm = async (req, res) => {
 
     // delete images code ---
     if (imageToDelete) {
-      console.log(imageToDelete)
+      console.log(imageToDelete);
       product.images.forEach((image, index) => {
-        const imageId = String(image._id)
+        const imageId = String(image._id);
 
         if (imageToDelete.includes(imageId)) {
           product.images[index].filepath = null;
           product.images[index].filename = null;
-          console.log("one image deleted")
+          console.log("one image deleted");
         }
       });
     }
@@ -496,7 +512,7 @@ exports.postEditProductForm = async (req, res) => {
     }
 
     if (req.files && req.files.length > 0) {
-      console.log("updated images in req.files", req.files)
+      console.log("updated images in req.files", req.files);
       // Loop through the uploaded files and create new image objects
       newImages = req.files.map((file, index) => ({
         filename: file.filename,
@@ -525,7 +541,6 @@ exports.postEditProductForm = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
 
 exports.toggleListProduct = async (req, res) => {
   try {
@@ -952,8 +967,8 @@ exports.getSingleOfferDetails = async (req, res, next) => {
       }
 
       offer.category = category.categoryName;
-    }else{
-      offer.category = 'All'
+    } else {
+      offer.category = "All";
     }
 
     return res.status(200).json({ offer });
@@ -990,7 +1005,7 @@ exports.saveUpdatedOffer = async (req, res, next) => {
     offer.endDate = endDate ?? offer.endDate;
     await offer.save();
 
-    // find all product with this offer and update 
+    // find all product with this offer and update
     const result = await ProductSchema.updateMany(
       { offerId: offer._id },
       {
@@ -1013,7 +1028,6 @@ exports.saveUpdatedOffer = async (req, res, next) => {
 
 exports.tooggleOfferStatus = async (req, res, next) => {
   try {
-
     const offerId = req.params.id;
     if (!offerId) {
       return res.status(400).send("offer id not found.");
@@ -1025,15 +1039,14 @@ exports.tooggleOfferStatus = async (req, res, next) => {
     }
 
     offer.isActive = !offer.isActive;
-    const active = offer.isActive
+    const active = offer.isActive;
     await offer.save();
-
 
     await ProductSchema.updateMany(
       { offerId: offer._id },
       {
         $set: {
-          discount: active ? offer.discount: 0,
+          discount: active ? offer.discount : 0,
           offerStartDate: active ? offer.startDate : null,
           offerEndDate: active ? offer.endDate : null,
         },
@@ -1043,12 +1056,11 @@ exports.tooggleOfferStatus = async (req, res, next) => {
     return res.status(200).json({
       message: "Offer status updated successfully",
     });
-
   } catch (error) {
-    console.log(error)
-    next(error)
+    console.log(error);
+    next(error);
   }
-}
+};
 // ----------offer management end--------
 
 // -------------ORDER MANAGMENT START
@@ -1128,15 +1140,13 @@ exports.updateOrderStatus = async (req, res) => {
 
     if (status === "Delivered") {
       order.deliveryDate = new Date();
-      const strOrderId = String(order._id)
-      const userCoupon = await UserCoupon.findOne({orderId: strOrderId})
+      const strOrderId = String(order._id);
+      const userCoupon = await UserCoupon.findOne({ orderId: strOrderId });
       if (userCoupon) {
-        userCoupon.isCredited = true
-        await userCoupon.save()
+        userCoupon.isCredited = true;
+        await userCoupon.save();
       }
     }
-
-
 
     await order.save();
 
@@ -1164,7 +1174,10 @@ exports.renderOrderDetailsPage = async (req, res) => {
 
     req.session.orderId = orderDetails._id;
 
-    res.render("admin/orders/orderDetails", { title: "Order Details", orderDetails });
+    res.render("admin/orders/orderDetails", {
+      title: "Order Details",
+      orderDetails,
+    });
   } catch (error) {
     console.log(error);
     res.redirect("/orders/all");
@@ -1235,7 +1248,7 @@ exports.cancelOrderByAdmin = async (req, res) => {
       return res.status(400).json({ error: "Session expired" });
     }
 
-    await cancelOrder(orderId, cancelReason)
+    await cancelOrder(orderId, cancelReason);
 
     res.status(200).json({ message: "Order cancelled successfully" });
   } catch (error) {
@@ -1251,8 +1264,13 @@ exports.approveReturnItem = async (req, res) => {
     const orderItem = await OrderItem.findById(itemId);
 
     orderItem.isReturned = true;
+    const amount = orderItem.subTotalPrice;
+
+    const order = await Order.findById(orderItem.orderId)
+    const userId = order.userId
     await orderItem.save();
 
+    refundUserAmount(amount, userId, "itemReturn")
     res.status(200).json({ message: "Return approved successfully" });
   } catch (error) {
     console.log(error);
@@ -1274,90 +1292,128 @@ exports.rejectReturnItemRefund = async (req, res, next) => {
     res.status(200).json({ message: "Return refund rejected successfully" });
   } catch (error) {
     console.log(error);
-    next(error)
+    next(error);
   }
 };
 
 // -------------ORDER MANAGMENT END
 
-// REPORT START 
+// REPORT START
 exports.getSalesReport = (req, res) => {
   res.render("admin/reports/salesReport", { title: "Sales Report" });
 };
- 
-exports.fetchSalesReportData = async(req, res, next) => {
+
+exports.fetchSalesReportData = async (req, res, next) => {
   try {
-    const {
-      period,
-      startDate: startDateQuery,
-      endDate: endDateQuery,
-    } = req.query;
+    const { period, startDateQuery, endDateQuery } = req.query;
 
     const now = new Date();
-    let startDate = new Date("1970-01-01T00:00:00.000Z")
-    let endDate = now
+    let startDate = new Date("1970-01-01T00:00:00.000Z");
+    let endDate = new Date();
+    endDate.setUTCHours(23, 59, 59, 999);
 
     if (startDateQuery && endDateQuery) {
       //date wise operations
-      startDate = new Date(startDateQuery)
-      endDate = new Date(endDateQuery)
+      startDate = new Date(startDateQuery);
+      endDate = new Date(endDateQuery);
       endDate.setUTCHours(23, 59, 59, 999);
-    }
-    else if(period){
-      // period wise operation 
-      switch(period) {
-        case 'day':
-          startDate = new Date()
-          startDate.setUTCHours(0, 0, 0, 0)
+    } else if (period) {
+      // period wise operation
+      switch (period) {
+        case "day":
+          startDate = new Date();
+          startDate.setUTCHours(0, 0, 0, 0);
           endDate = new Date();
           endDate.setUTCHours(23, 59, 59, 999);
           break;
 
-        case 'week':
-          startDate = new Date(now.setDate(now.getDate() - now.getDay())); 
+        case "week":
+          startDate = new Date(now.setDate(now.getDate() - now.getDay()));
           startDate.setUTCHours(0, 0, 0, 0);
-          endDate = new Date(now.setDate(now.getDate() + (6 - now.getDay()))); 
+          endDate = new Date(now.setDate(now.getDate() + (6 - now.getDay())));
           endDate.setUTCHours(23, 59, 59, 999);
           break;
 
         case "thisMonth":
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
-          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0); 
-          endDate.setUTCHours(23, 59, 59, 999); 
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+          endDate.setUTCHours(23, 59, 59, 999);
           break;
-        
-        case 'lastMonth':
+
+        case "lastMonth":
           startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
           endDate = new Date(now.getFullYear(), now.getMonth(), 0);
           endDate.setUTCHours(23, 59, 59, 999);
           break;
 
-        default: 
+        default:
           return res
-          .status(400)
-          .json({ error: "Invalid period parameter or missing date range" });
+            .status(400)
+            .json({ error: "Invalid period parameter or missing date range" });
       }
-
     }
 
     //get total revenue
     //get total coupon discount deductions
     //get total orders count
-    const reportOverview = await getReportOverview(startDate, endDate)
+    console.log(startDate, endDate);
+    const reportOverview = await getReportOverview(startDate, endDate);
 
-    //get the all orders of this 
-    const allOrders = await getAllOrdersDetails(startDate, endDate)
-    
-    res.status(200).json({reportOverview, allOrders})
+    //get the all orders of this
+    const allOrders = await getAllOrdersDetails(startDate, endDate);
 
-    
+    res.status(200).json({ reportOverview, allOrders });
   } catch (error) {
-    console.log(error)
-    next(error)
+    console.log(error);
+    next(error);
   }
 };
 
-// REPORT END 
+// SAMPLE CODE FOR LEARNING 
+exports.downloadSalesReportPdf = async (req, res) => {
+  try {
+    const salesData = [
+      { product: "Laptop", quantity: 2, price: 1000, total: 2000 },
+      { product: "Mouse", quantity: 5, price: 20, total: 100 },
+      { product: "Keyboard", quantity: 3, price: 50, total: 150 },
+    ];
+
+    // Render EJS Template
+    const templatePath = path.join(__dirname, "../views/admin/reports/salesReportPdf.ejs");
+    const html = await ejs.renderFile(templatePath, {
+      sales: salesData,
+      reportDate: new Date().toLocaleDateString(),
+    });
+
+    console.log("Generated HTML successfully!");
+
+    // Launch Puppeteer
+    const browser = await puppeteer.launch({
+      executablePath: puppeteer.executablePath(),
+      headless: "new",
+      args: ["--no-sandbox"],
+    });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "load" });
+
+    // Generate PDF (No Local Saving)
+    const pdfBuffer = await page.pdf({ format: "A4", printBackground: true });
+
+    await browser.close();
+
+    // Send PDF to Client
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", 'attachment; filename="sales-report.pdf"');
+    res.end(pdfBuffer); // Correctly sends binary data
+
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    res.status(500).send("Error generating PDF");
+  }
+};
+
+
+// REPORT END
 
 exports.getCouponManagement = (req, res) => {
   res.render("admin/coupons/couponManagement", { title: "Coupon Management" });

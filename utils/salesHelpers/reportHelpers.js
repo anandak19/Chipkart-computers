@@ -6,7 +6,7 @@ const getReportOverview = async (startDate, endDate) => {
     const reportAmounts = await Order.aggregate([
         {
           $match: {
-            deliveryDate: { $gte: startDate, $lte: endDate },
+            createdAt: { $gte: startDate, $lte: endDate },
             paymentStatus: "Paid",
             isCancelled: false,
           },
@@ -89,7 +89,7 @@ const getAllOrdersDetails = async (startDate, endDate) => {
     const ordersDetails = await Order.aggregate([
       {
         $match: {
-          deliveryDate: { $gte: startDate, $lte: endDate },
+          createdAt: { $gte: startDate, $lte: endDate },
           paymentStatus: "Paid",
           isCancelled: false,
         },
@@ -131,6 +131,7 @@ const getAllOrdersDetails = async (startDate, endDate) => {
           paymentMethod: 1,
           totalProducts: 1,
           totalPayable: 1,
+          orderId: 1
         },
       },
     ]);
