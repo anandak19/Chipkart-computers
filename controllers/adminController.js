@@ -932,7 +932,7 @@ exports.getEditOfferForm = async (req, res) => {
 
     req.session.offerId = offer._id;
 
-    res.render("admin/offerForm", {
+    res.render("admin/offer/offerForm", {
       title: "Offer Module - Edit Offer",
       edit: true,
     });
@@ -1317,6 +1317,7 @@ exports.fetchSalesReportData = async (req, res, next) => {
       startDate = new Date(startDateQuery);
       endDate = new Date(endDateQuery);
       endDate.setUTCHours(23, 59, 59, 999);
+
     } else if (period) {
       // period wise operation
       switch (period) {
@@ -1353,6 +1354,8 @@ exports.fetchSalesReportData = async (req, res, next) => {
       }
     }
 
+    req.session.startDate = startDate
+    req.session.endDate = endDate
     //get total revenue
     //get total coupon discount deductions
     //get total orders count
@@ -1370,7 +1373,7 @@ exports.fetchSalesReportData = async (req, res, next) => {
 };
 
 // SAMPLE CODE FOR LEARNING 
-exports.downloadSalesReportPdf = async (req, res) => {
+exports.downloadSalesReportPdf1 = async (req, res) => {
   try {
     const salesData = [
       { product: "Laptop", quantity: 2, price: 1000, total: 2000 },
@@ -1382,6 +1385,49 @@ exports.downloadSalesReportPdf = async (req, res) => {
     const templatePath = path.join(__dirname, "../views/admin/reports/salesReportPdf.ejs");
     const html = await ejs.renderFile(templatePath, {
       sales: salesData,
+      reportDate: new Date().toLocaleDateString(),
+    });
+
+    console.log("Generated HTML successfully!");
+
+    // Launch Puppeteer
+    const browser = await puppeteer.launch({
+      executablePath: puppeteer.executablePath(),
+      headless: "new",
+      args: ["--no-sandbox"],
+    });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "load" });
+
+    // Generate PDF (No Local Saving)
+    const pdfBuffer = await page.pdf({ format: "A4", printBackground: true });
+
+    await browser.close();
+
+    // Send PDF to Client
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", 'attachment; filename="sales-report.pdf"');
+    res.end(pdfBuffer); // Correctly sends binary data
+
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    res.status(500).send("Error generating PDF");
+  }
+};
+
+exports.downloadSalesReportPdf = async (req, res) => {
+  try {
+
+    const startDate = req.session.startDate
+    const endDate = req.session.endDate
+
+    const reportOverview = await getReportOverview(startDate, endDate);
+    const allOrders = await getAllOrdersDetails(startDate, endDate);
+
+    // Render EJS Template
+    const templatePath = path.join(__dirname, "../views/admin/reports/salesReportPdf.ejs");
+    const html = await ejs.renderFile(templatePath, {
+      reportOverview, allOrders,
       reportDate: new Date().toLocaleDateString(),
     });
 

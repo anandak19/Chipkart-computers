@@ -3,48 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales Report PDF</title>
+    <title>Sales Report</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 40px; }
-        h2 { text-align: center; }
-        .report-header { text-align: center; font-size: 20px; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-        th { background-color: #333; color: white; }
-        .total { font-weight: bold; background-color: #f2f2f2; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        .report-overview {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .report-overview td, .report-overview th {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .orders-table th, .orders-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        .orders-table th {
+            background-color: #f4f4f4;
+        }
     </style>
 </head>
 <body>
-    <div class="report-header">
-        <h2>Chipkart - Sales Report</h2>
-        <p>Generated on: <%= reportDate %></p>
-    </div>
 
-    <table>
+    <h1>Chipkart Computers - Sales Report</h1>
+    <p style="text-align: center;"><strong>Date:</strong> <%= reportDate %></p>
+
+    <h2>Report Overview</h2>
+    <table class="report-overview">
+        <tr>
+            <th>Total Revenue</th>
+            <th>Total Orders</th>
+            <th>Total Products Sold</th>
+            <th>Total Discount Deduction</th>
+        </tr>
+        <tr>
+            <td>₹<%= reportOverview.totalRevenue.toFixed(2) %></td>
+            <td><%= reportOverview.totalOrders %></td>
+            <td><%= reportOverview.totalSalesCount %></td>
+            <td>₹<%= reportOverview.totalCouponDiscount.toFixed(2) %></td>
+        </tr>
+    </table>
+
+    <h2>All Orders</h2>
+    <table class="orders-table">
         <thead>
             <tr>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th>Price</th>
-                <th>Total</th>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Total Amount</th>
+                <th>Total Products</th>
+                <th>Payment Method</th>
             </tr>
         </thead>
         <tbody>
-            <% let grandTotal = 0; %>
-            <% sales.forEach(sale => { %>
+            <% allOrders.forEach(order => { %>
                 <tr>
-                    <td><%= sale.product %></td>
-                    <td><%= sale.quantity %></td>
-                    <td>$<%= sale.price %></td>
-                    <td>$<%= sale.total %></td>
+                    <td><%= order.orderId %></td>
+                    <td><%= order.customerName %></td>
+                    <td>₹<%= order.totalPayable.toFixed(2) %></td>
+                    <td><%= order.totalProducts %></td>
+                    <td><%= order.paymentMethod %></td>
                 </tr>
-                <% grandTotal += sale.total; %>
-            <% }) %>
-            <tr class="total">
-                <td colspan="3">Grand Total</td>
-                <td>$<%= grandTotal %></td>
-            </tr>
+            <% }); %>
         </tbody>
     </table>
+
 </body>
 </html>

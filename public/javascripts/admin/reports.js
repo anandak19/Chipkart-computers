@@ -108,3 +108,24 @@ startDate.addEventListener("change", () => {
 endDate.addEventListener("change", () => {
   getCustomeFilterData();
 });
+
+//pdf generate 
+const pdfBtn = document.querySelector('.btn-generate')
+async function generatePdf() {
+  try {
+    pdfBtn.disabled = true;
+    pdfBtn.textContent = "Generating PDF...";
+
+    window.location.href = "/admin/reports/data/dowload/pdf";
+
+  } catch (error) {
+    console.log(error);
+    alert("Something went wrong");
+  } finally {
+    setTimeout(() => {
+      pdfBtn.disabled = false;
+      pdfBtn.textContent = "Generate PDF";
+    }, 3000);
+  }
+}
+
