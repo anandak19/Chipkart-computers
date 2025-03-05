@@ -2,59 +2,57 @@ const offerForm = document.getElementById("offerForm");
 
 const offerTitle = document.getElementById("offerTitle");
 const discount = document.getElementById("discount");
-const categoryDropdown = document.getElementById("category");
+const offerTarget = document.getElementById("offerTarget");
 const startDate = document.getElementById("startDate");
 const endDate = document.getElementById("endDate");
 
 // errors
 const offerTitleError = document.getElementById("offerTitleError");
 const discountError = document.getElementById("discountError");
-const categoryError = document.getElementById("categoryError");
+const offerTargetError = document.getElementById("offerTargetError");
 const startDateError = document.getElementById("startDateError");
 const endDateError = document.getElementById("endDateError");
 
 // on submitting offer form
-offerForm.addEventListener("submit", async(e) => {
+offerForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   offerTitleError.innerHTML = "";
   discountError.innerHTML = "";
-  categoryError.innerHTML = "";
+  offerTargetError.innerHTML = "";
   startDateError.innerHTML = "";
   endDateError.innerHTML = "";
 
   const offerTitleInput = offerTitle.value.trim();
   const discountInput = discount.value.trim();
-  const categoryInput = categoryDropdown.value;
-  const startDateInput = startDate.value
-  const endDateInput = endDate.value
+  const offerTargetInput = offerTarget.value;
+  const startDateInput = startDate.value;
+  const endDateInput = endDate.value;
 
-
-  if(offerTitleInput.length < 5 || !offerTitleInput){
-    offerTitleError.innerHTML = 'Offer title should have minimum 5 charecters'
-    return
+  if (offerTitleInput.length < 5 || !offerTitleInput) {
+    offerTitleError.innerHTML = "Offer title should have minimum 5 charecters";
+    return;
   }
-  
+
   if (discountInput >= 100 || !discountInput) {
-    discountError.innerHTML = 'Enter a valid discount percentage'
-    return 
+    discountError.innerHTML = "Enter a valid discount percentage";
+    return;
   }
 
-  if(!categoryInput) {
-    categoryError.innerHTML= 'Choose a category'
-    return
+  if (!offerTargetInput) {
+    offerTargetError.innerHTML = "Choose a Offer target";
+    return;
   }
-
 
   const today = new Date();
 
   today.setHours(0, 0, 0, 0);
-  
+
   const selectedStartDate = new Date(startDateInput);
   const selectedEndDate = new Date(endDateInput);
-  
+
   selectedStartDate.setHours(0, 0, 0, 0);
-  
+
   if (!startDateInput || selectedStartDate < today) {
     startDateError.innerHTML = "Start date must be in the future or today.";
     return;
@@ -62,65 +60,37 @@ offerForm.addEventListener("submit", async(e) => {
 
   if (!endDateInput || selectedEndDate <= today) {
     endDateError.innerHTML = "End date must be in the future.";
-    return
+    return;
   }
 
   if (selectedEndDate <= selectedStartDate) {
     endDateError.innerHTML = "End date should be greater than start date.";
-    return
+    return;
   }
 
   const newOffer = {
     offerTitle: offerTitleInput,
     discount: discountInput,
-    target: categoryInput === 'all'? 'all': 'category',
-    categoryId: categoryInput,
+    offerTarget: offerTargetInput,
     startDate: selectedStartDate,
-    endDate: selectedEndDate
-  }
+    endDate: selectedEndDate,
+  };
 
   try {
-    const res = await fetch('/admin/offers/new', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(newOffer)
-    })
+    const res = await fetch("/admin/offers/new", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newOffer),
+    });
 
-    const result = await res.json()
+    const result = await res.json();
     if (res.ok) {
-      alert(result.message)
-    }else{
-      alert(result.error)
+      alert(result.message);
+    } else {
+      alert(result.error);
     }
-    
   } catch (error) {
     console.error(error);
-    alert('Somthing went wrong')
+    alert("Somthing went wrong");
   }
-
 });
-
-// method to get category and show
-const getCategories = async() => {
-    try {
-        const res = await fetch('/admin/categories/available')
-        const result = await res.json()
-        if (res.ok) {
-            console.log(result)
-
-            result.data.forEach(category => {
-                const option = document.createElement("option")
-                option.value = category._id
-                option.textContent = category.categoryName
-                categoryDropdown.appendChild(option);
-            });
-        }else{
-            alert("Error fetching categories")
-        }
-    } catch (error) {
-        console.error(error);
-        alert('Error fetching categories')
-    }
-}
-
-document.addEventListener('DOMContentLoaded', getCategories)

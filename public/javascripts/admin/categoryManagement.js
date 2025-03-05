@@ -25,6 +25,7 @@ const showCategory = (categories) => {
                 year: "numeric",
               })}</td>
               <td>${category.isListed ? "Yes" : "No"}</td>
+              <td><a href="/admin/offers/apply/${category._id}?type=category" class="btn btn-primary btn-sm mt-2">Offer</a></td>
               <td>
                 <form action="/admin/categories/toggle-listed/${
                   category._id

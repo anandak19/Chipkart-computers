@@ -9,25 +9,7 @@
   </head>
   <body>
     <!-- Sidebar -->
-    <div class="sidebar">
-      <h3 class="text-white text-center">Chipkart Admin</h3>
-      <a href="/admin"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-      <a href="/admin/users"><i class="fas fa-users"></i> User Management</a>
-      <a href="/admin/products"
-        ><i class="fas fa-cogs"></i> Product Management</a
-      >
-      <a href="/admin/categories"
-        ><i class="fas fa-tags"></i> Category Management</a
-      >
-      <a href="/admin/offers"><i class="fas fa-gift"></i> Offer Module</a>
-      <a href="/admin/orders" class="sidebar-active"
-        ><i class="fas fa-box"></i> View Orders</a
-      >
-      <a href="/admin/reports"
-        ><i class="fas fa-chart-line"></i> Sales Report</a
-      >
-      <a href="/admin/coupons"><i class="fas fa-gift"></i> Coupon Management</a>
-    </div>
+    <%- include("../../partials/adminSidebar") %>
 
     <!-- Main Content -->
     <div class="content-wrapper">

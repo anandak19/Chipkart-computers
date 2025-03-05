@@ -28,9 +28,13 @@ const ejs = require("ejs");
 const puppeteer = require("puppeteer");
 const path = require("path");
 const Order = require("../models/Order");
+const Product = require("../models/Product");
 
 exports.getDashboard = (req, res) => {
-  res.render("admin/dashbord", { title: "Admin Dashboard" });
+  res.render("admin/dashbord", {
+    title: "Admin Dashboard",
+    activePage: "dashboard",
+  });
 };
 
 // -----user management start------
@@ -42,6 +46,7 @@ exports.getUserManagementPage = async (req, res) => {
       title: "User Management",
       usersArray,
       searchQuery: "",
+      activePage: "users",
     });
   } catch (error) {
     console.log(error);
@@ -165,6 +170,7 @@ exports.searchUser = async (req, res) => {
         usersArray,
         title: "User Management",
         searchQuery: searchQuery,
+        activePage: "users",
       });
     }
 
@@ -172,6 +178,7 @@ exports.searchUser = async (req, res) => {
       usersArray,
       title: "User Management",
       searchQuery: searchQuery,
+      activePage: "users",
     });
   } catch (error) {
     console.error("Error searching for users:", error);
@@ -237,6 +244,7 @@ exports.getProductManagement = async (req, res) => {
       currentPage: page,
       totalPages,
       searchQuery: "",
+      activePage: "products",
     });
   } catch (error) {
     console.log(error);
@@ -335,6 +343,7 @@ exports.getProductForm = (req, res) => {
           categoryArray,
           errorMessage: req.flash("errorMessage"),
           successMessage: req.flash("successMessage"),
+          activePage: "products",
         });
       })
       .catch((error) => {
@@ -422,6 +431,7 @@ exports.getEditProductForm = async (req, res) => {
       product,
       errorMessage: req.flash("errorMessage"),
       successMessage: req.flash("successMessage"),
+      activePage: "products",
     });
   } catch (error) {
     console.log(error);
@@ -576,6 +586,7 @@ exports.getCategoryManagement = async (req, res) => {
     res.render("admin/category/categoryManagement", {
       title: "Category Management",
       categoriesArray,
+      activePage: "categories",
     });
   } catch (error) {
     // add gracefull error management later
@@ -615,6 +626,7 @@ exports.getCategoryForm = (req, res) => {
     title: "Category Management - New",
     errorMessage: req.flash("errorMessage"),
     successMessage: req.flash("successMessage"),
+    activePage: "categories",
   });
 };
 
@@ -699,6 +711,7 @@ exports.getUpdateCategoryForm = async (req, res) => {
       errorMessage: req.flash("errorMessage"),
       successMessage: req.flash("successMessage"),
       category,
+      activePage: "categories",
     });
   } catch (error) {
     console.log(error);
@@ -771,37 +784,30 @@ exports.getAvailableCategories = async (req, res, next) => {
 // ----------offer management start--------
 
 exports.getOfferModule = (req, res) => {
-  res.render("admin/offer/offerModule", { title: "Offer Module" });
+  res.render("admin/offer/offerModule", {
+    title: "Offer Module",
+    activePage: "offers",
+  });
 };
 
 exports.getNewOfferForm = (req, res) => {
   res.render("admin/offer/offerForm", {
     title: "Offer Module - New Offer",
     edit: false,
+    activePage: "offers",
   });
 };
 
-exports.applyNewOffer = async (req, res, next) => {
+exports.saveNewOffer = async (req, res, next) => {
   try {
-    const { offerTitle, discount, target, categoryId, startDate, endDate } =
-      req.body;
+    const { offerTitle, discount, offerTarget, startDate, endDate } = req.body;
     const newDiscount = parseInt(discount);
-
-    let category;
-
-    if (target === "category") {
-      category = await CategoriesSchema.findById(categoryId);
-      if (!category) {
-        return res.status(404).json({ error: "Category not found" });
-      }
-    }
 
     // create new offer
     const newOffer = new Offer({
       offerTitle,
-      discount,
-      target,
-      categoryId: category._id,
+      discount: newDiscount,
+      offerTarget,
       startDate,
       endDate,
     });
@@ -812,56 +818,8 @@ exports.applyNewOffer = async (req, res, next) => {
       return res.status(404).json({ error: "Faild to create new offer" });
     }
 
-    // if the target is category,
-    if (target === "category") {
-      const result = await ProductSchema.updateMany(
-        { categoryId: categoryId, discount: { $lt: newDiscount } },
-        [
-          {
-            $set: {
-              discount: newDiscount,
-              offerStartDate: startDate,
-              offerEndDate: endDate,
-              offerId: savedOffer._id,
-            },
-          },
-        ]
-      );
-
-      if (result.modifiedCount <= 0) {
-        return res.status(400).json({
-          error: "This category already going through a bigger offer than this",
-        });
-      }
-    } else if (target === "all") {
-      const result = await ProductSchema.updateMany(
-        { discount: { $lt: newDiscount } },
-        [
-          {
-            $set: {
-              discount: newDiscount,
-              offerStartDate: startDate,
-              offerEndDate: endDate,
-              offerId: savedOffer._id,
-            },
-          },
-        ]
-      );
-
-      if (result.modifiedCount <= 0) {
-        return res.status(400).json({
-          error:
-            "All products are already going through a bigger offer than this",
-        });
-      }
-    } else {
-      return res.status(400).json({
-        error: "No Offer applied",
-      });
-    }
-
     return res.status(200).json({
-      message: "Offer applied successfully",
+      message: "Offer created successfully",
     });
   } catch (error) {
     console.log(error);
@@ -935,6 +893,7 @@ exports.getEditOfferForm = async (req, res) => {
     res.render("admin/offer/offerForm", {
       title: "Offer Module - Edit Offer",
       edit: true,
+      activePage: "offers",
     });
   } catch (error) {
     console.log(error);
@@ -978,6 +937,7 @@ exports.getSingleOfferDetails = async (req, res, next) => {
   }
 };
 
+// updating...
 exports.saveUpdatedOffer = async (req, res, next) => {
   try {
     const { offerTitle, discount, startDate, endDate } = req.body;
@@ -1061,11 +1021,294 @@ exports.tooggleOfferStatus = async (req, res, next) => {
     next(error);
   }
 };
+
+// render offer applay page for product or category
+exports.getOfferApplyPage = async (req, res, next) => {
+  try {
+    const type = req.query.type;
+    if (!type) {
+      return res.redirect("/admin");
+    }
+
+    if (!["product", "category"].includes(type)) {
+      return res.redirect("/admin");
+    }
+    const targetId = req.params.id;
+    let activePage;
+    if (type === "product") {
+      const product = await Product.findById(targetId);
+      if (!product) {
+        return res.redirect("/admin/products");
+      }
+      activePage = "products";
+    } else {
+      const category = await Categories.findById(targetId);
+      if (!category) {
+        return res.redirect("/admin/categories");
+      }
+      activePage = "categories";
+    }
+
+    req.session.offertype = type;
+    req.session.offerTargetId = targetId;
+
+    res.render("admin/offer/applyOffer", {
+      title: "Product Offer",
+      activePage: activePage,
+    });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+// WOKING FINE/ IMPEMENT CLINT
+// get the all offers availble of the type - product/category
+// adds a new feald which is selected; true or false
+exports.getOfferOfType = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 0;
+    const limit = 8;
+    const skip = page * limit;
+    console.log("run");
+
+    // product/cateogory
+    const offertype = req.session.offertype;
+    // product id / category id
+    const offerTargetId = req.session.offerTargetId;
+
+    if (!offertype || !offerTargetId) {
+      return res
+        .status(400)
+        .json({ error: "Session expired, faild to get offers" });
+    }
+
+    let product;
+    if (offertype === "product") {
+      product = await Product.findById(offerTargetId);
+      if (!product) {
+        return res.status(404).json({ error: "Selected product is not found" });
+      }
+    } else {
+      product = await Product.findOne({ categoryId: offerTargetId });
+    }
+
+    const appliedOfferId = product?.offerId || null;
+
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+
+    const aggregationResult = await Offer.aggregate([
+      {
+        $match: {
+          offerTarget: offertype,
+          isActive: true,
+          startDate: { $lte: today },
+          endDate: { $gt: today },
+        },
+      },
+      {
+        $addFields: {
+          isSelected: {
+            $cond: {
+              if: { $eq: ["$_id", appliedOfferId] },
+              then: true,
+              else: false,
+            },
+          },
+        },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
+        $facet: {
+          paginatedResult: [{ $skip: skip }, { $limit: limit }],
+          totalOffers: [{ $count: "total" }],
+        },
+      },
+    ]);
+
+    const availableOffers = aggregationResult[0]?.paginatedResult;
+    const total = aggregationResult[0]?.totalOffers[0]?.total || 0;
+    const hasMore = skip + availableOffers.length < total;
+
+    res.status(200).json({ availableOffers, total, hasMore });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+exports.applyNewOffer = async (req, res, next) => {
+  /*
+get the offer id form path
+get the offer type from session and
+get the selected product/ targetId
+find the 
+based on type, 
+if type is product 
+  -find the product with id and update its discount, offerStartDate, offerEnddate, offerId
+if type is category
+  -find the all product with category id and update its its discount, offerStartDate, offerEnddate, offerid - using updateMany
+return success message
+*/
+  try {
+    const offerId = req.params?.id;
+    const offertype = req.session?.offertype;
+    const offerTargetId = req.session?.offerTargetId;
+
+    if (!offerId) {
+      return res.status(400).json({ error: "Please select one offer" });
+    }
+
+    if (!offertype || !offerTargetId) {
+      return res
+        .status(400)
+        .json({ error: "Session expired! failed to apply offer" });
+    }
+
+    // validate offer
+    const offer = await Offer.findById(offerId);
+    if (!offer) {
+      return res
+        .status(400)
+        .json({ error: "Offer not found. Choose another offer" });
+    }
+
+    if (!offer.isActive) {
+      return res.status(400).json({ error: "Offer is inactive" });
+    }
+
+    // apply product offer to product only
+    if (offertype === "product") {
+      const updatedProduct = await Product.findByIdAndUpdate(
+        offerTargetId,
+        {
+          $set: {
+            discount: offer.discount,
+            offerStartDate: offer.startDate,
+            offerEndDate: offer.endDate,
+            offerId: offer._id,
+          },
+        },
+        { new: true }
+      );
+
+      if (!updatedProduct) {
+        return res.status(400).json({ error: "Selected product is not found" });
+      }
+      return res.status(200).json({ message: "Offer applied Successfully" });
+
+      // apply category offer to all products in the cateogory
+    } else {
+      //find the all product with the offerTargetId and update the
+      const updatedProducts = await Product.updateMany(
+        { categoryId: offerTargetId, discount: { $lte: offer.discount } },
+        {
+          $set: {
+            discount: offer.discount,
+            offerStartDate: offer.startDate,
+            offerEndDate: offer.endDate,
+            offerId: offer._id,
+          },
+        }
+      );
+
+      if (updatedProducts.modifiedCount === 0) {
+        return res.status(404).json({
+          error:
+            "No products were updated. They may already have a better discount.",
+        });
+      }
+      return res.status(200).json({
+        message: "Offer applied to all products in this category",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+exports.removeExistingOffer = async (req, res, next) => {
+  try {
+    const offertype = req.session?.offertype;
+    const offerTargetId = req.session?.offerTargetId;
+
+    if (!offertype || !offerTargetId) {
+      return res
+        .status(400)
+        .json({ error: "Session expired! failed to apply offer" });
+    }
+
+    // find the product and remove its offer related fealds
+    if (offertype === "product") {
+      const updatedProduct = await Product.findByIdAndUpdate(
+        offerTargetId,
+        {
+          $set: {
+            discount: 0,
+            offerStartDate: null,
+            offerEndDate: null,
+            offerId: null,
+          },
+        },
+        { new: true }
+      );
+
+      if (!updatedProduct) {
+        return res.status(400).json({ error: "Selected product is not found" });
+      }
+      return res.status(200).json({ message: "Offer removed Successfully" });
+
+      // remove the fealds from the producst inthe  cateogory
+    } else {
+      //find the all product with the offerTargetId and update the
+      const updatedProducts = await Product.updateMany(
+        { categoryId: offerTargetId },
+        {
+          $set: {
+            discount: 0,
+            offerStartDate: null,
+            offerEndDate: null,
+            offerId: null,
+          },
+        }
+      );
+
+      if (updatedProducts.modifiedCount === 0) {
+        return res.status(404).json({
+          error: "No products were updated.",
+        });
+      }
+      return res.status(200).json({
+        message: "Offer removed from all products in this category",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+// update the offer in offer module
+// ---
+/*
+get the offer id and find the offer
+update its offer disocunt, or endDate of title
+1. find all the product with offer id
+2 update its discount, offerStartDate, offerEnddate, offerId
+3. return the message
+*/
 // ----------offer management end--------
 
 // -------------ORDER MANAGMENT START
 exports.getOrderManagement = (req, res) => {
-  res.render("admin/orders/orderManagement", { title: "Order Management" });
+  res.render("admin/orders/orderManagement", {
+    title: "Order Management",
+    activePage: "orders",
+  });
 };
 
 exports.getAllOrders = async (req, res) => {
@@ -1177,6 +1420,7 @@ exports.renderOrderDetailsPage = async (req, res) => {
     res.render("admin/orders/orderDetails", {
       title: "Order Details",
       orderDetails,
+      activePage : 'orders'
     });
   } catch (error) {
     console.log(error);
@@ -1266,11 +1510,11 @@ exports.approveReturnItem = async (req, res) => {
     orderItem.isReturned = true;
     const amount = orderItem.subTotalPrice;
 
-    const order = await Order.findById(orderItem.orderId)
-    const userId = order.userId
+    const order = await Order.findById(orderItem.orderId);
+    const userId = order.userId;
     await orderItem.save();
 
-    refundUserAmount(amount, userId, "itemReturn")
+    refundUserAmount(amount, userId, "itemReturn");
     res.status(200).json({ message: "Return approved successfully" });
   } catch (error) {
     console.log(error);
@@ -1300,7 +1544,7 @@ exports.rejectReturnItemRefund = async (req, res, next) => {
 
 // REPORT START
 exports.getSalesReport = (req, res) => {
-  res.render("admin/reports/salesReport", { title: "Sales Report" });
+  res.render("admin/reports/salesReport", { title: "Sales Report", activePage : 'reports' });
 };
 
 exports.fetchSalesReportData = async (req, res, next) => {
@@ -1317,7 +1561,6 @@ exports.fetchSalesReportData = async (req, res, next) => {
       startDate = new Date(startDateQuery);
       endDate = new Date(endDateQuery);
       endDate.setUTCHours(23, 59, 59, 999);
-
     } else if (period) {
       // period wise operation
       switch (period) {
@@ -1354,8 +1597,8 @@ exports.fetchSalesReportData = async (req, res, next) => {
       }
     }
 
-    req.session.startDate = startDate
-    req.session.endDate = endDate
+    req.session.startDate = startDate;
+    req.session.endDate = endDate;
     //get total revenue
     //get total coupon discount deductions
     //get total orders count
@@ -1372,7 +1615,7 @@ exports.fetchSalesReportData = async (req, res, next) => {
   }
 };
 
-// SAMPLE CODE FOR LEARNING 
+// SAMPLE CODE FOR LEARNING
 exports.downloadSalesReportPdf1 = async (req, res) => {
   try {
     const salesData = [
@@ -1382,7 +1625,10 @@ exports.downloadSalesReportPdf1 = async (req, res) => {
     ];
 
     // Render EJS Template
-    const templatePath = path.join(__dirname, "../views/admin/reports/salesReportPdf.ejs");
+    const templatePath = path.join(
+      __dirname,
+      "../views/admin/reports/salesReportPdf.ejs"
+    );
     const html = await ejs.renderFile(templatePath, {
       sales: salesData,
       reportDate: new Date().toLocaleDateString(),
@@ -1406,9 +1652,11 @@ exports.downloadSalesReportPdf1 = async (req, res) => {
 
     // Send PDF to Client
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", 'attachment; filename="sales-report.pdf"');
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="sales-report.pdf"'
+    );
     res.end(pdfBuffer); // Correctly sends binary data
-
   } catch (error) {
     console.error("Error generating PDF:", error);
     res.status(500).send("Error generating PDF");
@@ -1417,17 +1665,20 @@ exports.downloadSalesReportPdf1 = async (req, res) => {
 
 exports.downloadSalesReportPdf = async (req, res) => {
   try {
-
-    const startDate = req.session.startDate
-    const endDate = req.session.endDate
+    const startDate = req.session.startDate;
+    const endDate = req.session.endDate;
 
     const reportOverview = await getReportOverview(startDate, endDate);
     const allOrders = await getAllOrdersDetails(startDate, endDate);
 
     // Render EJS Template
-    const templatePath = path.join(__dirname, "../views/admin/reports/salesReportPdf.ejs");
+    const templatePath = path.join(
+      __dirname,
+      "../views/admin/reports/salesReportPdf.ejs"
+    );
     const html = await ejs.renderFile(templatePath, {
-      reportOverview, allOrders,
+      reportOverview,
+      allOrders,
       reportDate: new Date().toLocaleDateString(),
     });
 
@@ -1449,20 +1700,21 @@ exports.downloadSalesReportPdf = async (req, res) => {
 
     // Send PDF to Client
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", 'attachment; filename="sales-report.pdf"');
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="sales-report.pdf"'
+    );
     res.end(pdfBuffer); // Correctly sends binary data
-
   } catch (error) {
     console.error("Error generating PDF:", error);
     res.status(500).send("Error generating PDF");
   }
 };
 
-
 // REPORT END
 
 exports.getCouponManagement = (req, res) => {
-  res.render("admin/coupons/couponManagement", { title: "Coupon Management" });
+  res.render("admin/coupons/couponManagement", { title: "Coupon Management", activePage : 'coupons' });
 };
 
 // get all available coupons
@@ -1515,6 +1767,7 @@ exports.getNewCouponForm = (req, res) => {
   res.render("admin/coupons/newCoupon", {
     title: "Coupon Management - New Coupon",
     edit: false,
+    activePage : 'coupons'
   });
 };
 
@@ -1573,6 +1826,7 @@ exports.getEditCouponForm = async (req, res) => {
     res.render("admin/coupons/newCoupon", {
       title: "Coupon Management - Edit Coupon",
       edit: true,
+      activePage : 'coupons'
     });
   } catch (error) {
     console.log(error);

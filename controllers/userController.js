@@ -368,7 +368,8 @@ exports.getAvailableProducts2 = async (req, res) => {
     }
 
     // add wishlist true if product is wishlisted 
-    if (req.session.user.id) {
+    const userId = req.session?.user?.id || null
+    if (userId) {
       const userId = req.session.user.id;
       pipeline.push(
         {
@@ -439,7 +440,8 @@ exports.getProductDetailsPage = async (req, res) => {
     const product = await getProductWithFinalPrice(productId);
 
     product.isWishlisted = false;
-    if (req.session.user.id) {
+    const userId = req.session?.user?.id || null
+    if (userId) {
       const wishlistItem = await WishlistItems.findOne({productId, userId: req.session.user.id})
       if (wishlistItem) {
         product.isWishlisted = true;

@@ -42,13 +42,22 @@ router.post('/categories/new', upload.single('image'),  adminController.postCate
 // render the offer page
 router.get('/offers', isAdminLogin, adminController.getOfferModule)
 router.get('/offers/new', isAdminLogin, adminController.getNewOfferForm)
-router.post('/offers/new', validateOffer, adminController.applyNewOffer)
+router.post('/offers/new', validateOffer, adminController.saveNewOffer)
 // add clint side for all of this ----
 router.get('/offers/all', adminController.getAllOffers)
 router.get('/offers/edit/:id',isAdminLogin, adminController.getEditOfferForm)
 router.get('/offers/edit/offer/details', adminController.getSingleOfferDetails)
 router.post('/offers/edit/offer/details', adminController.saveUpdatedOffer)
 router.patch('/offers/unlist/:id', adminController.tooggleOfferStatus)
+// apply offer for product and category 
+router.get('/offers/apply/:id', adminController.getOfferApplyPage)
+// get the offer of selected type -product/category offer
+router.get('/offers/apply/available/all', adminController.getOfferOfType)
+router.patch('/offers/apply/available/all/:id', adminController.applyNewOffer)
+router.patch('/offers/apply/available/remove-offer', adminController.removeExistingOffer)
+
+
+router.get('/categories/available', adminController.getAvailableCategories)
 
 router.get('/categories/available', adminController.getAvailableCategories)
 

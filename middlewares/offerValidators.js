@@ -2,7 +2,7 @@
 
 const validateOffer = (req, res, next) => {
   try {
-    const { offerTitle, discount, target, categoryId, startDate, endDate } =
+    const { offerTitle, discount, offerTarget, startDate, endDate } =
       req.body;
 
     if (!offerTitle || offerTitle.trim().length < 5) {
@@ -17,16 +17,11 @@ const validateOffer = (req, res, next) => {
         .json({ error: "Discount must be between 0 and 100." });
     }
 
-    if (!target || (target !== "category" && target !== "all")) {
-      return res
-        .status(400)
-        .json({ error: "Target must be either 'category' or 'all'." });
-    }
 
-    if (target === "category" && !categoryId) {
+    if (!["product", "category"].includes(offerTarget)) {
       return res
         .status(400)
-        .json({ error: "Category ID is required when target is 'category'." });
+        .json({ error: "Offer target should be 'category' or 'product'" });
     }
 
     if (!startDate || !endDate) {

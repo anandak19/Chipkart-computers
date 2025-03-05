@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel</title>
+
+    <%- include("../../partials/adminHead") %>
+    <link rel="stylesheet" href="/styles/adminPages/offerApplyPage.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <%- include("../../partials/adminSidebar") %>
+
+    <!-- Main Content -->
+    <div class="content-wrapper">
+      <!-- Navbar -->
+      <%- include("../../partials/adminHeader") %>
+
+      <div class="main-content">
+        <div
+          class="page-head-section"
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          "
+        >
+          <h5 style="margin: 0">Choose the offer you want to apply</h5>
+          <button class="back-button" id="backButton">Back</button>
+        </div>
+
+        <div class="offers-container">
+            <!-- offer card  -->
+          <div class="offer-card">
+            <h3 class="offer-title">Loding...</h3>
+            <p class="offer-percentage">Discount: Loding...</p>
+            <p class="offer-dates">
+              <span>Start: Loding...</span> <br />
+              <span>End: Loding...</span>
+            </p>
+            <button class="apply-offer-btn" >Loding...</button>
+          </div>
+
+
+          
+
+
+        </div>
+      </div>
+    </div>
+
+    <%- include("../../partials/adminFooter") %>
+    <script src="/javascripts/admin/applyOffer.js"></script>
+  </body>
+</html>
