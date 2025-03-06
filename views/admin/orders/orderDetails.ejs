@@ -108,6 +108,37 @@
           </div>
         </div>
       </div>
+
+      <div id="customDialog" class="dialog">
+        <div class="dialog-content">
+            <label for="blockReason" class="mb-3">Are you sure you want to confirm the return and refund the amount?</label>
+            <button type="button" id="confirmBtn" class="confirmBtn">Yes</button>
+            <button type="button" id="cancelButton" class="cancelBtn">No</button>
+        </div>
+      </div>
+
+      <div id="rejectDialog" class="dialog">
+        <div class="dialog-content">
+          <form id="rejectItemForm" >
+            <label for="rejectReason">Why are you rejecting this refund?</label>
+              <p class="errorText"><small id="resonError" class="text-danger"></small></p>
+              <p class="errorText"><small id="resonSuccess" class="text-success"></small></p>
+            
+            <input
+              type="text"
+              id="rejectReason"
+              placeholder="Enter reason..."
+              class="mt-2"
+            />
+            
+            <div class="mt-2">
+              <button type="submit" id="rejectBtn" class="confirmBtn">Reject</button>
+              <button type="button" id="cancelRejectBtn" class="cancelBtn">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
     </div>
 
     <%- include("../../partials/adminFooter") %>

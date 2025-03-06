@@ -1507,14 +1507,19 @@ exports.approveReturnItem = async (req, res) => {
 
     const orderItem = await OrderItem.findById(itemId);
 
+    orderItem.returnStatus = "approved";
     orderItem.isReturned = true;
+    orderItem.returnDate = new Date();
+
     const amount = orderItem.subTotalPrice;
 
     const order = await Order.findById(orderItem.orderId);
     const userId = order.userId;
-    await orderItem.save();
-
+    
     refundUserAmount(amount, userId, "itemReturn");
+
+    orderItem.isRefunded = true;
+    await orderItem.save();
     res.status(200).json({ message: "Return approved successfully" });
   } catch (error) {
     console.log(error);
@@ -1526,11 +1531,29 @@ exports.approveReturnItem = async (req, res) => {
 exports.rejectReturnItemRefund = async (req, res, next) => {
   try {
     let { id: itemId } = req.params;
+    const {reason} = req.body
+
+    if (!itemId) {
+      return res.status(400).json({error: 'Item details missing'})
+    }
+
+    if (!reason) {
+      return res.status(400).json({error: 'Please provide a reson for rejection'})
+    }
 
     const orderItem = await OrderItem.findById(itemId);
 
     //add somthing here
+    if (!orderItem) {
+      return res.status(400).json({error: 'Selected order item was not found'})
+    }
 
+    orderItem.returnStatus = "rejected";
+    orderItem.isReturned = true
+    orderItem.returnDate = new Date()
+    orderItem.isReturnRejected = true
+    orderItem.returnRejectReason = reason
+    
     await orderItem.save();
 
     res.status(200).json({ message: "Return refund rejected successfully" });

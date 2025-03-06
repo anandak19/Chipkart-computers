@@ -54,23 +54,22 @@ const showOrderItems = (orderDetails) => {
             <td>${item.finalPrice}</td>
             <td>${item.quantity}</td>
             <td>${item.subTotalPrice}</td>
-            <td>${item.isReturnRequested ? `<p class='text-danger'>Yes</p>` : `No` }</td>
+            <td>${
+              item.returnStatus !== "none" ? `<p class='text-danger'>Yes</p>` : `No`
+            }</td>
             <td>${item.returnReason}</td>
             ${
-              item.isReturnRequested
-              ? 
-              `
-              <td style="display: flex; flex-direction: column; gap: 4px">
-              <button class='${item.isReturned ? 'approved-btn': 'approve-btn' }' data-id="${
-              item._id
-              }"> ${item.isReturned ? 'Confirmed': 'Approve'}</button>
-
-              ${item.isReturned ? '' : `<button class='reject-btn' data-id="${item._id}> Reject </button>`}
-              
-              `
-              : `
-              <td>No request</td>
-              `
+              item.returnStatus === "requested" ?
+                `
+                <td style="display: flex; flex-direction: column; gap: 4px">
+                <button class="approve-btn" data-id="${item._id}">Approve</button>
+                <button class="reject-btn" data-id="${item._id}">Reject</button>
+                `
+              : item.returnStatus === "approved"
+              ? `<td style="color: green; font-weight: bold;">Approved and refunded</td>`
+              : item.returnStatus === "rejected"
+              ? `<td style="color: red; font-weight: bold;">Rejected</td>`
+              : `<td>No request</td>`
             }
 
         `;
@@ -82,46 +81,102 @@ const showOrderItems = (orderDetails) => {
     orderItemTable.appendChild(row);
   }
 
+  // to approve and refund the amount to user 
   document.querySelectorAll(".approve-btn").forEach((button) => {
     button.addEventListener("click", async function () {
       const itemId = this.getAttribute("data-id");
+      const customDialog = document.getElementById("customDialog");
+      customDialog.style.display = "flex";
 
-      try {
-        const response = await fetch(`/admin/orders/return/approve/${itemId}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+      const confirmBtn = document.getElementById("confirmBtn");
+      const cancelButton = document.getElementById("cancelButton");
 
-        const data = await response.json();
-        if (response.ok) {
-          this.textContent = "Confirmed";
-          this.disabled = true; 
-          this.style.backgroundColor = "green";
-        } else {
-          alert(data.error || "Failed to approve return");
+      confirmBtn.addEventListener("click", async () => {
+        try {
+          const response = await fetch(
+            `/admin/orders/return/approve/${itemId}`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          const data = await response.json();
+          if (response.ok) {
+            customDialog.style.display = "none";
+            getOrderItems()
+          } else {
+            alert(data.error || "Failed to approve return");
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Error approving refund request");
         }
-      } catch (error) {
-        console.error("Error:", error);
-        alert("Error approving refund request");
-      }
+      });
+
+      cancelButton.addEventListener("click", () => {
+        customDialog.style.display = "none";
+      });
     });
   });
 
-  document.querySelectorAll('.reject-btn').forEach((button) => {
+  // to reject the return and refund amount 
+  document.querySelectorAll(".reject-btn").forEach((button) => {
     button.addEventListener("click", async function () {
       const itemId = this.getAttribute("data-id");
+      const rejectDialog = document.getElementById('rejectDialog')
+      rejectDialog.style.display = 'flex'
 
-      try {
-        //api goes here
-        
-      } catch (error) {
-        console.error("Error:", error);
-        alert("Error rejecting refund");
-      }
-    })
-  })
+      const rejectItemForm = document.getElementById('rejectItemForm')
+      rejectItemForm.addEventListener('submit', async(e) => {
+        e.preventDefault()
+
+        const rejectReason = document.getElementById('rejectReason')
+        const rejectReasonInput = rejectReason.value.trim()
+
+        if (!rejectReasonInput) {
+          toastr.error("Plese provide a reason")
+          return
+        }
+
+
+
+        try {
+          //api goes here
+          const res = await fetch(`/admin/orders/return/reject/${itemId}`, {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({reason: rejectReasonInput})
+          })
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            alert(data.error|| "Failed to reject return request")
+          }
+
+          toastr.success(data.message)
+          rejectDialog.style.display = 'none'
+          rejectItemForm.reset()
+          getOrderItems()
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Error rejecting refund");
+        }
+      })
+
+      // close the dialogue window 
+      const cancelButton = document.getElementById('cancelRejectBtn')
+      cancelButton.addEventListener('click', () => {
+        rejectDialog.style.display = 'none'
+        rejectItemForm.reset() 
+      })
+
+
+    });
+  });
 };
 
 // method to get the orderd items

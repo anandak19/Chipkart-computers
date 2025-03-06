@@ -607,7 +607,7 @@ exports.getReturnProductPage = async (req, res) => {
 
     const items = await OrderItem.find({
       orderId: orderId,
-      isReturnRequested: false,
+      returnStatus: {$eq: "none"},
     });
     console.log(items);
 
@@ -677,7 +677,12 @@ exports.returnSelectedProducts = async (req, res) => {
 
     const result = await OrderItem.updateMany(
       { orderId: orderId, productId: { $in: objectIds } },
-      { $set: { isReturnRequested: true, returnReason: returnReson } }
+      { $set:
+        { 
+          returnStatus: "requested", 
+          returnReason: returnReson 
+        } 
+      }
     );
 
     if (result.modifiedCount === 0) {

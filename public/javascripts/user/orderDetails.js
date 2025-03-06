@@ -31,12 +31,17 @@ const showOrderItems = (items) => {
           <p class="product-name mb-1">${item.productName}</p>
           <p class="product-price mb-1">Unit Price: ₹${item.finalPrice.toLocaleString()}</p>
           <p class="product-quantity mb-0">Quantity: ${item.quantity}</p>
-          ${
-            item.isReturnRequested
-              ? `<p class= "text-warning">Return requested </p> `
-              : ""
-          }
-          ${item.isReturned ? `<p class= "text-danger">Returned</p> ` : ""}
+            ${
+              item.returnStatus === "requested" ?
+                `
+                <p class= "text-warning">Return requested</p>
+                `
+              : item.returnStatus === "approved"
+              ? `<p class= "text-success">Return aprooved and amount is added to your wallet</p>`
+              : item.returnStatus === "rejected"
+              ? `<p class= "text-danger">Return rejected with reason: ${item.returnRejectReason}</p>`
+              : ``
+            }
         </div>
   
         <div class="product-total text-end">
