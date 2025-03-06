@@ -91,15 +91,7 @@ const getCartTotal = async (userId) => {
     return total + (item.subTotalPrice || 0);
   }, 0);
 
-  let shippingFee = 0;
-  let cartTotal = 0;
-
-  if (cartSubTotal > 0) {
-    shippingFee = cartSubTotal < 5000 ? 100 : 0;
-    cartTotal = cartSubTotal + shippingFee;
-  }
-
-  return cartTotal;
+  return cartSubTotal;
 };
 
 const checkProductsAvailability = async (cart) => {

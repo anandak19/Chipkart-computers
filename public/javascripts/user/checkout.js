@@ -1,6 +1,15 @@
 const addressContainer = document.getElementById("addressContainer");
 const backBtn = document.getElementById("backBtn");
+
+const totalAmount = document.getElementById("totalAmount");
+const shippingFee = document.getElementById("shippingFee");
+const discountAmount = document.getElementById("discountAmount");
 const payableAmount = document.getElementById("payableAmount");
+
+const couponForm = document.getElementById("couponForm");
+
+
+const removeCouponBtn = document.querySelector(".remove-coupon");
 const placeOrderBtn = document.getElementById("placeOrderBtn");
 
 backBtn.addEventListener("click", () => {
@@ -90,12 +99,18 @@ const getTotalPayable = async () => {
     const data = await response.json();
     if (response.ok) {
       console.log(data);
-      payableAmount.innerText = `₹${data.total.toLocaleString("en-IN")}`;
+
+      totalAmount.innerText = `₹${data.total.toLocaleString("en-IN")}`;
+      shippingFee.innerText = `₹${data.shippingFee.toLocaleString("en-IN")}`;
+      discountAmount.innerText = `₹${data.discountApplied.toLocaleString(
+        "en-IN"
+      )}`;
+      payableAmount.innerText = `₹${data.totalPayable.toLocaleString("en-IN")}`;
 
       if (data.discountApplied !== 0) {
         const couponOffer = document.getElementById("couponOffer");
         couponOffer.innerText = `Coupon applied! Saved ₹${data.discountApplied}`;
-        
+        removeCouponBtn.style.display = "flex";
       }
     } else {
       console.error(data.error);
@@ -106,6 +121,29 @@ const getTotalPayable = async () => {
     alert("Internal server error");
   }
 };
+
+removeCouponBtn.addEventListener("click", async () => {
+  try {
+    const res = await fetch("/checkout/remove-coupon", {
+      method: "PATCH",
+    });
+
+    const result = await res.json();
+    if (res.ok) {
+      toastr.success(result.message);
+      getTotalPayable();
+
+      couponOffer.innerText = ``;
+      removeCouponBtn.style.display = "none";
+      couponForm.reset()
+    } else {
+      toastr.warning(result.error || "Somthing went wrong");
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Somthing went wrong");
+  }
+});
 
 let paymentMethod;
 document.addEventListener("DOMContentLoaded", () => {
@@ -252,7 +290,6 @@ function newAddressClicked() {
 }
 
 // method to applay cupon
-const couponForm = document.getElementById("couponForm");
 couponForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const couponInput = document.getElementById("couponInput").value;

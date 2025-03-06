@@ -76,14 +76,20 @@
               <p>
                 Payment Method: <span><%= orderDetails.paymentMethod %></span>
               </p>
-              <p>Total Amount: <span><%= orderDetails.totalAmount %></span></p>
+              <p>Gross Amount: <span><%= orderDetails.totalAmount %></span></p>
               <p>Discount: <span><%= orderDetails.discount %></span></p>
               <p>
-                Total Payable: <span><%= orderDetails.totalPayable %></span>
+                Total Amount: <span><%= orderDetails.totalPayable %></span>
               </p>
               <p>
                 Payment Status: <span><%= orderDetails.paymentStatus %></span>
               </p>
+
+              <% if (orderDetails.paymentMethod === 'Online') { %>
+                <p>
+                  Razorpay Method: <span><%= orderDetails.razorpayPaymentMethod %></span>
+                </p>
+              <% } %>
             </div>
           </div>
 

@@ -111,21 +111,31 @@
                       <div class="card-body">
                         <p class="card-title">Payment Details</p>
                         <p>
-                          <label>Total Amount:</label> ₹ <%=
+                          <label>Gross Amount:</label> ₹ <%=
                           orderDetails.totalAmount %>
+                        </p>
+                        <p>
+                          <label>Shipping Fee:</label> ₹ <%=
+                          orderDetails.shippingFee %>
                         </p>
                         <p>
                           <label>Discount:</label>
                           <span>₹ <%= orderDetails.discount %></span>
                         </p>
                         <p class="fw-bold">
-                          <label>Total Payable:</label> ₹ <%=
+                          <label>Total Amount:</label> ₹ <%=
                           orderDetails.totalPayable %>
                         </p>
                         <p>
                           <label>Payment Method:</label> <%=
                           orderDetails.paymentMethod %>
                         </p>
+                        <% if (orderDetails.paymentMethod === 'Online') { %>
+                          <p>
+                            <label>Razorpay Method:</label> <%=
+                            orderDetails.razorpayPaymentMethod %>
+                          </p>
+                        <% } %>
                         <p>
                           <label>Payment Status:</label>
                           <span><%= orderDetails.paymentStatus %></span>

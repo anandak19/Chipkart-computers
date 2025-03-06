@@ -39,7 +39,7 @@ const showOrderItems = (items) => {
               : item.returnStatus === "approved"
               ? `<p class= "text-success">Return aprooved and amount is added to your wallet</p>`
               : item.returnStatus === "rejected"
-              ? `<p class= "text-danger">Return rejected with reason: ${item.returnRejectReason}</p>`
+              ? `<p class= "text-danger">Return refund rejected with reason: ${item.returnRejectReason}</p>`
               : ``
             }
         </div>

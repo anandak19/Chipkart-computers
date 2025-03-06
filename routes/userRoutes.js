@@ -107,6 +107,7 @@ router.get('/cart/count', userOrderController.getCartItemCount)
 router.get('/checkout', getUser,  userOrderController.getCheckoutPage)
 router.get('/checkout/amount', varifyLoginUserSession, userOrderController.getCheckoutAmount)
 router.post('/checkout/applay-coupon', varifyLoginUserSession, userOrderController.applayCoupon)
+router.patch('/checkout/remove-coupon', varifyLoginUserSession, userOrderController.removeAppliedCoupon)
 // api calls
 router.post('/checkout/address', userOrderController.chooseDeliveryAddress)
 // place order with cod

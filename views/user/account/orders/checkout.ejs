@@ -65,14 +65,37 @@
                   </div>
                   <button type="submit" class="apply-btn">Applay</button>
                 </form>
+                <small class="text-success mt-2" id="couponOffer"></small>
+                <button class="remove-coupon">Remove Coupon</button>
+
               </div>
 
-              <div class="payment-section mt-3 card shadow">
-                <div class="to-pay">
-                  <p class="payment-label">Total Payable</p>
-                  <p class="payment-label" id="payableAmount"></p>
+              <div class="payment-section card shadow">
+                <div class="card p-3 shadow-sm">
+                
+                  <div class="d-flex justify-content-between">
+                    <p class="mb-1">Total Amount:</p>
+                    <p class="mb-1 fw-semibold" id="totalAmount">₹0</p>
+                  </div>
+                
+                  <div class="d-flex justify-content-between">
+                    <p class="mb-1">Shipping Fee:</p>
+                    <p class="mb-1 fw-semibold text-success" id="shippingFee">0</p>
+                  </div>
+                
+                  <div class="d-flex justify-content-between">
+                    <p class="mb-1">Discount Applied:</p>
+                    <p class="mb-1 fw-semibold text-danger" id="discountAmount">₹0</p>
+                  </div>
+                
+                  <hr />
+                
+                  <div class="d-flex justify-content-between">
+                    <p class="fw-bold">Total Payable:</p>
+                    <p class="fw-bold text-primary" id="payableAmount">₹0</p>
+                  </div>
                 </div>
-                <small class="text-success" id="couponOffer"></small>
+              
 
                 <div class="payment-method mt-4">
                   <p>Select Payment Method</p>

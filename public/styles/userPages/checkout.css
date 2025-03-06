@@ -105,6 +105,20 @@
   cursor: not-allowed;
 }
 
+.remove-coupon{
+  display: none;
+  color: #ff0000;
+  margin-top: 6px;
+  border: 1px solid;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.remove-coupon:hover{
+  color: #ffffff;
+  background-color: #ff0000;
+}
+
 .payment-section{
   border: 1px solid #818181;
   padding: 18px;
