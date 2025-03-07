@@ -110,7 +110,7 @@ endDate.addEventListener("change", () => {
 });
 
 //pdf generate 
-const pdfBtn = document.querySelector('.btn-generate')
+const pdfBtn = document.getElementById('pdfBtn')
 async function generatePdf() {
   try {
     pdfBtn.disabled = true;
@@ -129,3 +129,21 @@ async function generatePdf() {
   }
 }
 
+const excelBtn = document.getElementById('excelBtn')
+async function generateExcel() {
+  try {
+    excelBtn.disabled = true;
+    excelBtn.textContent = "Generating Excel...";
+
+    window.location.href = "/admin/reports/data/dowload/excel";
+
+  } catch (error) {
+    console.log(error);
+    alert("Something went wrong");
+  } finally {
+    setTimeout(() => {
+      excelBtn.disabled = false;
+      excelBtn.textContent = "Generate Excel";
+    }, 3000);
+  }
+}

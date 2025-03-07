@@ -1,34 +1,36 @@
-const UserSchema = require("../models/User");
-const CategoriesSchema = require("../models/Category");
-const ProductSchema = require("../models/Product");
-const OrderSchema = require("../models/Order");
-const AddressSchema = require("../models/Address");
 const {
   getOrderItemsDetails,
   cancelOrder,
   refundUserAmount,
 } = require("../utils/orderManagement");
-const OrderItem = require("../models/orderItem");
 const mongoose = require("mongoose");
-const Coupons = require("../models/Coupon");
 const { getCategories } = require("../utils/categoryHelpers");
-const Offer = require("../models/Offer");
 const { addFinalPriceStage } = require("../utils/productHelpers");
-const Categories = require("../models/Category");
 const {
   getReportAmounts,
   getSalesCount,
   getAllOrdersDetails,
   getReportOverview,
 } = require("../utils/salesHelpers/reportHelpers");
-const UserCoupon = require("../models/UserCoupon");
 const Session = mongoose.connection.collection("sessions");
 
 const ejs = require("ejs");
 const puppeteer = require("puppeteer");
 const path = require("path");
+const ExcelJS = require("exceljs");
+
+const Offer = require("../models/Offer");
+const OrderItem = require("../models/orderItem");
+const Coupons = require("../models/Coupon");
+const Categories = require("../models/Category");
+const UserCoupon = require("../models/UserCoupon");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const UserSchema = require("../models/User");
+const CategoriesSchema = require("../models/Category");
+const ProductSchema = require("../models/Product");
+const OrderSchema = require("../models/Order");
+const AddressSchema = require("../models/Address");
 
 exports.getDashboard = (req, res) => {
   res.render("admin/dashbord", {
@@ -1420,7 +1422,7 @@ exports.renderOrderDetailsPage = async (req, res) => {
     res.render("admin/orders/orderDetails", {
       title: "Order Details",
       orderDetails,
-      activePage : 'orders'
+      activePage: "orders",
     });
   } catch (error) {
     console.log(error);
@@ -1515,7 +1517,7 @@ exports.approveReturnItem = async (req, res) => {
 
     const order = await Order.findById(orderItem.orderId);
     const userId = order.userId;
-    
+
     refundUserAmount(amount, userId, "itemReturn");
 
     orderItem.isRefunded = true;
@@ -1531,29 +1533,33 @@ exports.approveReturnItem = async (req, res) => {
 exports.rejectReturnItemRefund = async (req, res, next) => {
   try {
     let { id: itemId } = req.params;
-    const {reason} = req.body
+    const { reason } = req.body;
 
     if (!itemId) {
-      return res.status(400).json({error: 'Item details missing'})
+      return res.status(400).json({ error: "Item details missing" });
     }
 
     if (!reason) {
-      return res.status(400).json({error: 'Please provide a reson for rejection'})
+      return res
+        .status(400)
+        .json({ error: "Please provide a reson for rejection" });
     }
 
     const orderItem = await OrderItem.findById(itemId);
 
     //add somthing here
     if (!orderItem) {
-      return res.status(400).json({error: 'Selected order item was not found'})
+      return res
+        .status(400)
+        .json({ error: "Selected order item was not found" });
     }
 
     orderItem.returnStatus = "rejected";
-    orderItem.isReturned = true
-    orderItem.returnDate = new Date()
-    orderItem.isReturnRejected = true
-    orderItem.returnRejectReason = reason
-    
+    orderItem.isReturned = true;
+    orderItem.returnDate = new Date();
+    orderItem.isReturnRejected = true;
+    orderItem.returnRejectReason = reason;
+
     await orderItem.save();
 
     res.status(200).json({ message: "Return refund rejected successfully" });
@@ -1567,7 +1573,10 @@ exports.rejectReturnItemRefund = async (req, res, next) => {
 
 // REPORT START
 exports.getSalesReport = (req, res) => {
-  res.render("admin/reports/salesReport", { title: "Sales Report", activePage : 'reports' });
+  res.render("admin/reports/salesReport", {
+    title: "Sales Report",
+    activePage: "reports",
+  });
 };
 
 exports.fetchSalesReportData = async (req, res, next) => {
@@ -1734,10 +1743,162 @@ exports.downloadSalesReportPdf = async (req, res) => {
   }
 };
 
+exports.downloadSalesReportExcel = async (req, res) => {
+  try {
+    const startDate = req.session.startDate;
+    const endDate = req.session.endDate;
+    // validate thise
+
+    // inint workbook
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Orders Report");
+
+    const reportOverview = await getReportOverview(startDate, endDate);
+    const allOrders = await getAllOrdersDetails(startDate, endDate);
+
+    const reportOverviewData = [
+      [
+        "Total Revenue",
+        "Total Orders",
+        "Total Products Sold",
+        "Total discount deduction",
+      ],
+      [
+        `₹${reportOverview.totalRevenue}`,
+        reportOverview.totalOrders,
+        reportOverview.totalSalesCount,
+        `₹${reportOverview.totalCouponDiscount}`,
+      ],
+    ];
+
+    // Add Report Overview Header
+    const reportHeaderRow = worksheet.addRow(["Report Overview"]);
+    worksheet.addRow([]);
+    reportHeaderRow.font = { bold: true, size: 14 };
+    reportHeaderRow.alignment = { vertical: "middle", horizontal: "center" };
+
+    // Insert data as columns
+    const headerRow = worksheet.addRow(reportOverviewData[0]);
+    const valuesRow = worksheet.addRow(reportOverviewData[1]);
+
+    worksheet.columns = [
+      { width: 20 },
+      { width: 20 },
+      { width: 25 },
+      { width: 25 },
+    ];
+
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: "FFFFFF" } };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "0078D7" },
+      };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+    });
+
+    valuesRow.eachCell((cell) => {
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+    });
+
+    worksheet.addRow([]);
+    worksheet.addRow([]);
+
+    // orders table
+    const ordersHeaderTitle = worksheet.addRow(["All Orders"]);
+    ordersHeaderTitle.font = { bold: true, size: 14 };
+    ordersHeaderTitle.alignment = { vertical: "middle", horizontal: "center" };
+    worksheet.addRow([]);
+    const ordersHeaderRow = worksheet.addRow([
+      "Order ID",
+      "Customer",
+      "Total Amount",
+      "Total Products",
+      "Payment Method",
+    ]);
+
+    ordersHeaderRow.eachCell((cell, colNumber) => {
+      if (colNumber <= 5) {
+        cell.font = { bold: true, color: { argb: "FFFFFF" } };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "28A745" }, 
+        };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      }
+    });
+
+    allOrders.forEach((order) => {
+      const row = worksheet.addRow([
+        order.orderId,
+        order.customerName,
+        `₹${order.totalPayable.toFixed(2)}`,
+        order.totalProducts,
+        order.paymentMethod,
+      ]);
+      row.eachCell((cell) => {
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+    });
+
+    // Auto-adjust column widths
+    worksheet.columns.forEach((column) => {
+      column.width = 23;
+    });
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=Orders_Report.xlsx"
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+
+    console.log("Excel file sent successfully!");
+  } catch (error) {
+    console.error("Error generating excel:", error);
+    res.status(500).send("Error generating excel");
+  }
+};
+
 // REPORT END
 
 exports.getCouponManagement = (req, res) => {
-  res.render("admin/coupons/couponManagement", { title: "Coupon Management", activePage : 'coupons' });
+  res.render("admin/coupons/couponManagement", {
+    title: "Coupon Management",
+    activePage: "coupons",
+  });
 };
 
 // get all available coupons
@@ -1790,7 +1951,7 @@ exports.getNewCouponForm = (req, res) => {
   res.render("admin/coupons/newCoupon", {
     title: "Coupon Management - New Coupon",
     edit: false,
-    activePage : 'coupons'
+    activePage: "coupons",
   });
 };
 
@@ -1849,7 +2010,7 @@ exports.getEditCouponForm = async (req, res) => {
     res.render("admin/coupons/newCoupon", {
       title: "Coupon Management - Edit Coupon",
       edit: true,
-      activePage : 'coupons'
+      activePage: "coupons",
     });
   } catch (error) {
     console.log(error);

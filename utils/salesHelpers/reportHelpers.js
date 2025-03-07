@@ -76,6 +76,8 @@ const getReportOverview = async (startDate, endDate) => {
     reportAmountData.totalOrders = reportAmounts[0]?.totalOrders || 0;
     reportAmountData.totalSalesCount = reportAmounts[0]?.totalSalesCount || 0
 
+    // contains - totalRevenue, totalCouponDiscount, totalOrders, totalSalesCount
+    
     return reportAmountData;
   } catch (error) {
     console.error("Error fetching report amounts:", error);
