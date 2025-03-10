@@ -125,4 +125,46 @@ const cancelOrder = async (orderId, cancelReason) => {
   }
 }
 
-module.exports = { getOrderItemsDetails, cancelOrder, refundUserAmount };
+const getFullOrderDetails = async (orderId) => {
+  try {
+    const orderObjectId = new mongoose.Types.ObjectId(orderId)
+
+    const orderDetails = await Order.aggregate([
+      {
+        $match: { _id: orderObjectId },
+      },
+      {
+        $addFields: {
+          addressId: {$toObjectId: "$addressId"}
+        }
+      },
+      {
+        $lookup: {
+          from: "addresses",
+          localField: "addressId",
+          foreignField: "_id",
+          as: "shippingAddress",
+        },
+      },
+      {
+        $unwind: "$shippingAddress",
+      },
+      {
+        $lookup: {
+          from: 'orderitems',
+          localField: '_id',
+          foreignField: 'orderId',
+          as: 'orderItems'
+        }
+      }
+    ])
+
+    const completeOrderDetails = orderDetails[0]
+    return completeOrderDetails
+    
+  } catch (error) {
+    throw new Error(`Error fetching order details`);
+  }
+}
+
+module.exports = { getOrderItemsDetails, cancelOrder, refundUserAmount, getFullOrderDetails };

@@ -32,15 +32,15 @@ const showOrderItems = (items) => {
           <p class="product-price mb-1">Unit Price: ₹${item.finalPrice.toLocaleString()}</p>
           <p class="product-quantity mb-0">Quantity: ${item.quantity}</p>
             ${
-              item.returnStatus === "requested" ?
-                `
+              item.returnStatus === "requested"
+                ? `
                 <p class= "text-warning">Return requested</p>
                 `
-              : item.returnStatus === "approved"
-              ? `<p class= "text-success">Return aprooved and amount is added to your wallet</p>`
-              : item.returnStatus === "rejected"
-              ? `<p class= "text-danger">Return refund rejected with reason: ${item.returnRejectReason}</p>`
-              : ``
+                : item.returnStatus === "approved"
+                ? `<p class= "text-success">Return aprooved and amount is added to your wallet</p>`
+                : item.returnStatus === "rejected"
+                ? `<p class= "text-danger">Return refund rejected with reason: ${item.returnRejectReason}</p>`
+                : ``
             }
         </div>
   
@@ -97,13 +97,13 @@ const getOrderCoupons = async () => {
     if (res.ok) {
       console.log(result);
       const couponDiv = document.getElementById("couponDiv");
-      couponDiv.innerHTML = ''
+      couponDiv.innerHTML = "";
       const couponCard = document.createElement("div");
       couponCard.className = "coupon-strip";
       couponCard.innerHTML = `
       <p>You got <span>${result.discount}%</span> Off Coupon in this order</p>
       <small>${result.message}</small>
-      `
+      `;
 
       couponDiv.appendChild(couponCard);
     }
@@ -169,4 +169,22 @@ cancelOrderForm.addEventListener("submit", async (e) => {
 // return an item
 function returnProduct() {
   window.location.href = "/account/orders/all/ord/items/return";
+}
+
+async function generateInvoice() {
+  const invoiceBtn = document.querySelector(".invoiceBtn");
+  try {
+    invoiceBtn.disabled = true;
+    invoiceBtn.textContent = "Downloading Invoice...";
+
+    window.location.href = "/account/orders/all/ord/invoice/download";
+  } catch (error) {
+    console.error(error);
+    alert("Somthing went wrong");
+  } finally {
+    setTimeout(() => {
+      invoiceBtn.disabled = false;
+      invoiceBtn.textContent = "Download Invoice";
+    }, 3000);
+  }
 }

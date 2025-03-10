@@ -49,6 +49,12 @@
                           { day: "2-digit", month: "2-digit", year: "2-digit" })
                           %>
                         </p>
+
+
+                        <% if (!orderDetails.isCancelled ) { %>
+                          <button class="invoiceBtn" onclick="generateInvoice()">Download Invoice</button>
+                        <% } %>
+
                         <% if (!orderDetails.isCancelled &&
                         orderDetails.orderStatus !== 'Delivered') { %>
                         <button

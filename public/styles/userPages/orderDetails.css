@@ -1,95 +1,106 @@
-
 /* order info  */
 .details-card {
-    border-radius: 10px;
-    border: none;
-    min-height: 258px;
+  border-radius: 10px;
+  border: none;
+  min-height: 258px;
 }
 
-
 .orderDetails .card-title {
-    font-weight: 600;
-    margin-bottom: 10px;
+  font-weight: 600;
+  margin-bottom: 10px;
 }
 
 .orderDetails p {
-    margin-bottom: 5px;
+  margin-bottom: 5px;
 }
-
 
 /* order items  */
 .order-item {
-    border-radius: 8px;
-    border: none;
-    background: linear-gradient(135deg, #ffffff, #f8f9fa);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #ffffff, #f8f9fa);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .product-img-container {
-    flex-shrink: 0;
+  flex-shrink: 0;
 }
 
 .product-img {
-    width: 80px;
-    height: 80px;
-    object-fit: cover;
-    border-radius: 6px;
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
 }
 
 .product-details {
-    flex-grow: 1;
+  flex-grow: 1;
 }
 
 .product-total {
-    min-width: 120px;
-    font-size: 16px;
-    font-weight: 500;
+  min-width: 120px;
+  font-size: 16px;
+  font-weight: 500;
 }
 
-.product-name{
-    white-space: nowrap;    
-    overflow: hidden;       
-    text-overflow: ellipsis;
-    max-width: 600px;        
-    display: block;
+.product-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 600px;
+  display: block;
 }
 
 /* coupon styles  */
 .coupon-strip {
-    background: linear-gradient(135deg, #fc74ac, #fc6b83);
-    border-radius: 10px;
-    padding: 12px;
-    color: #fff;
-    text-align: center;
-    font-family: "Poppins", sans-serif;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    margin: 20px auto;
-    width: 90%;
-    max-width: 500px;
-  }
-  
-  .coupon-strip p {
-    font-size: 1.2rem;
-    font-weight: bold;
-    margin: 0;
-  }
-  
-  .coupon-strip p span {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #ffeb3b;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
-  }
-  
-  .coupon-strip small {
-    display: block;
-    font-size: 0.9rem;
-    opacity: 0.8;
-    margin-top: 5px;
-  }
-  
+  background: linear-gradient(135deg, #fc74ac, #fc6b83);
+  border-radius: 10px;
+  padding: 12px;
+  color: #fff;
+  text-align: center;
+  font-family: "Poppins", sans-serif;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  margin: 20px auto;
+  width: 90%;
+  max-width: 500px;
+}
+
+.coupon-strip p {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.coupon-strip p span {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffeb3b;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.coupon-strip small {
+  display: block;
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-top: 5px;
+}
+
+.invoiceBtn {
+  display: flex;
+  background-color: #5ff0fe;
+  border-radius: 5px;
+  width: 100%;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.invoiceBtn:hover {
+  background-color: #7fffd4cc;
+}

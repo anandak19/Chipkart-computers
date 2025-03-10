@@ -1,5 +1,8 @@
 const { default: mongoose } = require("mongoose");
 const bcrypt = require("bcrypt");
+const ejs = require("ejs");
+const puppeteer = require("puppeteer");
+const path = require("path");
 
 const Order = require("../models/Order");
 const AddressSchema = require("../models/Address");
@@ -12,6 +15,7 @@ const logoutUser = require("../utils/logoutUser");
 const {
   getOrderItemsDetails,
   cancelOrder,
+  getFullOrderDetails,
 } = require("../utils/orderManagement");
 const {
   validateDob,
@@ -495,7 +499,6 @@ exports.getDeliveryInfo = async (req, res) => {
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
-    console.log(order.userId);
 
     const address = await AddressSchema.findById(order.addressId);
     if (!address) {
@@ -554,6 +557,75 @@ exports.getRewards = async (req, res, next) => {
   }
 };
 
+exports.downloadInvoice = async (req, res, next) => {
+  try {
+    const order = {
+      orderId: "INV-12345",
+      date: "2025-03-07",
+      shipping: {
+        name: "John Doe",
+        address: "123 Main St",
+        city: "New York",
+        zip: "10001",
+        country: "USA",
+      },
+      payment: {
+        method: "Credit Card",
+        transactionId: "TXN123456",
+      },
+      items: [
+        { name: "Laptop", unitPrice: 1200, quantity: 1 },
+        { name: "Mouse", unitPrice: 25, quantity: 2 },
+        { name: "Keyboard", unitPrice: 50, quantity: 1 },
+      ],
+      total: 1300, // Sum of all products
+      discount: 50, // Discount applied
+    };
+
+    const orderId = req.session.ordId;
+    if (!orderId) {
+      return res.status(400).json({ error: "Session expired" });
+    }
+    const orderDetails = await getFullOrderDetails(orderId)
+
+    // Render EJS Template
+    const templatePath = path.join(
+      __dirname,
+      "../views/user/account/orders/invoicePdf.ejs"
+    );
+    const html = await ejs.renderFile(templatePath, {
+      orderDetails,
+    });
+
+    console.log("Generated HTML successfully!");
+
+    // Launch Puppeteer
+    const browser = await puppeteer.launch({
+      executablePath: puppeteer.executablePath(),
+      headless: "new",
+      args: ["--no-sandbox"],
+    });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "load" });
+
+    // Generate PDF (No Local Saving)
+    const pdfBuffer = await page.pdf({ format: "A4", printBackground: true });
+
+    await browser.close();
+
+    // Send PDF to Client
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="invoice.pdf"'
+    );
+    res.end(pdfBuffer); // Correctly sends binary data
+  } catch (error) {
+    console.error("Error generating invoice:", error);
+    res.status(500).send("Error generating Invoice");
+  }
+};
+
 // need to test
 exports.getOrderItems = async (req, res) => {
   try {
@@ -566,7 +638,6 @@ exports.getOrderItems = async (req, res) => {
     if (!orderItems) {
       return res.status(404).json({ error: "Order items not found" });
     }
-    console.log(orderItems);
 
     res.status(200).json({ items: orderItems });
   } catch (error) {
@@ -607,7 +678,7 @@ exports.getReturnProductPage = async (req, res) => {
 
     const items = await OrderItem.find({
       orderId: orderId,
-      returnStatus: {$eq: "none"},
+      returnStatus: { $eq: "none" },
     });
     console.log(items);
 
@@ -677,11 +748,11 @@ exports.returnSelectedProducts = async (req, res) => {
 
     const result = await OrderItem.updateMany(
       { orderId: orderId, productId: { $in: objectIds } },
-      { $set:
-        { 
-          returnStatus: "requested", 
-          returnReason: returnReson 
-        } 
+      {
+        $set: {
+          returnStatus: "requested",
+          returnReason: returnReson,
+        },
       }
     );
 

@@ -74,6 +74,7 @@ router.get('/account/orders/all', varifyLoginUserSession, userAccountController.
 router.get('/account/orders/all/ord/:id', userAccountController.getOrderDetaillsPage)
 router.get('/account/orders/all/ord/info/address', userAccountController.getDeliveryInfo)
 router.get('/account/orders/all/ord/info/rewards', userAccountController.getRewards)
+router.get('/account/orders/all/ord/invoice/download', userAccountController.downloadInvoice)
 // updated
 
 router.get('/account/orders/all/ord/info/itemes', userAccountController.getOrderItems)
