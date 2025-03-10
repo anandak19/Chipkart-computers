@@ -4,6 +4,7 @@ const Wallet = require("../models/Wallet");
 const Users = require("../models/User");
 const Order = require("../models/Order");
 const WalletTransaction = require("../models/WalletTransaction");
+const OrderItem = require("../models/orderItem");
 
 const getOrderItemsDetails = async(orderId) => {
   try {
@@ -107,6 +108,16 @@ const cancelOrder = async (orderId, cancelReason) => {
     orderDetails.orderStatus = "Cancelled";
     orderDetails.cancelReason = cancelReason;
     await orderDetails.save();
+
+    const modifiedOrderItems = await OrderItem.updateMany(
+      { orderId: orderDetails._id }, 
+      { $set: { orderStatus: "Cancelled" } }
+    )
+
+    if (modifiedOrderItems.modifiedCount === 0) {
+      res.status(400);
+      throw new Error("No order items were modified. They may already have the 'Cancelled' status.");
+    }
     
   } catch (error) {
     res.status(500);

@@ -39,6 +39,403 @@ exports.getDashboard = (req, res) => {
   });
 };
 
+exports.getChartData = async (req, res, next) => {
+  try {
+    const period = req.query?.period || "yearly";
+    const validPeriods = ["yearly", "monthly", "weekly"];
+
+    if (!validPeriods.includes(period)) {
+      return res.status(400).json({
+        error: "Invalid period. Choose from yearly, monthly, or weekly.",
+      });
+    }
+
+    // declarations
+    const currentDate = new Date();
+    const currentYear = new Date().getFullYear();
+    const pastYears = Array.from(
+      { length: 4 },
+      (_, i) => currentYear - (i + 1)
+    );
+    const allYears = [...pastYears.reverse(), currentYear];
+    const currentMonth = currentDate.getMonth() + 1;
+    const currentWeek = Math.ceil(
+      ((currentDate - new Date(currentYear, 0, 1)) / 86400000 +
+        new Date(currentYear, 0, 1).getDay() +
+        1) /
+        7
+    );
+
+    // yearly
+
+    const yearlyPipeline = [
+      {
+        $match: {
+          orderStatus: "Delivered",
+        },
+      },
+      {
+        $group: {
+          _id: { year: { $year: { $toDate: "$createdAt" } } },
+          totalProducts: { $sum: { $ifNull: ["$quantity", 0] } },
+        },
+      },
+      {
+        $sort: { "_id.year": 1 },
+      },
+      {
+        $group: {
+          _id: null,
+          data: { $push: { year: "$_id.year", value: "$totalProducts" } },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          data: {
+            $concatArrays: [
+              allYears.map((year) => ({ year, value: 0 })),
+              "$data",
+            ],
+          },
+        },
+      },
+      { $unwind: "$data" },
+      {
+        $group: {
+          _id: "$data.year",
+          value: { $max: "$data.value" },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+      {
+        $project: {
+          label: "$_id",
+          value: 1,
+          _id: 0,
+        },
+      },
+    ];
+
+    // monthly
+    const pastMonths = Array.from({ length: 12 }, (_, i) => {
+      let month = currentMonth - i;
+      let year = currentYear;
+      if (month <= 0) {
+        month += 12;
+        year -= 1;
+      }
+      return { year, month };
+    }).reverse();
+
+    const monthlyPipeline = [
+      {
+        $match: {
+          orderStatus: "Delivered",
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: { $toDate: "$createdAt" } },
+            month: { $month: { $toDate: "$createdAt" } },
+          },
+          totalProducts: { $sum: { $ifNull: ["$quantity", 0] } },
+        },
+      },
+      {
+        $sort: { "_id.year": 1, "_id.month": 1 },
+      },
+      {
+        $group: {
+          _id: null,
+          data: {
+            $push: {
+              year: "$_id.year",
+              month: "$_id.month",
+              value: "$totalProducts",
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          data: {
+            $concatArrays: [
+              pastMonths.map(({ year, month }) => ({ year, month, value: 0 })),
+              "$data",
+            ],
+          },
+        },
+      },
+      { $unwind: "$data" },
+      {
+        $group: {
+          _id: { year: "$data.year", month: "$data.month" },
+          value: { $max: "$data.value" },
+        },
+      },
+      {
+        $sort: { "_id.year": 1, "_id.month": 1 },
+      },
+      {
+        $project: {
+          label: {
+            $concat: [
+              {
+                $cond: { if: { $lt: ["$_id.month", 10] }, then: "0", else: "" },
+              },
+              { $toString: "$_id.month" },
+              "-",
+              { $toString: "$_id.year" },
+            ],
+          }, // Formats as "MM-YYYY"
+          value: 1,
+          _id: 0,
+        },
+      },
+    ];
+
+    // weekly
+    const pastWeeks = Array.from({ length: 12 }, (_, i) => {
+      let week = currentWeek - i;
+      let year = currentYear;
+      if (week <= 0) {
+        year -= 1;
+        week += 52;
+      }
+      return { year, week };
+    }).reverse();
+
+    const weeklyPipeline = [
+      {
+        $match: {
+          orderStatus: "Delivered",
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: { $toDate: "$createdAt" } },
+            week: { $isoWeek: { $toDate: "$createdAt" } },
+          },
+          totalProducts: { $sum: { $ifNull: ["$quantity", 0] } },
+        },
+      },
+      {
+        $sort: { "_id.year": 1, "_id.week": 1 },
+      },
+      {
+        $group: {
+          _id: null,
+          data: {
+            $push: {
+              year: "$_id.year",
+              week: "$_id.week",
+              value: "$totalProducts",
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          data: {
+            $concatArrays: [
+              pastWeeks.map(({ year, week }) => ({ year, week, value: 0 })),
+              "$data",
+            ],
+          },
+        },
+      },
+      { $unwind: "$data" },
+      {
+        $group: {
+          _id: { year: "$data.year", week: "$data.week" },
+          value: { $max: "$data.value" },
+        },
+      },
+      {
+        $sort: { "_id.year": 1, "_id.week": 1 },
+      },
+      {
+        $project: {
+          label: {
+            $concat: [
+              { $toString: "$_id.year" },
+              "-W",
+              {
+                $cond: { if: { $lt: ["$_id.week", 10] }, then: "0", else: "" },
+              },
+              { $toString: "$_id.week" },
+            ],
+          },
+          value: 1,
+          _id: 0,
+        },
+      },
+    ];
+
+    let result;
+
+    switch (period) {
+      case "yearly":
+        result = await OrderItem.aggregate(yearlyPipeline);
+        break;
+
+      case "monthly":
+        result = await OrderItem.aggregate(monthlyPipeline);
+        break;
+
+      case "weekly":
+        result = await OrderItem.aggregate(weeklyPipeline);
+        break;
+
+      default:
+        return res.status(400).json({
+          error: "Invalid period. Choose from yearly, monthly, or weekly.",
+        });
+    }
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+
+exports.getTopSellingData = async (req, res, next) => {
+  try {
+
+    const bestSellingProductsPipeline = [
+      {
+        $group: {
+          _id: "$productId",
+          orderCount: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { orderCount: -1 }
+      },
+      {
+        $limit: 5
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "_id",
+          as: "productDetails"
+        }
+      },
+      {
+        $unwind: "$productDetails"
+      },
+      {
+        $project: {
+          _id: 0,
+          productId: "$_id",
+          name: "$productDetails.productName",
+        }
+      }
+    ];
+
+    const topCategoriesPipeline = [
+      {
+        $lookup: {
+          from: "products",
+          localField: "productId",
+          foreignField: "_id",
+          as: "productDetails"
+        }
+      },
+      {
+        $unwind: "$productDetails" 
+      },
+      {
+        $group: {
+          _id: {$toObjectId: "$productDetails.categoryId"} ,
+          orderCount: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { orderCount: -1 } 
+      },
+      {
+        $limit: 5 
+      },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "_id",
+          foreignField: "_id",
+          as: "categoryDetails"
+        }
+      },
+      {
+        $unwind: "$categoryDetails"
+      },
+      {
+        $project: {
+          _id: 0,
+          categoryId: "$_id",
+          name: "$categoryDetails.categoryName",
+          orderCount: 1
+        }
+      }
+    ];
+
+    const bestSellingBrandsPipeline = [
+      {
+        $lookup: {
+          from: "products", 
+          localField: "productId",
+          foreignField: "_id",
+          as: "productDetails"
+        }
+      },
+      {
+        $unwind: "$productDetails" 
+      },
+      {
+        $group: {
+          _id: "$productDetails.brand", 
+          orderCount: { $sum: 1 } 
+        }
+      },
+      {
+        $sort: { orderCount: -1 } 
+      },
+      {
+        $limit: 5 
+      },
+      {
+        $project: {
+          _id: 0,
+          name: "$_id",
+          orderCount: 1
+        }
+      }
+    ];
+    
+    const [bestSellingBrands, topCategories, bestSellingProducts] = await Promise.all([
+      OrderItem.aggregate(bestSellingBrandsPipeline),
+      OrderItem.aggregate(topCategoriesPipeline),
+      OrderItem.aggregate(bestSellingProductsPipeline)
+    ])
+
+
+    res.status(200).json({bestSellingBrands, topCategories, bestSellingProducts});
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
 // -----user management start------
 // render user management page
 exports.getUserManagementPage = async (req, res) => {
@@ -1383,6 +1780,17 @@ exports.updateOrderStatus = async (req, res) => {
 
     order.orderStatus = status;
 
+    const modifiedOrderItems = await OrderItem.updateMany(
+      { orderId: order._id },
+      { $set: { orderStatus: status } }
+    );
+
+    if (modifiedOrderItems.modifiedCount === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Order items not found" });
+    }
+
     if (status === "Delivered") {
       order.deliveryDate = new Date();
       const strOrderId = String(order._id);
@@ -1836,7 +2244,7 @@ exports.downloadSalesReportExcel = async (req, res) => {
         cell.fill = {
           type: "pattern",
           pattern: "solid",
-          fgColor: { argb: "28A745" }, 
+          fgColor: { argb: "28A745" },
         };
         cell.alignment = { horizontal: "center", vertical: "middle" };
         cell.border = {

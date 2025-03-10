@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Panel</title>
+    <link rel="stylesheet" href="/styles/adminPages/dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <%- include("../partials/adminHead") %>
   </head>
@@ -16,9 +18,57 @@
       <!-- Navbar -->
       <%- include("../partials/adminHeader") %>
 
-      <div class="main-content"></div>
+      <div class="main-content">
+
+        <div class="chart-container">
+          <div class="sales-header">
+            <span>Sales Overview</span>
+            <select id="timeFilter">
+              <option value="yearly">Yearly</option>
+              <option value="monthly">Monthly</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
+
+          <div class="line-chart">
+            <canvas id="myChart"></canvas>
+          </div>
+        </div>
+
+        <div class="best-selling-container">
+          <!-- Card 1 -->
+          <div class="card">
+              <div class="card-body">
+                  <h5 class="card-title">Best selling product</h5>
+                  <ul class="list-group list-group-flush" id="bestSellingProducts">
+                  </ul>
+              </div>
+          </div>
+  
+          <!-- Card 2 -->
+          <div class="card">
+              <div class="card-body">
+                  <h5 class="card-title">Best selling category</h5>
+                  <ul class="list-group list-group-flush" id="bestSellingCategory">
+                  </ul>
+              </div>
+          </div>
+  
+          <!-- Card 3 -->
+          <div class="card">
+              <div class="card-body">
+                  <h5 class="card-title">Best selling Brands</h5>
+                  <ul class="list-group list-group-flush" id="bestSellingBrands">
+                  </ul>
+              </div>
+          </div>
+      </div>
+
+
+      </div>
     </div>
 
     <%- include("../partials/adminFooter") %>
+    <script src="/javascripts/admin/dashboard.js"></script>
   </body>
 </html>

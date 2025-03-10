@@ -10,6 +10,8 @@ const router = express.Router()
 
 
 router.get('/', isAdminLogin, adminController.getDashboard)
+router.get('/chart-data', adminController.getChartData)
+router.get('/top-selling', adminController.getTopSellingData)
 // user management start
 // -- isAdminLogin will come here
 router.get('/users', isAdminLogin, adminController.getUserManagementPage)
