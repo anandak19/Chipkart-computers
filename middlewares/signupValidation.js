@@ -12,8 +12,6 @@ const signupValidations = async (req, res, next) => {
   try {
     let { name, phoneNumber, email, password, confirmPassword } = req.body;
 
-    console.log("body from signup form", req.body)
-
     // validate each entered input data 
     const alertMessage =
       (validateName(name)) ||
@@ -32,7 +30,9 @@ const signupValidations = async (req, res, next) => {
     password = await bcrypt.hash(password, 10);
 
     // save the user to database 
-    const savedUser = await createNewUser(name, email, phoneNumber, password, false)
+    const referralCode = req.cookies.referralCode;
+    console.log("referal code got in signup validation", referralCode)
+    const savedUser = await createNewUser(name, email, phoneNumber, password, false, referralCode)
     req.user = savedUser
     // ------write this code in the startOtpvarifiction 
     // req.session.userEmail = email;

@@ -426,7 +426,7 @@ exports.getCheckoutPage = async (req, res) => {
     if (cart) {
       const userCart = await CartSchema.findOne({ userId });
 
-      if (!cart || userCart?.products.length === 0) {
+      if (!cart || userCart?.products.length === 0 || !userCart) {
         return res.redirect("/cart");
       }
 

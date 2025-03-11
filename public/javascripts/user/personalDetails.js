@@ -8,12 +8,15 @@ const phoneNumberError = document.getElementById("phoneNumberError");
 const dobError = document.getElementById("dobError");
 const serverError = document.getElementById("serverError");
 // btns
+const referralLinkBtn = document.getElementById("referralLink");
 const editBtn = document.getElementById("editBtn");
 const detailsSaveBtn = document.getElementById("detailsSaveBtn");
 // regex
 const nameRegex = /^[a-zA-Z\s]+$/;
 const phoneNumberRegex = /^(\+\d{1,3}[- ]?)?\d{10,13}$/;
 const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[^\s]{4,}$/;
+
+let referralLink;
 
 // get users details and show
 const getUserDetails = () => {
@@ -37,6 +40,7 @@ const getUserDetails = () => {
       email.value = data.email;
       phoneNumber.value = data.phoneNumber || null;
       dob.value = data.dob || null;
+      referralLink = `${data.baseUrl}?ref=${data.referralCode}`;
     })
     .catch((error) => {
       console.error("Error fetching user details:", error);
@@ -50,6 +54,20 @@ editBtn.addEventListener("click", () => {
   dob.removeAttribute("readonly");
   detailsSaveBtn.style.display = "flex";
 });
+
+// on clicking copy referal link button
+referralLinkBtn.addEventListener("click", () => {
+  navigator.clipboard
+    .writeText(referralLink)
+    .then(() => {
+      toastr.success("Copied to clipboard")
+    })
+    .catch((err) => {
+      toastr.error("Faild to copy")
+      console.error("Failed to copy text: ", err);
+    });
+});
+
 
 // on submitting updated personal details
 personalDetailsForm.addEventListener("submit", (e) => {
@@ -111,7 +129,7 @@ personalDetailsForm.addEventListener("submit", (e) => {
         }
       })
       .catch((error) => {
-        alert("Somthing went wrong")
+        alert("Somthing went wrong");
         console.error("Fetch error:", error);
         serverError.innerText = "Network error. Please try again!";
       });
@@ -197,7 +215,7 @@ const savePassword = async () => {
 
 passwordForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  await savePassword()
+  await savePassword();
 });
 
-savePassBtn.addEventListener("click", savePassword)
+savePassBtn.addEventListener("click", savePassword);

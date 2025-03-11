@@ -41,7 +41,7 @@ router.get('/products/:id/related', validateProduct, userController.getRelatedPr
 // get top category images 
 router.get('/category/top', userController.getTopCategories)
 // add to wishlist
-router.get('/account/wishlist', userController.getWishListPage)
+router.get('/account/wishlist', isLogin, userController.getWishListPage)
 router.get('/wishlist/count', userController.getWishlistCount)
 router.get('/account/wishlist/all', varifyLoginUserSession, userController.getWishlistItems)
 router.post('/products/wishlist/add/:id', varifyLoginUserSession, validateProduct, userController.addWishlist)
@@ -91,7 +91,7 @@ router.get('/account/coupons', userAccountController.getCoupons)
 router.get('/account/coupons/all', varifyLoginUserSession, userAccountController.getAllUserCoupons)
 
 // ORDER BASED ROUTES
-router.get('/cart',  userOrderController.getCartPage)// isLogin,
+router.get('/cart', isLogin,  userOrderController.getCartPage)
 router.get('/cart/all', varifyLoginUserSession, userOrderController.getCartItems)
 router.get('/cart/total', varifyLoginUserSession, userOrderController.getCartTotal)
 // send products id in the body

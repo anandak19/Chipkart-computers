@@ -21,10 +21,8 @@ const sendEmailToUser = (to, html, subject) => {
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        console.log("Error sending email in email js", error);
         return reject(error);
       } else {
-        console.log("Email send to user", info.response);
         return resolve(info.response);
       }
     });

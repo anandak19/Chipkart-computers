@@ -3,14 +3,14 @@ const path = require("path");
 const session = require("express-session");
 const flash = require("connect-flash");
 const cors = require("cors");
-const MongoStore = require("connect-mongo")
-const mongoose = require("mongoose")
+const MongoStore = require("connect-mongo");
+const mongoose = require("mongoose");
 const passport = require("passport");
-const cookieParser = require('cookie-parser')
+const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 require("dotenv").config();
-const {errorHandler} = require("./middlewares/errorHandler")
+const { errorHandler } = require("./middlewares/errorHandler");
 
 const app = express();
 //cache controle
@@ -36,29 +36,26 @@ app.set("views", path.join(__dirname, "views"));
 
 app.use(cookieParser());
 app.use((req, res, next) => {
-  let sessionName = 'userSession'
-  if(req.path.startsWith("/admin")) {
-    sessionName = "adminSession"
+  let sessionName = "userSession";
+  if (req.path.startsWith("/admin")) {
+    sessionName = "adminSession";
   }
 
-    session({
-      name: sessionName,
-      secret: "chipkart-computers",
-      resave: false,
-      saveUninitialized: false,
-      store: MongoStore.create({
-        mongoUrl: process.env.MONGO_URI,
-        collectionName: "sessions",
-        stringify: false
-      }),
-      cookie: {
-        maxAge: 24 * 60 * 60 * 1000,
-      },
-    })(req, res, next)
-})
-
-
-
+  session({
+    name: sessionName,
+    secret: "chipkart-computers",
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+      collectionName: "sessions",
+      stringify: false,
+    }),
+    cookie: {
+      maxAge: 24 * 60 * 60 * 1000,
+    },
+  })(req, res, next);
+});
 
 // google auth ---
 app.use(passport.initialize());
@@ -72,7 +69,6 @@ passport.use(
       callbackURL: "http://localhost:3000/auth/google/callback",
     },
     (_accessToken, _refreshToken, profile, done) => {
-      console.log(profile);
       return done(null, profile);
     }
   )
@@ -96,6 +92,6 @@ app.use("/admin", adminRoutes);
 app.use("/", userRoutes);
 app.use("/", authRoutes);
 
-app.use(errorHandler)
+app.use(errorHandler);
 
 module.exports = app;

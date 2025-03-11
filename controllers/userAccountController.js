@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const ejs = require("ejs");
 const puppeteer = require("puppeteer");
 const path = require("path");
+require('dotenv').config()
 
 const Order = require("../models/Order");
 const AddressSchema = require("../models/Address");
@@ -46,12 +47,15 @@ exports.getUserDetails = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    console.log(process.env.BASE_URL)
     res.status(200).json({
       id: user._id,
       name: user.name,
       email: user.email,
       phoneNumber: user.phoneNumber,
       dob: user.dob,
+      referralCode: user.referralCode,
+      baseUrl: process.env.BASE_URL
     });
   } catch (error) {
     console.error("Error fetching user details:", error);

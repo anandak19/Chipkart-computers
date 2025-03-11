@@ -7,17 +7,29 @@ const createNewUser = async (
   email,
   phoneNumber = null,
   password = null,
-  isVerified = false
+  isVerified = false,
+  referralCode = null
 ) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
+
+    let referrer
+    if (referralCode) {
+      referrer = await Users.findOne({ referralCode });
+      console.log("referer", referrer)
+      if (!referrer) {
+        throw new Error("Invalid Referral Link");
+      }
+    }
+
     const newUser = new Users({
       name,
       phoneNumber,
       email,
       password,
       isVerified,
+      refBy: referrer ? referrer._id : null 
     });
     const savedUser = await newUser.save({ session });
 

@@ -2,6 +2,7 @@ const CategoriesSchema = require("../models/Category");
 const ProductSchema = require("../models/Product");
 const UserReviewsSchema = require("../models/UserReview");
 const mongoose = require("mongoose");
+require('dotenv').config()
 const { calculateAverageRating } = require("../utils/helper");
 const {
   getProductWithFinalPrice,
@@ -12,6 +13,17 @@ const Users = require("../models/User");
 const { ObjectId } = require("mongoose").Types;
 
 exports.getHome = (req, res) => {
+
+  const referralCode = req.query.ref; 
+  if (referralCode) {
+    console.log("Saving the referal code: ", referralCode)
+    res.cookie("referralCode", referralCode, {
+      maxAge: 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production"
+    })
+  }
+
   res.render("user/home");
 };
 

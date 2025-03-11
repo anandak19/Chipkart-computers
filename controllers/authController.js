@@ -2,8 +2,8 @@ const UserSchema = require("../models/User");
 const { sendEmailToUser } = require("../utils/email");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
-const mongoose = require('mongoose')
-const Session = mongoose.connection.collection('sessions')
+const mongoose = require("mongoose");
+const Session = mongoose.connection.collection("sessions");
 const { validatePassword } = require("../utils/validations");
 const logoutUser = require("../utils/logoutUser");
 const { createNewUser } = require("../utils/userHelpers");
@@ -69,13 +69,12 @@ exports.startOtpVerification = async (req, res) => {
       id: user._id,
       name: user.name,
     };
-    req.session.cookieName = 'userSession'
+    req.session.cookieName = "userSession";
     // remove the below code later
     req.session.userEmail = req.user.email;
     req.session.isVerified = false;
     req.session.userId = req.user._id;
     req.session.isLogin = true;
-    
 
     return res.status(200).json({
       status: "success",
@@ -174,33 +173,46 @@ exports.registerGoogleUser = async (req, res) => {
 
     const email = profile.emails[0].value;
     const name = profile.displayName;
-    console.log(email, name);
 
-    // check if the user exists, if not create one 
+    // check if the user exists, if not create one
     let user = await UserSchema.findOne({ email });
     if (!user) {
-      // create new user and create a wallet for user 
-      user = await createNewUser(name, email, undefined, undefined, true)
-      console.log("New user saved to the database:", user);
+      // create new user and create a wallet for user
+      const referralCode = req.cookies.referralCode;
+
+      console.log("referal code got in google ref", referralCode);
+      user = await createNewUser(
+        name,
+        email,
+        undefined,
+        undefined,
+        true,
+        referralCode
+      );
     }
 
-    // to identify each each sessions in db 
+    // to identify each each sessions in db
     req.session.userId = user._id.toString();
 
-    const sessionUser = await Session.findOne({"session.userId": req.session.userId});
-    console.log(sessionUser);
+    const sessionUser = await Session.findOne({
+      "session.userId": req.session.userId,
+    });
 
-    // if user is blockd 
-    if(user.isBlocked) {
-      res.cookie('errorMessage', `You are being blocked for the reason: ${user.blockReason}`, {
-        maxAge: 9000, 
-        httpOnly: true
-      });
+    // if user is blockd
+    if (user.isBlocked) {
+      res.cookie(
+        "errorMessage",
+        `You are being blocked for the reason: ${user.blockReason}`,
+        {
+          maxAge: 9000,
+          httpOnly: true,
+        }
+      );
 
       await Session.deleteMany({ "session.userId": req.session.userId });
       console.log("Sessions deleted due to block.");
 
-      req.session.destroy(err => {
+      req.session.destroy((err) => {
         if (err) {
           console.error("Error destroying session:", err);
         } else {
@@ -208,9 +220,8 @@ exports.registerGoogleUser = async (req, res) => {
         }
       });
 
-      return res.redirect('/login');
+      return res.redirect("/login");
     }
-
 
     req.session.user = {
       email: user.email,
@@ -235,7 +246,7 @@ exports.getUserLogin = (req, res) => {
   if (req.session.isLogin || req.isAuthenticated()) {
     res.redirect("/");
   } else {
-    req.session.isLogin = false
+    req.session.isLogin = false;
     const errorMessage = req.cookies.errorMessage || req.flash("errorMessage");
     res.clearCookie("errorMessage");
     res.render("user/auth/login", {
@@ -280,9 +291,8 @@ exports.postUserLogin = async (req, res) => {
       });
     }
 
-
-    // check if the user is blocked 
-    if(user.isBlocked) {
+    // check if the user is blocked
+    if (user.isBlocked) {
       return res.status(400).json({
         success: false,
         message: `Your are being blocked for the reason: ${user.blockReason}`,
@@ -291,7 +301,7 @@ exports.postUserLogin = async (req, res) => {
 
     req.session.user = {
       email: user.email,
-      id: user._id, 
+      id: user._id,
       name: user.name,
     };
     req.session.isLogin = true;
@@ -413,7 +423,7 @@ exports.postForgotPassword = async (req, res) => {
 
     await sendEmailToUser(user.email, html, "Reset Password", resetLink);
 
-    req.session.passwordResetSuccess = false
+    req.session.passwordResetSuccess = false;
     req.session.isPasswordUpdated = false;
     res
       .status(200)
@@ -491,7 +501,7 @@ exports.postNewPassword = async (req, res) => {
 
     await user.save();
 
-    req.session.passwordResetSuccess = true
+    req.session.passwordResetSuccess = true;
 
     res.status(200).json({ message: "Password saved succesfully" });
   } catch (error) {

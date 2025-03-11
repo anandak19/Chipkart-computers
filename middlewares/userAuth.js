@@ -100,9 +100,10 @@ const isLogout = (req, res, next) => {
 const varifyLoginUserSession = async (req, res, next) => {
   try {
     const loggedInUser = req.session.user
-    if (!loggedInUser) {
-      res.status(400).json({error: "Please Login First", redirect: true})
+    if (!req.session.isLogin && !loggedInUser) {
+      return res.status(400).json({error: "Please Login First", redirect: true})
     }
+
     const user = await User.findById(loggedInUser.id)
 
     if (!user) {
