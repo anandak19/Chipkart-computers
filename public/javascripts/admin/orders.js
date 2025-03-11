@@ -118,6 +118,16 @@ const getOrders = async (page = 0, search = "") => {
 document.addEventListener("DOMContentLoaded", getOrders);
 
 
+prevBtn.addEventListener('click', () => {
+  page--
+  getOrders(page)
+})
+
+nextBtn.addEventListener('click', () => {
+  page++
+  getOrders(page)
+})
+
 // working 
 // searchForm.addEventListener('submit', (e) => {
 //     e.preventDefault()

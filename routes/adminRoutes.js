@@ -81,6 +81,7 @@ router.post('/orders/update-status', adminController.updateOrderStatus)
 // render the sales report page 
 router.get('/reports', isAdminLogin, adminController.getSalesReport)
 router.get('/reports/data', adminController.fetchSalesReportData)
+router.get('/reports/orders', adminController.fetchAllOrders)
 router.get('/reports/data/dowload/pdf', adminController.downloadSalesReportPdf)
 router.get('/reports/data/dowload/excel', adminController.downloadSalesReportExcel)
 // REPORTS END

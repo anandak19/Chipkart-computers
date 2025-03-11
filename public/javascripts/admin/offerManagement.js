@@ -20,7 +20,7 @@ const showOffers = (offers) => {
                   <td>${offer.discount}</td>
                   <td>${formatDate(offer.startDate)}</td>
                   <td>${formatDate(offer.endDate)}</td>
-                  <td>${offer.target}</td>
+                  <td>${offer.offerTarget}</td>
                   <td>${offer.isActive ? "Yes" : "No"}</td>
                   <td>
                       <a href="/admin/offers/edit/${

@@ -1082,6 +1082,11 @@ exports.toggleListCategory = async (req, res) => {
       return res.status(404).send("Category not found.");
     }
 
+    const updatedProducts = await Product.updateMany(
+      {categoryId},
+      {isListed: !category.isListed}
+    )
+
     category.isListed = !category.isListed;
     await category.save();
 
@@ -2055,53 +2060,23 @@ exports.fetchSalesReportData = async (req, res, next) => {
   }
 };
 
-// SAMPLE CODE FOR LEARNING
-exports.downloadSalesReportPdf1 = async (req, res) => {
+exports.fetchAllOrders = async (req, res, next) => {
   try {
-    const salesData = [
-      { product: "Laptop", quantity: 2, price: 1000, total: 2000 },
-      { product: "Mouse", quantity: 5, price: 20, total: 100 },
-      { product: "Keyboard", quantity: 3, price: 50, total: 150 },
-    ];
+    const startDate = req.session.startDate;
+    const endDate = req.session.endDate;
+    const page = req.query.page
 
-    // Render EJS Template
-    const templatePath = path.join(
-      __dirname,
-      "../views/admin/reports/salesReportPdf.ejs"
-    );
-    const html = await ejs.renderFile(templatePath, {
-      sales: salesData,
-      reportDate: new Date().toLocaleDateString(),
-    });
+    const allOrders = await getAllOrdersDetails(startDate, endDate, page, true);
 
-    console.log("Generated HTML successfully!");
-
-    // Launch Puppeteer
-    const browser = await puppeteer.launch({
-      executablePath: puppeteer.executablePath(),
-      headless: "new",
-      args: ["--no-sandbox"],
-    });
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "load" });
-
-    // Generate PDF (No Local Saving)
-    const pdfBuffer = await page.pdf({ format: "A4", printBackground: true });
-
-    await browser.close();
-
-    // Send PDF to Client
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      'attachment; filename="sales-report.pdf"'
-    );
-    res.end(pdfBuffer); // Correctly sends binary data
+    console.log(allOrders)
+    
   } catch (error) {
-    console.error("Error generating PDF:", error);
-    res.status(500).send("Error generating PDF");
+    console.log(error);
+    next(error);
   }
-};
+}
+
+
 
 exports.downloadSalesReportPdf = async (req, res) => {
   try {

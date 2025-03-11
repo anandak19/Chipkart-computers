@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const crypto = require("crypto")
 
 const { Schema } = mongoose;
 
@@ -16,11 +17,22 @@ const UsersSchema = new Schema({
   isAdmin: { type: Boolean, required: true, default: false  },
   resetPasswordToken : { type: String, default: null },
   resetPasswordExpires : { type: Date, default: null },
+
+  isFirstOrderDone: { type: Boolean, default: false  },
+  refBy:{ type: mongoose.Schema.Types.ObjectId, ref: "Users", default: null},
+  referralCode: {type: String, unique: true}
 },
 {
   timestamps: true,
 }
 );
+
+UsersSchema.pre("save", function (next) {
+  if (!this.referralCode) {
+    this.referralCode = crypto.randomBytes(10).toString("hex")
+  }
+  next()
+})
 
 const Users = mongoose.model("Users", UsersSchema);
 

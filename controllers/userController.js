@@ -254,7 +254,8 @@ exports.getAvailableProducts2 = async (req, res) => {
 
     const filters = { isListed: true };
     const sort = {};
-    let pipeline = [];
+    let pipeline = [
+    ];
 
     let { isFeatured, isNew } = req.query;
     isFeatured = isFeatured === "true";
@@ -367,8 +368,8 @@ exports.getAvailableProducts2 = async (req, res) => {
       });
     }
 
-    // add wishlist true if product is wishlisted 
-    const userId = req.session?.user?.id || null
+    // add wishlist true if product is wishlisted
+    const userId = req.session?.user?.id || null;
     if (userId) {
       const userId = req.session.user.id;
       pipeline.push(
@@ -393,11 +394,11 @@ exports.getAvailableProducts2 = async (req, res) => {
         },
         {
           $addFields: {
-            isWishlisted: { $gt: [{ $size: "$wishlistData" }, 0] }
-          }
+            isWishlisted: { $gt: [{ $size: "$wishlistData" }, 0] },
+          },
         },
         {
-            $project: { wishlistData: 0 } 
+          $project: { wishlistData: 0 },
         }
       );
     }
@@ -440,9 +441,12 @@ exports.getProductDetailsPage = async (req, res) => {
     const product = await getProductWithFinalPrice(productId);
 
     product.isWishlisted = false;
-    const userId = req.session?.user?.id || null
+    const userId = req.session?.user?.id || null;
     if (userId) {
-      const wishlistItem = await WishlistItems.findOne({productId, userId: req.session.user.id})
+      const wishlistItem = await WishlistItems.findOne({
+        productId,
+        userId: req.session.user.id,
+      });
       if (wishlistItem) {
         product.isWishlisted = true;
       }
@@ -685,30 +689,29 @@ exports.getTopCategories = async (req, res, next) => {
 
 exports.getWishListPage = (req, res) => {
   res.render("user/account/wishlist");
-}
+};
 
-exports.getWishlistCount = async(req, res, next) => {
-try {
-  const loggedInUser = req.session.user;
-  if (!loggedInUser) {
-    return res.status(200).json({ count: 0 });
+exports.getWishlistCount = async (req, res, next) => {
+  try {
+    const loggedInUser = req.session.user;
+    if (!loggedInUser) {
+      return res.status(200).json({ count: 0 });
+    }
+
+    const wishlist = await WishlistItems.find({ userId: loggedInUser.id });
+
+    if (!wishlist) {
+      return res.status(200).json({ count: 0 });
+    }
+
+    const itemCount = wishlist.length;
+
+    return res.status(200).json({ count: itemCount });
+  } catch (error) {
+    console.log(error);
+    next(error);
   }
-
-  const wishlist = await WishlistItems.find({ userId: loggedInUser.id });
-
-  if (!wishlist) {
-    return res.status(200).json({ count: 0 });
-  }
-
-  const itemCount = wishlist.length;
-
-  return res.status(200).json({ count: itemCount });
-  
-} catch (error) {
-  console.log(error);
-  next(error);
-}
-}
+};
 
 exports.addWishlist = async (req, res, next) => {
   try {
@@ -718,10 +721,13 @@ exports.addWishlist = async (req, res, next) => {
       return res.status(400).json({ error: "Error geting user or product" });
     }
 
-    const existingItem = await WishlistItems.findOne({userId, productId})
+    const existingItem = await WishlistItems.findOne({ userId, productId });
 
-    if (existingItem) { 
-      const deletedItem = await WishlistItems.findOneAndDelete({userId, productId})
+    if (existingItem) {
+      const deletedItem = await WishlistItems.findOneAndDelete({
+        userId,
+        productId,
+      });
       return res.status(200).json({ message: "Item removed from wishlist" });
     }
 
@@ -742,7 +748,7 @@ exports.addWishlist = async (req, res, next) => {
     console.log(error);
     next(error);
   }
-}
+};
 
 exports.getWishlistItems = async (req, res, next) => {
   try {
@@ -780,7 +786,8 @@ exports.getWishlistItems = async (req, res, next) => {
       },
       {
         $project: { productDetails: 0 },
-      },addFinalPriceStage,
+      },
+      addFinalPriceStage,
       {
         $facet: {
           paginatedResult: [{ $skip: skip }, { $limit: limit }],
