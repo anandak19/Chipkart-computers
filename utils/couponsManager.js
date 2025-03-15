@@ -9,8 +9,10 @@ const addUserCoupon = async (orderId, session) => {
       throw new Error("Order ID is required");
     }
 
+    console.log("order id of current order from coupon", orderId)
     const order = await Order.findById(orderId).session(session);
-
+    console.log("the actual order", order)
+ 
     if (!order) {
       throw new Error("Order not found");
     }

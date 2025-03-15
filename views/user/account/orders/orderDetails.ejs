@@ -50,12 +50,11 @@
                           %>
                         </p>
 
-
                         <% if (!orderDetails.isCancelled ) { %>
-                          <button class="invoiceBtn" onclick="generateInvoice()">Download Invoice</button>
-                        <% } %>
-
-                        <% if (!orderDetails.isCancelled &&
+                        <button class="invoiceBtn" onclick="generateInvoice()">
+                          Download Invoice
+                        </button>
+                        <% } %> <% if (!orderDetails.isCancelled &&
                         orderDetails.orderStatus !== 'Delivered') { %>
                         <button
                           class="btn btn-danger btn-sm mt-2"
@@ -75,10 +74,11 @@
                         <button
                           class="btn btn-warning btn-sm"
                           id="returnBtn"
-                          onclick="returnProduct()"
-                        >
+                          onclick="returnProduct()" >
                           Return a Product
                         </button>
+                        <% } else if(orderDetails.orderStatus === 'Pending') { %>
+                        <button class="btn btn-warning btn-sm mt-2">Retry Payment</button>
                         <% } %>
                       </div>
                     </div>
@@ -137,10 +137,10 @@
                           orderDetails.paymentMethod %>
                         </p>
                         <% if (orderDetails.paymentMethod === 'Online') { %>
-                          <p>
-                            <label>Razorpay Method:</label> <%=
-                            orderDetails.razorpayPaymentMethod %>
-                          </p>
+                        <p>
+                          <label>Razorpay Method:</label> <%=
+                          orderDetails.razorpayPaymentMethod %>
+                        </p>
                         <% } %>
                         <p>
                           <label>Payment Status:</label>
@@ -178,7 +178,11 @@
                   </div>
                 </div>
 
-                <div class="container-fluid mt-4" style="padding-left: 0" id="couponDiv">
+                <div
+                  class="container-fluid mt-4"
+                  style="padding-left: 0"
+                  id="couponDiv"
+                >
                   <!-- <div class="coupon-strip">
                     <p>You got <span>20%</span> Off Coupon in this order</p>
                     <small>Coupon Will be credited at the time of delivery</small>
@@ -242,21 +246,25 @@
     <%- include("../../../partials/userFooter") %>
     <script>
       const orderMessage = "<%= orderMessage %>";
+      const orderErrorMessage = "<%= orderErrorMessage %>";
       const couponMessage = "<%= couponMessage %>";
 
       if (orderMessage) {
         toastr.success(orderMessage);
       }
 
+      if (orderErrorMessage) {
+        toastr.error(orderErrorMessage, "Error", {
+          closeButton: true,
+          timeOut: 5000,
+        });
+      }
+
       if (couponMessage) {
-        toastr.success(
-          couponMessage,
-          "Success",
-          {
-            closeButton: true,
-            timeOut: 5000,
-          }
-        );
+        toastr.success(couponMessage, "Success", {
+          closeButton: true,
+          timeOut: 5000,
+        });
       }
     </script>
     <script src="/javascripts/user/orderDetails.js"></script>

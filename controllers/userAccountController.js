@@ -476,16 +476,19 @@ exports.getOrderDetaillsPage = async (req, res) => {
 
     req.session.ordId = orderDetails._id;
     const orderMessage = req.session.orderMessage || null;
+    const orderErrorMessage = req.session.orderErrorMessage || null;
     const couponMessage = req.session.couponMessage || null;
 
     delete req.session.orderMessage;
     delete req.session.couponMessage;
+    delete req.session.orderErrorMessage ;
 
     res.render("user/account/orders/orderDetails", {
       currentPage: "orders",
       orderDetails,
       orderMessage,
       couponMessage,
+      orderErrorMessage
     });
   } catch (error) {
     console.log(error);

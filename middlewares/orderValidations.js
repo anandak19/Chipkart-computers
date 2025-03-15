@@ -35,8 +35,6 @@ const compareOrderItems = async (req, res, next) => {
       // validate each item quantity and avialability of items
       const products = await checkProductsAvailability(cart);
       req.cart = cart;
-      console.log("Selected cart", cart);
-      console.log("All products available:", products);
     }
     
     return next();

@@ -8,7 +8,6 @@ const payableAmount = document.getElementById("payableAmount");
 
 const couponForm = document.getElementById("couponForm");
 
-
 const removeCouponBtn = document.querySelector(".remove-coupon");
 const placeOrderBtn = document.getElementById("placeOrderBtn");
 
@@ -122,6 +121,7 @@ const getTotalPayable = async () => {
   }
 };
 
+// to remove the applied coupon
 removeCouponBtn.addEventListener("click", async () => {
   try {
     const res = await fetch("/checkout/remove-coupon", {
@@ -135,7 +135,7 @@ removeCouponBtn.addEventListener("click", async () => {
 
       couponOffer.innerText = ``;
       removeCouponBtn.style.display = "none";
-      couponForm.reset()
+      couponForm.reset();
     } else {
       toastr.warning(result.error || "Somthing went wrong");
     }
@@ -209,15 +209,96 @@ const placeOrderWithCod = async (paymentMethod) => {
   }
 };
 
+// const placeOrderWithOnline = async (paymentMethod) => {
+//   console.log("✅ placeOrderWithOnline() function called");
+//   try {
+//     const res = await fetch("/checkout/create-order", {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//     });
+//     console.log("✅ API Call Made to /checkout/create-order");
+//     const result = await res.json();
+//     console.log("resutl", result);
+//     if (res.ok) {
+//       const { order } = result;
+
+//       const options = {
+//         key: "rzp_test_ZiDJEpnShu93LF",
+//         amount: order.amount,
+//         currency: "INR",
+//         name: "Chipkart",
+//         description: "Razorpay payment for chipkart computers",
+//         order_id: order.id,
+//         handler: async function (response) {
+//           console.log(response);
+
+//           if (!response.razorpay_payment_id) return;
+
+//           try {
+
+//             const varificationRes = await fetch("/checkout/varify-payment", {
+//               method: "POST",
+//               headers: { "Content-Type": "application/json" },
+//               body: JSON.stringify(response),
+//             });
+
+//             const varificationResult = await varificationRes.json();
+
+//             if (varificationRes.ok) {
+//               placeOrderBtn.disabled = true;
+//               toastr.success(varificationResult.message);
+//               placeOrderBtn.textContent = "Order Placed";
+//               window.location.href = varificationResult.redirectUrl;
+//             } else {
+//               placeOrderBtn.disabled = false;
+//               placeOrderBtn.textContent = "Place The Order";
+//               toastr.error(varificationResult.error);
+//             }
+//           } catch (error) {
+//             console.error("Error verifying payment:", error);
+//             toastr.error("Something went wrong. Please try again.");
+//           }
+//         },
+
+//         modal: {
+//           ondismiss: function () {
+//             alert("payment faild of cancelled");
+//           },
+//         },
+
+//       };
+
+//       var rzp = new Razorpay(options);
+
+//       rzp.open();
+
+//       rzp.on("payment.failed", function (response) {
+//         alert(`Payment Failed! Reason: ${response.error.description}`);
+//       });
+
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     alert("Error placing order on razorpay");
+//   }
+// };
+
+// copy
+
 const placeOrderWithOnline = async (paymentMethod) => {
+
+  let redirectUrl = "";
+
   try {
     const res = await fetch("/checkout/create-order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
     });
-    console.log("response of razrpy", res);
+    console.log("✅ API Call Made to /checkout/create-order");
+
     const result = await res.json();
     console.log("resutl", result);
+
     if (res.ok) {
       const { order } = result;
 
@@ -229,42 +310,83 @@ const placeOrderWithOnline = async (paymentMethod) => {
         description: "Razorpay payment for chipkart computers",
         order_id: order.id,
         handler: async function (response) {
-          console.log(response);
+          if (!response.razorpay_payment_id) return;
 
           try {
             const varificationRes = await fetch("/checkout/varify-payment", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(response),
+              body: JSON.stringify({ ...response, success: true }),
             });
 
             const varificationResult = await varificationRes.json();
 
             if (varificationRes.ok) {
+              redirectUrl = varificationResult.redirectUrl; 
               placeOrderBtn.disabled = true;
               toastr.success(varificationResult.message);
               placeOrderBtn.textContent = "Order Placed";
-              window.location.href = varificationResult.redirectUrl;
+              window.location.href = redirectUrl;
             } else {
               placeOrderBtn.disabled = false;
               placeOrderBtn.textContent = "Place The Order";
-              toastr.error(varificationResult.error);
+              toastr.error(varificationResult.message);
             }
           } catch (error) {
             console.error("Error verifying payment:", error);
             toastr.error("Something went wrong. Please try again.");
           }
         },
+
+        modal: {
+          ondismiss: function () {
+            console.warn("Payment popup closed by user");
+            if (redirectUrl) {
+              window.location.href = redirectUrl;
+            } else {
+              alert("Payment process cancelled. Please try again.");
+            }
+          },
+        },
       };
 
       var rzp = new Razorpay(options);
       rzp.open();
+
+      let isFailedPaymentCalled = false;
+
+      rzp.on("payment.failed", async function (response) {
+        if (isFailedPaymentCalled) return;
+        isFailedPaymentCalled = true;
+        console.log("payment faild");
+        console.log("faidl respp", response);
+
+        console.log(response.error);
+        const varificationRes = await fetch("/checkout/varify-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            razorpay_payment_id: response.error.metadata.payment_id,
+            razorpay_order_id: response.error.metadata.order_id,
+            success: false,
+          }),
+        });
+
+        const varificationResult = await varificationRes.json();
+        alert(varificationResult.message);
+        redirectUrl = varificationResult.redirectUrl;
+      });
+
     }
   } catch (error) {
     console.error(error);
     alert("Error placing order on razorpay");
   }
 };
+
+
+// e commerce transaction - on
+// after hosting make it off
 
 // method to place the order
 placeOrderBtn.addEventListener("click", async () => {

@@ -22,21 +22,25 @@ const OrderSchema = new Schema(
       default: "Pending",
       trim: true,
     },
-    razorpayPaymentId: { type: String, default: null },
+
     paymentMethod: {
       type: String,
       required: true,
       enum: ["COD", "Online"],
       trim: true,
     },
-    razorpayPaymentMethod: { type: String, default: null },
+
+    razorpayPaymentId: { type: String, required: false },
+    razorpayOrderId: { type: String, required: false },
+    razorpayPaymentMethod: { type: String, required: false },
     appliedCoupon: { type: String, default: null },
     orderStatus: {
       type: String,
-      enum: ["Ordered", "Shipped", "Delivered", "Cancelled"],
-      default: "Ordered",
+      enum: [ "Pending", "Ordered", "Shipped", "Delivered", "Cancelled"],
+      default: "Pending",
       trim: true,
     },
+
     isCancelled: { type: Boolean, default: false },
     cancelReason: { type: String, default: null },
     deliveryDate: { type: Date, default: null },

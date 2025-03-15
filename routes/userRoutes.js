@@ -120,4 +120,4 @@ router.post('/checkout/varify-payment', varifyLoginUserSession, compareOrderItem
 
 router.get('/checkout/address/new', userOrderController.getAddAnotherAddressPage)
 
-module.exports = router
+module.exports = router 

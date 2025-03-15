@@ -537,7 +537,7 @@ exports.removeAppliedCoupon = async (req, res, next) => {
 
     userCoupon.isRedeemed = false;
     req.session.appliedCouponId = null;
-    await userCoupon.save()
+    await userCoupon.save();
 
     res.status(200).json({ message: "Coupon removed" });
   } catch (error) {
@@ -618,7 +618,9 @@ exports.placeOrder = async (req, res) => {
 
     const checkoutData = await calculateCheckoutAmount(req);
     if (checkoutData.totalPayable > 5000) {
-      return res.status(400).json({ error: "Orders above ₹5000 are not allowed for COD " });
+      return res
+        .status(400)
+        .json({ error: "Orders above ₹5000 are not allowed for COD " });
     }
 
     // get address id , default address or address choosed from session
@@ -759,7 +761,6 @@ exports.createRazorypayOrder = async (req, res) => {
     };
 
     const order = await razorpay.orders.create(options);
-    console.log("razors replay", order);
     await session.commitTransaction();
     res.status(200).json({ order });
   } catch (error) {
@@ -771,37 +772,144 @@ exports.createRazorypayOrder = async (req, res) => {
   }
 };
 
+// varify payment
+// create the order / if payment is sucess place the order
 exports.varifyPayment = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
-      req.body;
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      success,
+    } = req.body;
+    console.log(req.body);
     const cart = req.cart;
     const userId = req.user._id;
-    console.log(req.body);
 
-    const response = await razorpay.payments.fetch(razorpay_payment_id);
+    let redirectUrl;
+    let isPaymentSuccess = false;
 
-    if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid payment details received" });
+    let responseStatus = 400;
+    let responseMessage = "Payment failed!";
+
+    // init "currentOrder"
+    let currentOrder;
+    const razorpayResponse = await razorpay.payments.fetch(razorpay_payment_id);
+
+    if (success) {
+      // 1. varify the order with the generated key and given key
+      // Generate expected signature
+      const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
+      hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
+      const expectedSignature = hmac.digest("hex");
+
+      if (expectedSignature !== "razorpay_signature") {
+        console.log("Payment Verification Failed!");
+      } else {
+        isPaymentSuccess = true;
+        responseStatus = 200;
+        responseMessage = "Payment successful";
+      }
     }
 
-    // Generate expected signature
-    const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
-    hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
-    const expectedSignature = hmac.digest("hex");
+    // from the orders database check if their is a order with razorpay_order_id exists
+    console.log(razorpay_order_id);
+    currentOrder = await OrderSchema.findOne({
+      razorpayOrderId: razorpay_order_id,
+    });
+    console.log("the current order is", currentOrder);
 
-    if (expectedSignature === razorpay_signature) {
-      console.log("Payment Verified Successfully!");
-
+    // new order create
+    if (!currentOrder) {
+      console.log("no order detected");
       const checkoutData = await calculateCheckoutAmount(req);
       const addressId = await getDeliveryAddress(req);
 
-      // decrese product from db
+      // if not create a new order (include razorpay_order_id) and order items as pending status - save each order items to db
+      const newOrder = new OrderSchema({
+        userId,
+        addressId,
+        totalAmount: checkoutData.total,
+        shippingFee: checkoutData.shippingFee,
+        discount: checkoutData.discountApplied,
+        totalPayable: checkoutData.totalPayable,
+        paymentStatus: isPaymentSuccess ? "Paid" : "Pending",
+        paymentMethod: "Online",
+        razorpayPaymentMethod: razorpayResponse.method,
+
+        orderStatus: isPaymentSuccess ? "Ordered" : "Pending",
+        razorpayPaymentId: success ? razorpay_payment_id : null,
+        razorpayOrderId: razorpay_order_id,
+      });
+
+      currentOrder = await newOrder.save({ session });
+      console.log("new order created", currentOrder);
+
+      // if order creation faild 
+      if (!currentOrder) {
+        await session.abortTransaction();
+        return res.status(400).json({ error: "Faild to place order" });
+      }
+
+      // create new order item(s) and save to db
+      if (req.session.cartCheckout) {
+        // get cart items with calculated final price
+        const cartItemsDetails = await getUserCartItems(userId);
+        // create each order items with follwing field
+        const orderItems = cartItemsDetails.map((item) => ({
+          orderId: currentOrder._id,
+          productName: item.productName,
+          mrp: item.mrp,
+          discount: item.discount,
+          image: item.image,
+          quantity: item.quantity,
+          finalPrice: item.finalPrice,
+          subTotalPrice: item.subTotalPrice,
+          productId: item.productId,
+          orderStatus: isPaymentSuccess ? "Ordered" : "Pending",
+        }));
+
+        // save all order items from cart to db
+        const insertedOrderItems = await OrderItem.insertMany(orderItems, {
+          session,
+        });
+
+        // check if all items in the order where inserted to db
+        if (insertedOrderItems.length !== orderItems.length) {
+          await session.abortTransaction();
+          throw new Error("Not all order items were added");
+        }
+
+        // delete old cart
+        await CartSchema.deleteOne({ userId }, { session });
+      } else if (req.session.checkoutProductId) {
+        const newOrderItem = new OrderItem({
+          orderId: currentOrder._id,
+          productName: cart[0].productName,
+          mrp: cart[0].mrp,
+          discount: cart[0].discount,
+          image: cart[0].images[0],
+          quantity: 1,
+          finalPrice: checkoutData.total,
+          subTotalPrice: checkoutData.total,
+          productId: cart[0]._id,
+          orderStatus: isPaymentSuccess ? "Ordered" : "Pending",
+        });
+
+        await newOrderItem.save({ session });
+      }
+      console.log("order items created");
+    }
+
+    redirectUrl = `/account/orders/all/ord/${currentOrder._id}`;
+    req.session.orderErrorMessage = "Please Retry payment";
+
+    if (isPaymentSuccess) {
+      // decrease the quantity of items from the db
+      // decrese product from db - cart products if car/ selected products
       if (req.session.cartCheckout) {
         for (const item of cart.products) {
           const updatedProduct = await decreaseProductQuantity(
@@ -821,102 +929,38 @@ exports.varifyPayment = async (req, res) => {
           1,
           session
         );
+
         if (!updatedProduct) {
           throw new Error(`Product is not available`);
         }
+
+
       }
 
-      // create new order
-      const newOrder = new OrderSchema({
-        userId,
-        addressId,
-        totalAmount: checkoutData.total,
-        shippingFee: checkoutData.shippingFee,
-        discount: checkoutData.discountApplied,
-        totalPayable: checkoutData.totalPayable,
-        paymentStatus: "Paid",
-        paymentMethod: "Online",
-        razorpayPaymentMethod: response.method,
-        razorpayPaymentId: razorpay_payment_id,
-      });
+      const couponDiscount = await addUserCoupon(currentOrder._id, session);
 
-      req.session.appliedCouponId = null;
-      const order = await newOrder.save({ session });
-      if (!order) {
-        await session.abortTransaction();
-        return res.status(400).json({ error: "Faild to place order" });
-      }
-
-      // save order items, if cart-save cart items and delete the cart, if product-save product to orderItems
-      if (req.session.cartCheckout) {
-        // get cart items with calculated final price
-        const cartItemsDetails = await getUserCartItems(userId);
-        console.log("order item details", cartItemsDetails);
-        console.log("one order item ", cartItemsDetails[0]);
-        // create each order items with follwing field
-        const orderItems = cartItemsDetails.map((item) => ({
-          orderId: order._id,
-
-          productName: item.productName,
-          mrp: item.mrp,
-          discount: item.discount,
-          image: item.image,
-          quantity: item.quantity,
-          finalPrice: item.finalPrice,
-          subTotalPrice: item.subTotalPrice,
-          productId: item.productId,
-        }));
-        console.log("modifid order items", orderItems);
-
-        const insertedOrderItems = await OrderItem.insertMany(orderItems, {
-          session,
-        });
-
-        // check if all items in the order where inserted to db
-        if (insertedOrderItems.length !== orderItems.length) {
-          await session.abortTransaction();
-          throw new Error("Not all order items were added");
-        }
-
-        // delete old cart
-        await CartSchema.deleteOne({ userId }, { session });
-      } else if (req.session.checkoutProductId) {
-        console.log("single item", cart);
-        const newOrderItem = new OrderItem({
-          orderId: order._id,
-          productName: cart[0].productName,
-          mrp: cart[0].mrp,
-          discount: cart[0].discount,
-          image: cart[0].images[0],
-          quantity: 1,
-          finalPrice: checkoutData.total,
-          subTotalPrice: checkoutData.total,
-          productId: cart[0]._id,
-        });
-
-        await newOrderItem.save({ session });
-      }
-
-      const couponDiscount = await addUserCoupon(order._id, session);
-
-      const redirectUrl = `/account/orders/all/ord/${order._id}`;
       req.session.orderMessage = `Order Placed Successfully`;
+
       if (couponDiscount) {
         req.session.couponMessage = `Congratulations! You will get a new coupon in this order`;
       }
 
-      await session.commitTransaction();
-
-      res
-        .status(200)
-        .json({ message: "Order Placed Successfully", redirectUrl });
-    } else {
-      console.log("Payment Verification Failed!");
-      await session.abortTransaction();
-      res
-        .status(400)
-        .json({ success: false, message: "Payment verification failed!" });
+      responseMessage = "Order Placed Successfully";
+      responseStatus = 200;
+    
     }
+
+    await session.commitTransaction();
+    return res
+      .status(responseStatus)
+      .json({ message: responseMessage, redirectUrl: redirectUrl || null });
+
+    // -------------------------------------------- end of new logic ------------------------------------------
+
+    // if success = false
+    // return the error message with OrderId for rediring the user to order summary page for retry the payment
+
+    // internal server errors
   } catch (error) {
     console.error(error);
     await session.abortTransaction();
