@@ -166,7 +166,7 @@ cancelOrderForm.addEventListener("submit", async (e) => {
   }
 });
 
-// return an item
+// return an item page
 function returnProduct() {
   window.location.href = "/account/orders/all/ord/items/return";
 }
@@ -188,3 +188,102 @@ async function generateInvoice() {
     }, 3000);
   }
 }
+
+const retryPayBtn = document.getElementById("retryPayBtn");
+
+retryPayBtn.addEventListener("click", async () => {
+  let isPaidSuccessfully = false;
+  try {
+    const res = await fetch("/account/orders/all/ord/payment/retry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const result = await res.json();
+
+    if (res.ok) {
+      console.log("ok res from raxor")
+      const { order } = result;
+
+      const options = {
+        key: "rzp_test_ZiDJEpnShu93LF",
+        amount: order.amount,
+        currency: "INR",
+        name: "Chipkart",
+        description: "Razorpay payment for chipkart computers",
+        order_id: order.id,
+        handler: async function (response) {
+          if (!response.razorpay_payment_id) return;
+
+          try {
+            const varificationRes = await fetch(
+              "/account/orders/all/ord/payment/varify",
+              {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...response, success: true }),
+              }
+            );
+
+            const varificationResult = await varificationRes.json();
+
+            if (varificationRes.ok) {
+              isPaidSuccessfully = true;
+              alert(varificationResult.message)
+              location.reload();
+            } else {
+              toastr.error(varificationResult.message);
+            }
+          } catch (error) {
+            console.error("Error verifying payment:", error);
+            toastr.error("Something went wrong. Please try again.");
+          }
+        },
+
+        modal: {
+          ondismiss: function () {
+            console.warn("Payment popup closed by user");
+            if (isPaidSuccessfully) {
+              console.log("reload the page")
+              location.reload();
+            } else {
+              alert("Payment process cancelled. Please try again.");
+            }
+          },
+        },
+      };
+
+      var rzp = new Razorpay(options);
+      rzp.open();
+
+      let isFailedPaymentCalled = false;
+
+      rzp.on("payment.failed", async function (response) {
+        if (isFailedPaymentCalled) return;
+        isFailedPaymentCalled = true;
+        console.log("payment faild");
+        console.log("faidl respp", response);
+
+        console.log(response.error);
+        const varificationRes = await fetch(
+          "/account/orders/all/ord/payment/varify",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_payment_id: response.error.metadata.payment_id,
+              razorpay_order_id: response.error.metadata.order_id,
+              success: false,
+            }),
+          }
+        );
+
+        const varificationResult = await varificationRes.json();
+        alert(varificationResult.message);
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Error placing order on razorpay");
+  }
+});

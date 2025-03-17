@@ -56,7 +56,7 @@ router.post('/account/user/password', userAccountController.postChangePassword)
 
 
 // user address 
-router.get('/account/address', isLogin, userAccountController.getAddresses) 
+router.get('/account/address', isLogin, userAccountController.getAddresses)
 router.get('/account/address/all', varifyLoginUserSession, userAccountController.getUsersAllAddress)
 router.get('/account/address/new', isLogin, userAccountController.getAddressForm)
 router.post('/account/address/new', varifyLoginUserSession, validateAddressFields, userAccountController.addAddress)
@@ -75,6 +75,12 @@ router.get('/account/orders/all/ord/:id', userAccountController.getOrderDetaills
 router.get('/account/orders/all/ord/info/address', userAccountController.getDeliveryInfo)
 router.get('/account/orders/all/ord/info/rewards', userAccountController.getRewards)
 router.get('/account/orders/all/ord/invoice/download', userAccountController.downloadInvoice)
+// retry payment 
+
+// --- not tested 
+router.post('/account/orders/all/ord/payment/retry', userAccountController.createRetryPaymentOrder)
+router.patch('/account/orders/all/ord/payment/varify', userAccountController.varifyRetryPayment)
+
 // updated
 
 router.get('/account/orders/all/ord/info/itemes', userAccountController.getOrderItems)

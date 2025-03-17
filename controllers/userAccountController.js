@@ -3,7 +3,8 @@ const bcrypt = require("bcrypt");
 const ejs = require("ejs");
 const puppeteer = require("puppeteer");
 const path = require("path");
-require('dotenv').config()
+const crypto = require("crypto");
+require("dotenv").config();
 
 const Order = require("../models/Order");
 const AddressSchema = require("../models/Address");
@@ -27,6 +28,9 @@ const {
 } = require("../utils/validations");
 const Wallet = require("../models/Wallet");
 const WalletTransaction = require("../models/WalletTransaction");
+const { decreaseProductQuantity } = require("../utils/productQtyManagement");
+const { addUserCoupon } = require("../utils/couponsManager");
+const { razorpay } = require("../config/razorpay");
 
 // make a session validate middleware later that sends json response
 
@@ -47,7 +51,7 @@ exports.getUserDetails = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    console.log(process.env.BASE_URL)
+    console.log(process.env.BASE_URL);
     res.status(200).json({
       id: user._id,
       name: user.name,
@@ -55,7 +59,7 @@ exports.getUserDetails = async (req, res) => {
       phoneNumber: user.phoneNumber,
       dob: user.dob,
       referralCode: user.referralCode,
-      baseUrl: process.env.BASE_URL
+      baseUrl: process.env.BASE_URL,
     });
   } catch (error) {
     console.error("Error fetching user details:", error);
@@ -481,14 +485,14 @@ exports.getOrderDetaillsPage = async (req, res) => {
 
     delete req.session.orderMessage;
     delete req.session.couponMessage;
-    delete req.session.orderErrorMessage ;
+    delete req.session.orderErrorMessage;
 
     res.render("user/account/orders/orderDetails", {
       currentPage: "orders",
       orderDetails,
       orderMessage,
       couponMessage,
-      orderErrorMessage
+      orderErrorMessage,
     });
   } catch (error) {
     console.log(error);
@@ -593,7 +597,7 @@ exports.downloadInvoice = async (req, res, next) => {
     if (!orderId) {
       return res.status(400).json({ error: "Session expired" });
     }
-    const orderDetails = await getFullOrderDetails(orderId)
+    const orderDetails = await getFullOrderDetails(orderId);
 
     // Render EJS Template
     const templatePath = path.join(
@@ -622,14 +626,146 @@ exports.downloadInvoice = async (req, res, next) => {
 
     // Send PDF to Client
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      'attachment; filename="invoice.pdf"'
-    );
+    res.setHeader("Content-Disposition", 'attachment; filename="invoice.pdf"');
     res.end(pdfBuffer); // Correctly sends binary data
   } catch (error) {
     console.error("Error generating invoice:", error);
     res.status(500).send("Error generating Invoice");
+  }
+};
+
+exports.createRetryPaymentOrder = async (req, res, next) => {
+  try {
+    const orderId = req.session.ordId;
+    if (!orderId) {
+      return res.status(400).json({ error: "Session expired" });
+    }
+    const selectedOrder = await Order.findById(orderId);
+    if (!selectedOrder) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // if amount is paid, return error 
+    if (selectedOrder.paymentStatus === "Paid") {
+      return res.status(400).json({ error: "Already Paid" });
+    }
+
+    // create razorpay order with amount 
+    const options = {
+      amount: selectedOrder.totalPayable * 100,
+      currency: "INR",
+      receipt: `order_rcptid_${Date.now()}`,
+    };
+    const order = await razorpay.orders.create(options);
+
+    res.status(200).json({ order });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+exports.varifyRetryPayment = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      success,
+    } = req.body;
+
+    let responseStatus = 400;
+    let responseMessage = "Payment failed!";
+    let couponMessage;
+    console.log("varify start")
+
+    const orderId = req.session.ordId;
+    if (!orderId) {
+      console.log("could not find order id")
+      await session.abortTransaction();
+      return res.status(400).json({ error: "Session expired" });
+    }
+
+    // get the order 
+    const selectedOrder = await Order.findById(orderId).session(session);
+    if (!selectedOrder) {
+      console.log("could not find order with id")
+      await session.abortTransaction();
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // get razorpay response on order 
+    const razorpayResponse = await razorpay.payments.fetch(razorpay_payment_id);
+
+    // if payment is success from frontend 
+    if (success) {
+      console.log("handling success payment")
+      // varify the signature 
+      const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
+      hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
+      const expectedSignature = hmac.digest("hex");
+
+      if (expectedSignature !== razorpay_signature) {
+        responseMessage = "Payment Verification Failed!";
+        console.log("could not match the signature")
+      } else {
+        console.log("Signature matched proceeding to place the order")
+
+        // if the payment is varified successfully 
+        responseStatus = 200;
+        responseMessage = "Payment successful";
+
+        // update order 
+        selectedOrder.orderStatus = "Ordered";
+        selectedOrder.paymentStatus = "Paid";
+        selectedOrder.razorpayPaymentMethod = razorpayResponse.method;
+        selectedOrder.razorpayPaymentId = razorpay_payment_id;
+        selectedOrder.razorpayOrderId = razorpay_order_id;
+
+        await selectedOrder.save({ session });
+
+        // Decrease product quantity from DB
+        const orderItems = await OrderItem.find({ orderId: selectedOrder._id }).session(session);
+
+        if (!orderItems || orderItems.length === 0) {
+          throw new Error("No order items found.");
+        }
+
+        for (const item of orderItems) {
+          item.orderStatus = "Ordered";
+          await item.save({ session });
+
+          const updatedProduct = await decreaseProductQuantity(
+            item.productId,
+            item.quantity,
+            session // Pass the session to ensure atomicity
+          );
+
+          if (!updatedProduct) {
+            throw new Error(`Product with ID ${item.productId} is not available`);
+          }
+        }
+
+        // Check and credit coupon to user
+        const couponDiscount = await addUserCoupon(selectedOrder._id, session);
+        if (couponDiscount) {
+          couponMessage = "Congratulations! You will get a new coupon in this order";
+        }
+      }
+    }
+
+    await session.commitTransaction();
+    return res
+      .status(responseStatus)
+      .json({ message: responseMessage, couponMessage: couponMessage || null });
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(500).json({ success: false, message: "Error verifying payment" });
+  } finally {
+    session.endSession();
   }
 };
 

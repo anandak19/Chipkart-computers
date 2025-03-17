@@ -610,6 +610,7 @@ exports.placeOrder = async (req, res) => {
     const userId = req.user._id;
     const { paymentMethod } = req.body;
     const cart = req.cart;
+    let isFirstOrder = false;
 
     // if no payment method is choosen
     if (!paymentMethod) {
@@ -646,6 +647,14 @@ exports.placeOrder = async (req, res) => {
       );
     }
 
+    // check if this is first order of referd user
+    const user = await UserSchema.findById(userId).session(session);
+    if (user && user.refBy && !user.isFirstOrderDone) {
+      isFirstOrder = true;
+      user.isFirstOrderDone = true;
+      await user.save({ session });
+    }
+
     // create new order
     const newOrder = new OrderSchema({
       userId,
@@ -656,9 +665,13 @@ exports.placeOrder = async (req, res) => {
       totalPayable: checkoutData.totalPayable,
       paymentStatus: "Pending",
       paymentMethod: "COD",
+      isFirstOrder: isFirstOrder,
     });
 
+    console.log("Actual order:", newOrder)
     const order = await newOrder.save({ session });
+    console.log("saved order:", order)
+
     if (!order) {
       await session.abortTransaction();
       return res.status(400).json({ error: "Faild to place order" });
@@ -716,6 +729,7 @@ exports.placeOrder = async (req, res) => {
 
     // check if the user got any discount coupon in this order
     const couponDiscount = await addUserCoupon(order._id, session);
+    console.log("order from outside",order)
 
     const redirectUrl = `/account/orders/all/ord/${order._id}`;
     req.session.orderMessage = `Order Placed Successfully`;
@@ -806,8 +820,8 @@ exports.varifyPayment = async (req, res) => {
       hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
       const expectedSignature = hmac.digest("hex");
 
-      if (expectedSignature !== "razorpay_signature") {
-        console.log("Payment Verification Failed!");
+      if (expectedSignature !== razorpay_signature) {
+        responseMessage = "Payment Verification Failed!";
       } else {
         isPaymentSuccess = true;
         responseStatus = 200;
@@ -828,6 +842,14 @@ exports.varifyPayment = async (req, res) => {
       const checkoutData = await calculateCheckoutAmount(req);
       const addressId = await getDeliveryAddress(req);
 
+      let isFirstOrder = false;
+      const user = await UserSchema.findById(userId).session(session);
+      if (user && user.refBy && !user.isFirstOrderDone) {
+        isFirstOrder = true;
+        user.isFirstOrderDone = true;
+        await user.save({ session });
+      }
+
       // if not create a new order (include razorpay_order_id) and order items as pending status - save each order items to db
       const newOrder = new OrderSchema({
         userId,
@@ -843,12 +865,13 @@ exports.varifyPayment = async (req, res) => {
         orderStatus: isPaymentSuccess ? "Ordered" : "Pending",
         razorpayPaymentId: success ? razorpay_payment_id : null,
         razorpayOrderId: razorpay_order_id,
+        isFirstOrder
       });
 
       currentOrder = await newOrder.save({ session });
       console.log("new order created", currentOrder);
 
-      // if order creation faild 
+      // if order creation faild
       if (!currentOrder) {
         await session.abortTransaction();
         return res.status(400).json({ error: "Faild to place order" });
@@ -933,13 +956,12 @@ exports.varifyPayment = async (req, res) => {
         if (!updatedProduct) {
           throw new Error(`Product is not available`);
         }
-
-
       }
 
       const couponDiscount = await addUserCoupon(currentOrder._id, session);
 
       req.session.orderMessage = `Order Placed Successfully`;
+      req.session.orderErrorMessage = null
 
       if (couponDiscount) {
         req.session.couponMessage = `Congratulations! You will get a new coupon in this order`;
@@ -947,7 +969,6 @@ exports.varifyPayment = async (req, res) => {
 
       responseMessage = "Order Placed Successfully";
       responseStatus = 200;
-    
     }
 
     await session.commitTransaction();

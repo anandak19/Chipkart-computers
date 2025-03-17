@@ -41,6 +41,7 @@ const OrderSchema = new Schema(
       trim: true,
     },
 
+    isFirstOrder: { type: Boolean, default: false },
     isCancelled: { type: Boolean, default: false },
     cancelReason: { type: String, default: null },
     deliveryDate: { type: Date, default: null },

@@ -78,7 +78,7 @@
                           Return a Product
                         </button>
                         <% } else if(orderDetails.orderStatus === 'Pending') { %>
-                        <button class="btn btn-warning btn-sm mt-2">Retry Payment</button>
+                        <button class="btn btn-warning btn-sm mt-2" id="retryPayBtn">Retry Payment</button>
                         <% } %>
                       </div>
                     </div>
@@ -244,6 +244,7 @@
     </div>
 
     <%- include("../../../partials/userFooter") %>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
       const orderMessage = "<%= orderMessage %>";
       const orderErrorMessage = "<%= orderErrorMessage %>";
