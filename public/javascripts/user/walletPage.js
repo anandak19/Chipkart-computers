@@ -22,15 +22,7 @@ const showTransactions = (transactions) => {
                 </div>
     
                 <div class="payment-type">
-                    <p>${
-                        trasaction.reason === 'orderCancel' ?
-                        `Order cancel`
-                        : trasaction.reason === 'itemReturn' ?
-                        `Item return`
-                        : trasaction.reason === 'refReward' ?
-                        `Referal reward`
-                        :`Wallet Payment`
-                    }</p>
+                    <p>${trasaction.reason}</p>
                 </div>
     
                 <div class="meta-data">

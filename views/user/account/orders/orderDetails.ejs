@@ -78,7 +78,9 @@
                           Return a Product
                         </button>
                         <% } else if(orderDetails.orderStatus === 'Pending') { %>
-                        <button class="btn btn-warning btn-sm mt-2" id="retryPayBtn">Retry Payment</button>
+                        <button class="btn btn-warning btn-sm mt-2" id="retryPayBtn">
+                          <%= orderDetails.paymentMethod === "Online" ? "Retry Payment" : "Pay Now" %>
+                        </button>
                         <% } %>
                       </div>
                     </div>

@@ -2,6 +2,7 @@ const {
   getOrderItemsDetails,
   cancelOrder,
   refundUserAmount,
+  creditReferalReward,
 } = require("../utils/orderManagement");
 const mongoose = require("mongoose");
 const { getCategories } = require("../utils/categoryHelpers");
@@ -1767,10 +1768,13 @@ exports.getAllOrders = async (req, res) => {
 };
 
 exports.updateOrderStatus = async (req, res) => {
+  const session = await mongoose.startSession()
+  session.startTransaction()
   try {
     const { orderId, status } = req.body;
     const validStatuses = ["Ordered", "Shipped", "Delivered"];
     if (!validStatuses.includes(status)) {
+      await session.abortTransaction(); 
       return res
         .status(400)
         .json({ success: false, message: "Invalid order status" });
@@ -1778,6 +1782,7 @@ exports.updateOrderStatus = async (req, res) => {
 
     const order = await OrderSchema.findById(orderId);
     if (!order) {
+      await session.abortTransaction();
       return res
         .status(404)
         .json({ success: false, message: "Order not found" });
@@ -1787,10 +1792,12 @@ exports.updateOrderStatus = async (req, res) => {
 
     const modifiedOrderItems = await OrderItem.updateMany(
       { orderId: order._id },
-      { $set: { orderStatus: status } }
+      { $set: { orderStatus: status } },
+      { session }
     );
 
     if (modifiedOrderItems.modifiedCount === 0) {
+      await session.abortTransaction();
       return res
         .status(400)
         .json({ success: false, message: "Order items not found" });
@@ -1799,21 +1806,29 @@ exports.updateOrderStatus = async (req, res) => {
     if (status === "Delivered") {
       order.deliveryDate = new Date();
       const strOrderId = String(order._id);
-      const userCoupon = await UserCoupon.findOne({ orderId: strOrderId });
+      const userCoupon = await UserCoupon.findOne({ orderId: strOrderId }).session(session);
       if (userCoupon) {
         userCoupon.isCredited = true;
-        await userCoupon.save();
+        await userCoupon.save({ session });
+      }
+
+      if(order.isFirstOrder) {
+        await creditReferalReward(order.userId, session);
       }
     }
 
-    await order.save();
+    await session.commitTransaction();
+    await order.save({session});
 
     res
       .status(200)
       .json({ success: true, message: "Order status updated successfully" });
   } catch (error) {
+    await session.abortTransaction();
     console.error("Error updating order status:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
+  }finally{
+    session.endSession();
   }
 };
 
@@ -1845,11 +1860,13 @@ exports.renderOrderDetailsPage = async (req, res) => {
 
 // get user detail with id
 exports.getUserDataAndDeliveryInfo = async (req, res) => {
+
   try {
     const orderId = req.session.orderId;
     if (!orderId) {
       return res.status(400).json({ error: "Session expired" });
     }
+
     const order = await OrderSchema.findById(orderId);
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
@@ -1931,7 +1948,7 @@ exports.approveReturnItem = async (req, res) => {
     const order = await Order.findById(orderItem.orderId);
     const userId = order.userId;
 
-    refundUserAmount(amount, userId, "itemReturn");
+    refundUserAmount(amount, userId, "Order Item Return");
 
     orderItem.isRefunded = true;
     await orderItem.save();

@@ -6,10 +6,9 @@ const Order = require("../models/Order");
 const WalletTransaction = require("../models/WalletTransaction");
 const OrderItem = require("../models/orderItem");
 
-const getOrderItemsDetails = async(orderId) => {
+const getOrderItemsDetails = async (orderId) => {
   try {
-
-    const orderObjectId = new mongoose.Types.ObjectId(orderId)
+    const orderObjectId = new mongoose.Types.ObjectId(orderId);
 
     const pipeline = [
       {
@@ -42,50 +41,60 @@ const getOrderItemsDetails = async(orderId) => {
     ];
 
     const productDetails = await OrderSchema.aggregate(pipeline);
-    return productDetails
+    return productDetails;
   } catch (error) {
     throw new Error(`Error fetching order items: ${error.message}`);
   }
 };
 
-
-const refundUserAmount = async(amount, userId, reason) => {
+const creditAmountToUser = async (amount, userId, reason, session = null) => {
   try {
-    const user = await Users.findById(userId)
-    if(!user) {
-      throw new Error('Error finding user')
+    const user = await Users.findById(userId).session(session);
+    if (!user) {
+      throw new Error("Error finding user");
     }
 
-    const userWallet = await Wallet.findOne({userId: user._id})
-
+    const userWallet = await Wallet.findOne({ userId: user._id }).session(session);
     if (!userWallet) {
-      throw new Error('Error finding users wallet')
+      throw new Error("Error finding user's wallet");
     }
 
-    userWallet.totalCredited += amount
-    userWallet.balanceLeft += amount
+    const walletUpdateResult = await Wallet.updateOne(
+      { userId: user._id },
+      { 
+        $inc: {
+          totalCredited: amount,
+          balanceLeft: amount,
+        }
+      },
+      { session }
+    );
 
-    const updatedWallet = await userWallet.save()
-
-    if (!updatedWallet) {
-      throw new Error("Error adding amount to wallet")
+    if (!walletUpdateResult.modifiedCount) {
+      throw new Error("Error adding amount to wallet");
     }
 
-    // update to trasactions 
+    // Add transaction entry
     const newWalletTransaction = new WalletTransaction({
       userId: user._id,
       userWalletId: userWallet._id,
       amount,
-      transactionType: 'credit',
+      transactionType: "credit",
       reason,
-    })
+    });
 
-    await newWalletTransaction.save()
-    
+    if (session) {
+      await newWalletTransaction.save({ session });
+    } else {
+      await newWalletTransaction.save();
+    }
+
   } catch (error) {
-    throw new Error('Internal error adding amount to wallet')
+    console.error(error);
+    throw new Error("Internal error adding amount to wallet");
   }
-}
+};
+
 
 const cancelOrder = async (orderId, cancelReason) => {
   try {
@@ -95,13 +104,17 @@ const cancelOrder = async (orderId, cancelReason) => {
       throw new Error(`Order not found`);
     }
 
-    if (orderDetails.orderStatus === 'Delivered') {
+    if (orderDetails.orderStatus === "Delivered") {
       res.status(400);
       throw new Error(`Order was already delivered`);
     }
 
-    if (orderDetails.paymentStatus === 'Paid') {
-      refundUserAmount(orderDetails.totalPayable, orderDetails.userId, 'orderCancel')
+    if (orderDetails.paymentStatus === "Paid") {
+      creditAmountToUser(
+        orderDetails.totalPayable,
+        orderDetails.userId,
+        "Order Cancelled"
+      );
     }
 
     orderDetails.isCancelled = true;
@@ -110,24 +123,25 @@ const cancelOrder = async (orderId, cancelReason) => {
     await orderDetails.save();
 
     const modifiedOrderItems = await OrderItem.updateMany(
-      { orderId: orderDetails._id }, 
+      { orderId: orderDetails._id },
       { $set: { orderStatus: "Cancelled" } }
-    )
+    );
 
     if (modifiedOrderItems.modifiedCount === 0) {
       res.status(400);
-      throw new Error("No order items were modified. They may already have the 'Cancelled' status.");
+      throw new Error(
+        "No order items were modified. They may already have the 'Cancelled' status."
+      );
     }
-    
   } catch (error) {
     res.status(500);
     throw new Error(`Error cancelling order`);
   }
-}
+};
 
 const getFullOrderDetails = async (orderId) => {
   try {
-    const orderObjectId = new mongoose.Types.ObjectId(orderId)
+    const orderObjectId = new mongoose.Types.ObjectId(orderId);
 
     const orderDetails = await Order.aggregate([
       {
@@ -135,8 +149,8 @@ const getFullOrderDetails = async (orderId) => {
       },
       {
         $addFields: {
-          addressId: {$toObjectId: "$addressId"}
-        }
+          addressId: { $toObjectId: "$addressId" },
+        },
       },
       {
         $lookup: {
@@ -151,21 +165,44 @@ const getFullOrderDetails = async (orderId) => {
       },
       {
         $lookup: {
-          from: 'orderitems',
-          localField: '_id',
-          foreignField: 'orderId',
-          as: 'orderItems'
-        }
-      }
-    ])
+          from: "orderitems",
+          localField: "_id",
+          foreignField: "orderId",
+          as: "orderItems",
+        },
+      },
+    ]);
 
-    const completeOrderDetails = orderDetails[0]
-    return completeOrderDetails
-    
+    const completeOrderDetails = orderDetails[0];
+    return completeOrderDetails;
   } catch (error) {
     throw new Error(`Error fetching order details`);
   }
-}
+};
 
+const creditReferalReward = async (refUserId, session) => {
+  try {
+    // find the user with id 
+    const refUser = await Users.findById(refUserId).session(session)
+    if (!refUser) {
+      const error = new Error(`Refered user not found`)
+      error.status = 404
+      throw error
+    }
 
-module.exports = { getOrderItemsDetails, cancelOrder, refundUserAmount, getFullOrderDetails };
+    await creditAmountToUser(150, refUser.refBy, "Referral Reward", session)
+    await creditAmountToUser( 50, refUser._id, "Refered joinee reward", session)
+
+  } catch (error) {
+    console.log(error);
+    throw new Error(`Error crediting referal reward`);
+  }
+};
+
+module.exports = {
+  getOrderItemsDetails,
+  cancelOrder,
+  creditAmountToUser,
+  getFullOrderDetails,
+  creditReferalReward
+};

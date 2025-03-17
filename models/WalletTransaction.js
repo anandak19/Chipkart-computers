@@ -20,9 +20,8 @@ const WalletTransactionSchema = new Schema(
       enum: ["credit", "debit"], 
       required: true
     }, 
-    reason: { 
+    reason: {
       type: String,
-      enum: ["orderCancel", "itemReturn", "refReward", "walletPay"],
       required: true
     },
     transactionId: {
