@@ -37,7 +37,7 @@ router.get('/categories/all', adminController.getCategories)
 router.post('/categories/toggle-listed/:id', adminController.toggleListCategory)
 router.get('/categories/edit/:id', adminController.getUpdateCategoryForm)
 router.post('/categories/edit', upload.single('image'), adminController.postUpdateCategoryForm)
-router.get('/categories/new', isAdminLogin,  adminController.getCategoryForm) // isAdminLogin,
+router.get('/categories/new', isAdminLogin,  adminController.getCategoryForm)
 router.post('/categories/new', upload.single('image'),  adminController.postCategoryForm)
 
 // offer management 

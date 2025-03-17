@@ -32,6 +32,8 @@ const CategoriesSchema = require("../models/Category");
 const ProductSchema = require("../models/Product");
 const OrderSchema = require("../models/Order");
 const AddressSchema = require("../models/Address");
+const cloudinary = require("../config/cloudinary");
+const { extractPublicId } = require("../utils/multer");
 
 exports.getDashboard = (req, res) => {
   res.render("admin/dashbord", {
@@ -308,41 +310,39 @@ exports.getChartData = async (req, res, next) => {
   }
 };
 
-
 exports.getTopSellingData = async (req, res, next) => {
   try {
-
     const bestSellingProductsPipeline = [
       {
         $group: {
           _id: "$productId",
-          orderCount: { $sum: 1 }
-        }
+          orderCount: { $sum: 1 },
+        },
       },
       {
-        $sort: { orderCount: -1 }
+        $sort: { orderCount: -1 },
       },
       {
-        $limit: 5
+        $limit: 5,
       },
       {
         $lookup: {
           from: "products",
           localField: "_id",
           foreignField: "_id",
-          as: "productDetails"
-        }
+          as: "productDetails",
+        },
       },
       {
-        $unwind: "$productDetails"
+        $unwind: "$productDetails",
       },
       {
         $project: {
           _id: 0,
           productId: "$_id",
           name: "$productDetails.productName",
-        }
-      }
+        },
+      },
     ];
 
     const topCategoriesPipeline = [
@@ -351,86 +351,88 @@ exports.getTopSellingData = async (req, res, next) => {
           from: "products",
           localField: "productId",
           foreignField: "_id",
-          as: "productDetails"
-        }
+          as: "productDetails",
+        },
       },
       {
-        $unwind: "$productDetails" 
+        $unwind: "$productDetails",
       },
       {
         $group: {
-          _id: {$toObjectId: "$productDetails.categoryId"} ,
-          orderCount: { $sum: 1 }
-        }
+          _id: { $toObjectId: "$productDetails.categoryId" },
+          orderCount: { $sum: 1 },
+        },
       },
       {
-        $sort: { orderCount: -1 } 
+        $sort: { orderCount: -1 },
       },
       {
-        $limit: 5 
+        $limit: 5,
       },
       {
         $lookup: {
           from: "categories",
           localField: "_id",
           foreignField: "_id",
-          as: "categoryDetails"
-        }
+          as: "categoryDetails",
+        },
       },
       {
-        $unwind: "$categoryDetails"
+        $unwind: "$categoryDetails",
       },
       {
         $project: {
           _id: 0,
           categoryId: "$_id",
           name: "$categoryDetails.categoryName",
-          orderCount: 1
-        }
-      }
+          orderCount: 1,
+        },
+      },
     ];
 
     const bestSellingBrandsPipeline = [
       {
         $lookup: {
-          from: "products", 
+          from: "products",
           localField: "productId",
           foreignField: "_id",
-          as: "productDetails"
-        }
+          as: "productDetails",
+        },
       },
       {
-        $unwind: "$productDetails" 
+        $unwind: "$productDetails",
       },
       {
         $group: {
-          _id: "$productDetails.brand", 
-          orderCount: { $sum: 1 } 
-        }
+          _id: "$productDetails.brand",
+          orderCount: { $sum: 1 },
+        },
       },
       {
-        $sort: { orderCount: -1 } 
+        $sort: { orderCount: -1 },
       },
       {
-        $limit: 5 
+        $limit: 5,
       },
       {
         $project: {
           _id: 0,
           name: "$_id",
-          orderCount: 1
-        }
-      }
+          orderCount: 1,
+        },
+      },
     ];
-    
-    const [bestSellingBrands, topCategories, bestSellingProducts] = await Promise.all([
-      OrderItem.aggregate(bestSellingBrandsPipeline),
-      OrderItem.aggregate(topCategoriesPipeline),
-      OrderItem.aggregate(bestSellingProductsPipeline)
-    ])
 
+    const [bestSellingBrands, topCategories, bestSellingProducts] =
+      await Promise.all([
+        OrderItem.aggregate(bestSellingBrandsPipeline),
+        OrderItem.aggregate(topCategoriesPipeline),
+        OrderItem.aggregate(bestSellingProductsPipeline),
+      ]);
 
-    res.status(200).json({bestSellingBrands, topCategories, bestSellingProducts});
+    res
+      .status(200)
+      .json({ bestSellingBrands, topCategories, bestSellingProducts });
   } catch (error) {
     console.log(error);
     next(error);
@@ -770,7 +772,25 @@ exports.addNewProduct = async (req, res) => {
       filepath: `/uploads/${file.filename}`,
       position: positions ? parseInt(positions[index], 10) : index + 1,
     }));
-    console.log(images);
+
+    const uploadResults = await Promise.all(
+      req.files.map((file, index) => {
+        return new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream({ folder: "product_images" }, (error, result) => {
+              if (error) reject(error);
+              else
+                resolve({
+                  filename: result.public_id,
+                  filepath: result.secure_url,
+                  position: index + 1,
+                });
+            })
+            .end(file.buffer);
+        });
+      })
+    );
+
 
     const newProduct = new ProductSchema({
       productName,
@@ -781,7 +801,7 @@ exports.addNewProduct = async (req, res) => {
       finalPrice,
       quantity,
       highlights,
-      images,
+      images: uploadResults,
     });
 
     await newProduct.save();
@@ -1054,14 +1074,23 @@ exports.postCategoryForm = async (req, res) => {
       return res.status(400).json({ error: "No image uploaded" });
     }
 
-    // save image to cloudinary
-
-    const imagePath = `/uploads/${req.file.filename}`;
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream({ folder: "category_images" }, (error, result) => {
+          if (error) reject(error);
+          else
+            resolve({
+              filename: result.public_id,
+              filepath: result.secure_url,
+            });
+        })
+        .end(req.file.buffer); 
+    });
 
     const newCategory = new CategoriesSchema({
       categoryName,
       isListed,
-      imagePath,
+      imagePath: result.filepath,
     });
 
     await newCategory.save();
@@ -1084,9 +1113,9 @@ exports.toggleListCategory = async (req, res) => {
     }
 
     const updatedProducts = await Product.updateMany(
-      {categoryId},
-      {isListed: !category.isListed}
-    )
+      { categoryId },
+      { isListed: !category.isListed }
+    );
 
     category.isListed = !category.isListed;
     await category.save();
@@ -1156,14 +1185,29 @@ exports.postUpdateCategoryForm = async (req, res) => {
     }
 
     let imagePath;
+    let result;
     if (req.file) {
-      imagePath = `/uploads/${req.file.filename}`;
+      result = await new Promise((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream({ folder: "category_images" }, (error, result) => {
+            if (error) reject(error);
+            else
+              resolve({
+                filename: result.public_id,
+                filepath: result.secure_url,
+              });
+          })
+          .end(req.file.buffer);
+      });
     }
 
     category.categoryName = categoryName || category.categoryName;
     category.isListed = isListed || category.isListed;
     if (req.file) {
-      category.imagePath = imagePath || category.imagePath;
+      const publicId = extractPublicId(category.imagePath);
+      console.log(publicId);
+      category.imagePath = result.filepath || category.imagePath;
+      await cloudinary.uploader.destroy(publicId);
     }
 
     await category.save();
@@ -1768,13 +1812,13 @@ exports.getAllOrders = async (req, res) => {
 };
 
 exports.updateOrderStatus = async (req, res) => {
-  const session = await mongoose.startSession()
-  session.startTransaction()
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     const { orderId, status } = req.body;
     const validStatuses = ["Ordered", "Shipped", "Delivered"];
     if (!validStatuses.includes(status)) {
-      await session.abortTransaction(); 
+      await session.abortTransaction();
       return res
         .status(400)
         .json({ success: false, message: "Invalid order status" });
@@ -1806,19 +1850,21 @@ exports.updateOrderStatus = async (req, res) => {
     if (status === "Delivered") {
       order.deliveryDate = new Date();
       const strOrderId = String(order._id);
-      const userCoupon = await UserCoupon.findOne({ orderId: strOrderId }).session(session);
+      const userCoupon = await UserCoupon.findOne({
+        orderId: strOrderId,
+      }).session(session);
       if (userCoupon) {
         userCoupon.isCredited = true;
         await userCoupon.save({ session });
       }
 
-      if(order.isFirstOrder) {
+      if (order.isFirstOrder) {
         await creditReferalReward(order.userId, session);
       }
     }
 
     await session.commitTransaction();
-    await order.save({session});
+    await order.save({ session });
 
     res
       .status(200)
@@ -1827,7 +1873,7 @@ exports.updateOrderStatus = async (req, res) => {
     await session.abortTransaction();
     console.error("Error updating order status:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
-  }finally{
+  } finally {
     session.endSession();
   }
 };
@@ -1860,7 +1906,6 @@ exports.renderOrderDetailsPage = async (req, res) => {
 
 // get user detail with id
 exports.getUserDataAndDeliveryInfo = async (req, res) => {
-
   try {
     const orderId = req.session.orderId;
     if (!orderId) {
@@ -2081,19 +2126,16 @@ exports.fetchAllOrders = async (req, res, next) => {
   try {
     const startDate = req.session.startDate;
     const endDate = req.session.endDate;
-    const page = req.query.page
+    const page = req.query.page;
 
     const allOrders = await getAllOrdersDetails(startDate, endDate, page, true);
 
-    console.log(allOrders)
-    
+    console.log(allOrders);
   } catch (error) {
     console.log(error);
     next(error);
   }
-}
-
-
+};
 
 exports.downloadSalesReportPdf = async (req, res) => {
   try {
