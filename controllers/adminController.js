@@ -791,7 +791,6 @@ exports.addNewProduct = async (req, res) => {
       })
     );
 
-
     const newProduct = new ProductSchema({
       productName,
       categoryId,
@@ -918,18 +917,21 @@ exports.postEditProductForm = async (req, res) => {
     // delete images code ---
     if (imageToDelete) {
       console.log(imageToDelete);
-      product.images.forEach((image, index) => {
-        const imageId = String(image._id);
-
-        if (imageToDelete.includes(imageId)) {
-          product.images[index].filepath = null;
-          product.images[index].filename = null;
-          console.log("one image deleted");
-        }
-      });
+    
+      await Promise.all(
+        product.images.map(async (image, index) => {
+          const imageId = String(image._id);
+    
+          if (imageToDelete.includes(imageId)) {
+            const publicId = extractPublicId(image.filepath);
+            product.images[index].filepath = null;
+            product.images[index].filename = null;
+            await cloudinary.uploader.destroy(publicId);
+          }
+        })
+      );
     }
-
-    let newImages = [];
+    
 
     // filter only number values and convert to Number type  - from positions
     if (positions) {
@@ -941,19 +943,27 @@ exports.postEditProductForm = async (req, res) => {
         .map((pos) => parseInt(pos));
     }
 
-    if (req.files && req.files.length > 0) {
-      console.log("updated images in req.files", req.files);
-      // Loop through the uploaded files and create new image objects
-      newImages = req.files.map((file, index) => ({
-        filename: file.filename,
-        filepath: `/uploads/${file.filename}`,
-        position: positions ? positions[index] : index + 1,
-      }));
-    }
+    let uploadResults = await Promise.all(
+      req.files.map((file, index) => {
+        return new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream({ folder: "product_images" }, (error, result) => {
+              if (error) reject(error);
+              else
+                resolve({
+                  filename: result.public_id,
+                  filepath: result.secure_url,
+                  position: positions ? positions[index] : index + 1,
+                });
+            })
+            .end(file.buffer);
+        });
+      })
+    );
 
     // updating images
     if (positions) {
-      newImages.forEach((newImage) => {
+      uploadResults.forEach((newImage) => {
         product.images.forEach((existingImage, index) => {
           if (newImage.position === existingImage.position) {
             product.images[index] = newImage;
@@ -1084,7 +1094,7 @@ exports.postCategoryForm = async (req, res) => {
               filepath: result.secure_url,
             });
         })
-        .end(req.file.buffer); 
+        .end(req.file.buffer);
     });
 
     const newCategory = new CategoriesSchema({
@@ -1184,7 +1194,6 @@ exports.postUpdateCategoryForm = async (req, res) => {
       });
     }
 
-    let imagePath;
     let result;
     if (req.file) {
       result = await new Promise((resolve, reject) => {
