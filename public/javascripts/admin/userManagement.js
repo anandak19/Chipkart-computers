@@ -17,15 +17,15 @@ const blockUser = (userId, userEmail) => {
   const resonError = document.getElementById("resonError");
   const resonSuccess = document.getElementById("resonSuccess");
 
+  // Clear previous data
   blockUserName.innerText = "";
   resonError.innerText = "";
   resonSuccess.innerText = "";
   dialog.style.display = "flex";
   blockUserName.innerText = userEmail;
-  console.log("started to block ", userEmail);
 
-  // when submiting the form
-  blockUserForm.addEventListener("submit", async (e) => {
+  // Define the submit handler as a named function for easy removal
+  async function submitHandler(e) {
     e.preventDefault();
 
     let isValid = true;
@@ -33,11 +33,10 @@ const blockUser = (userId, userEmail) => {
 
     if (!reason) {
       isValid = false;
-      resonError.innerText = "Enter a valid reson";
+      resonError.innerText = "Enter a valid reason";
     }
 
     if (isValid) {
-
       resonError.innerText = "";
 
       try {
@@ -64,14 +63,18 @@ const blockUser = (userId, userEmail) => {
         alert("Something went wrong. Please try again.");
       }
     }
-  });
+  }
 
-  // cancel the form 
+  blockUserForm.addEventListener("submit", submitHandler);
+
+  // Cancel button functionality
   cancelButton.addEventListener("click", () => {
     blockUserForm.reset();
+    blockUserForm.removeEventListener("submit", submitHandler);
     dialog.style.display = "none";
-  })
+  });
 };
+
 
 const unblockUser = async(userId) => {
   try {
@@ -120,7 +123,6 @@ const addEvents = () => {
 const showUsers = (users, totalUsers) => {
   userTable.innerHTML = "";
   if (users.length > 0 || totalUsers > 0) {
-    console.log(users);
     users.forEach((user, index) => {
       const row = document.createElement("tr");
 

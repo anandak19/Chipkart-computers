@@ -20,10 +20,7 @@
         <!-- search box and add new  -->
         <div class="manage-page">
           <div class="search-box">
-            <form
-              method="get"
-              class="search-form"
-            >
+            <form method="get" class="search-form">
               <input
                 type="search"
                 name="query"
@@ -56,28 +53,20 @@
               <th>Action</th>
             </tr>
           </thead>
-          <tbody  id="categoryTableBody">
-
-          </tbody>
+          <tbody id="categoryTableBody"></tbody>
         </table>
-
-        
 
         <!-- pagination  -->
         <div class="pagination">
-          <form action="/admin/categories" method="get" style="display: inline;">
-            <input type="hidden" name="page">
-            <button type="submit">Previous</button>
-          </form>
-      
-          <span>Page 1 of 1</span>
-      
-          <form action="/admin/categories" method="get" style="display: inline;">
-            <input type="hidden" name="page">
-            <button type="submit">Next</button>
-          </form>
+          <div class="pagination-btns">
+            <button class="prev-btn">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button class="next-btn">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
         </div>
-
       </div>
     </div>
 

@@ -1,7 +1,7 @@
 const {
   getOrderItemsDetails,
   cancelOrder,
-  refundUserAmount,
+  creditAmountToUser,
   creditReferalReward,
 } = require("../utils/orderManagement");
 const mongoose = require("mongoose");
@@ -34,6 +34,8 @@ const OrderSchema = require("../models/Order");
 const AddressSchema = require("../models/Address");
 const cloudinary = require("../config/cloudinary");
 const { extractPublicId } = require("../utils/multer");
+const CustomError = require("../utils/customError");
+const { STATUS_CODES } = require("../utils/constants");
 
 exports.getDashboard = (req, res) => {
   res.render("admin/dashbord", {
@@ -48,9 +50,10 @@ exports.getChartData = async (req, res, next) => {
     const validPeriods = ["yearly", "monthly", "weekly"];
 
     if (!validPeriods.includes(period)) {
-      return res.status(400).json({
-        error: "Invalid period. Choose from yearly, monthly, or weekly.",
-      });
+      throw new CustomError(
+        "Invalid period. Choose from yearly, monthly, or weekly.",
+        400
+      );
     }
 
     // declarations
@@ -298,14 +301,14 @@ exports.getChartData = async (req, res, next) => {
         break;
 
       default:
-        return res.status(400).json({
-          error: "Invalid period. Choose from yearly, monthly, or weekly.",
-        });
+        throw new CustomError(
+          "Invalid period. Choose from yearly, monthly, or weekly.",
+          STATUS_CODES.BAD_REQUEST
+        );
     }
 
-    res.status(200).json(result);
+    res.status(STATUS_CODES.SUCCESS).json(result);
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -431,10 +434,9 @@ exports.getTopSellingData = async (req, res, next) => {
       ]);
 
     res
-      .status(200)
+      .status(STATUS_CODES.SUCCESS)
       .json({ bestSellingBrands, topCategories, bestSellingProducts });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -442,22 +444,15 @@ exports.getTopSellingData = async (req, res, next) => {
 // -----user management start------
 // render user management page
 exports.getUserManagementPage = async (req, res) => {
-  try {
-    const usersArray = await UserSchema.find();
-    res.render("admin/userManagement", {
-      title: "User Management",
-      usersArray,
-      searchQuery: "",
-      activePage: "users",
-    });
-  } catch (error) {
-    console.log(error);
-  }
+  res.render("admin/userManagement", {
+    title: "User Management",
+    activePage: "users",
+  });
 };
 
 // returns all users with pagination, or the searched user
 // BUG: when applying serach the other users data is also coming in the array of result
-exports.getUsers = async (req, res) => {
+exports.getUsers = async (req, res, next) => {
   try {
     const { search } = req.query;
     const page = parseInt(req.query.page) || 0;
@@ -491,7 +486,7 @@ exports.getUsers = async (req, res) => {
     const users = result[0]?.paginatedResult;
     const hasMore = skip + users.length < totalUsers;
 
-    res.status(200).json({
+    res.status(STATUS_CODES.SUCCESS).json({
       success: true,
       message: "Users fetched successfully",
       totalUsers,
@@ -499,11 +494,7 @@ exports.getUsers = async (req, res) => {
       hasMore,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+    next(error);
   }
 };
 
@@ -513,13 +504,13 @@ user id is needed in the params and reson is needed for blocking only
 if the user.isBlocked is true it will unblock the user and set the block reson to empty
 if the user.isBlocked is false , then user will get blocked and reson will be saved
 */
-exports.toggleBlockUser = async (req, res) => {
+exports.toggleBlockUser = async (req, res, next) => {
   try {
     const { id } = req.params;
     const user = await UserSchema.findById(id);
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      throw new CustomError("User not found", STATUS_CODES.NOT_FOUND);
     }
 
     if (user.isBlocked) {
@@ -528,9 +519,10 @@ exports.toggleBlockUser = async (req, res) => {
     } else {
       const { reason } = req.body;
       if (!reason) {
-        return res
-          .status(400)
-          .json({ message: "No reason provided, blocking failed" });
+        throw new CustomError(
+          "No reason provided, blocking failed",
+          STATUS_CODES.BAD_REQUEST
+        );
       }
       user.isBlocked = true;
       user.blockReason = reason;
@@ -540,25 +532,26 @@ exports.toggleBlockUser = async (req, res) => {
     await Session.deleteMany({ "session.userId": id });
 
     await user.save();
-    res.status(200).json({
+    res.status(STATUS_CODES.SUCCESS).json({
       message: `User ${user.isBlocked ? "blocked" : "unblocked"} successfully`,
       isBlocked: user.isBlocked,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
-// search a user
+// search a user  NEED UPDATION
 exports.searchUser = async (req, res) => {
   try {
     const searchQuery = req.query.query?.trim();
 
     if (!searchQuery || searchQuery.length === 0) {
-      return res.status(400).send("Search query is required.");
+      throw new CustomError(
+        "Search query is required.",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
-
-    console.log("Search Query:", searchQuery);
 
     const usersArray = await UserSchema.find({
       $or: [
@@ -591,66 +584,10 @@ exports.searchUser = async (req, res) => {
 
 // -----product management start------
 exports.getProductManagement = async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = 5;
-  const skip = (page - 1) * limit;
-
-  try {
-    let query = req.query.q;
-
-    const pipeline = [
-      {
-        $addFields: {
-          categoryIdObject: { $toObjectId: "$categoryId" },
-        },
-      },
-      {
-        $lookup: {
-          from: "categories",
-          localField: "categoryIdObject",
-          foreignField: "_id",
-          as: "categoryDetails",
-        },
-      },
-      {
-        $unwind: "$categoryDetails",
-      },
-      addFinalPriceStage,
-      {
-        $skip: skip,
-      },
-      {
-        $limit: limit,
-      },
-      {
-        $sort: { createdAt: -1 },
-      },
-    ];
-
-    if (query) {
-      query = query.trim();
-      pipeline.unshift({
-        $match: { $text: { $search: query } },
-      });
-    }
-
-    const productsArray = await ProductSchema.aggregate(pipeline);
-    console.log(productsArray);
-
-    const totalProducts = await ProductSchema.countDocuments();
-    const totalPages = Math.ceil(totalProducts / limit);
-
-    res.render("admin/products/productManagement", {
-      title: "Product Management",
-      productsArray,
-      currentPage: page,
-      totalPages,
-      searchQuery: "",
-      activePage: "products",
-    });
-  } catch (error) {
-    console.log(error);
-  }
+  res.render("admin/products/productManagement", {
+    title: "Product Management",
+    activePage: "products",
+  });
 };
 
 // not in use
@@ -713,11 +650,11 @@ exports.getAllProducts = async (req, res, next) => {
     const paginatedResult = result[0]?.paginatedResult;
     const total = result[0]?.total[0]?.totalProducts || 0;
     const hasMore = skip + paginatedResult.length < total;
-    console.log(paginatedResult);
 
-    res.status(200).json({ productsArray: paginatedResult, total, hasMore });
+    res
+      .status(STATUS_CODES.SUCCESS)
+      .json({ productsArray: paginatedResult, total, hasMore });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -758,20 +695,14 @@ exports.getProductForm = (req, res) => {
   }
 };
 
-exports.addNewProduct = async (req, res) => {
+exports.addNewProduct = async (req, res, next) => {
   try {
     const { productName, categoryId, brand, description, positions } = req.body;
-    // console.log(req.body)
+
     const mrp = parseFloat(req.body.mrp);
     const finalPrice = parseFloat(req.body.finalPrice);
     const quantity = parseFloat(req.body.quantity);
     const highlights = JSON.parse(req.body.highlights);
-
-    const images = req.files.map((file, index) => ({
-      filename: file.filename,
-      filepath: `/uploads/${file.filename}`,
-      position: positions ? parseInt(positions[index], 10) : index + 1,
-    }));
 
     const uploadResults = await Promise.all(
       req.files.map((file, index) => {
@@ -805,11 +736,11 @@ exports.addNewProduct = async (req, res) => {
 
     await newProduct.save();
     res
-      .status(200)
+      .status(STATUS_CODES.CREATED)
       .json({ success: true, message: "Product added successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: "Server error" });
+    next(error);
   }
 };
 
@@ -859,15 +790,12 @@ exports.getEditProductForm = async (req, res) => {
 };
 
 // we need to update the clint side code coz, after succsfull the old data is shoing , we need to refesh the page or redierct the user
-exports.postEditProductForm = async (req, res) => {
+exports.postEditProductForm = async (req, res, next) => {
   try {
     const productId = req.params.id;
     if (!productId) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Product ID is required" });
+      throw new CustomError("Product ID is required", STATUS_CODES.BAD_REQUEST);
     }
-    console.log("data from clint", req.body);
 
     const { productName, categoryId, brand, description } = req.body;
     let { positions } = req.body;
@@ -884,9 +812,7 @@ exports.postEditProductForm = async (req, res) => {
 
     const product = await ProductSchema.findById(productId);
     if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Product not found" });
+      throw new CustomError("Product not found", STATUS_CODES.NOT_FOUND);
     }
 
     if (productName !== undefined && productName !== null) {
@@ -914,14 +840,12 @@ exports.postEditProductForm = async (req, res) => {
       product.highlights = highlights;
     }
 
-    // delete images code ---
+    // delete images
     if (imageToDelete) {
-      console.log(imageToDelete);
-    
       await Promise.all(
         product.images.map(async (image, index) => {
           const imageId = String(image._id);
-    
+
           if (imageToDelete.includes(imageId)) {
             const publicId = extractPublicId(image.filepath);
             product.images[index].filepath = null;
@@ -931,7 +855,6 @@ exports.postEditProductForm = async (req, res) => {
         })
       );
     }
-    
 
     // filter only number values and convert to Number type  - from positions
     if (positions) {
@@ -974,80 +897,87 @@ exports.postEditProductForm = async (req, res) => {
 
     await product.save();
     res
-      .status(200)
+      .status(STATUS_CODES.SUCCESS)
       .json({ success: true, message: "Product updated successfully" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Server error" });
+    next(error);
   }
 };
 
-exports.toggleListProduct = async (req, res) => {
+exports.toggleListProduct = async (req, res, next) => {
   try {
     const productId = req.params.id;
     if (!productId) {
-      return res.status(400).send("Product id not found.");
+      throw new CustomError(
+        "Product details not found",
+        STATUS_CODES.NOT_FOUND
+      );
     }
     const product = await ProductSchema.findById(productId);
     if (!product) {
-      return res.status(404).send("Product not found.");
+      throw new CustomError("Product not found", STATUS_CODES.NOT_FOUND);
     }
 
     product.isListed = !product.isListed;
     await product.save();
-
-    console.log("updated");
-    res.redirect("/admin/products");
+    res
+      .status(STATUS_CODES.SUCCESS)
+      .json({ message: "Successfully updated product visibility." });
   } catch (error) {
-    console.log(error);
-    res.redirect("/admin/products");
+    next(error);
   }
 };
 // -----product management end------
 
 // -----category management start------
 exports.getCategoryManagement = async (req, res) => {
-  try {
-    // delete req.session.flash;
-
-    const categoriesArray = await CategoriesSchema.find();
-    console.log(categoriesArray);
-    // render the categoris with out paginations
-    res.render("admin/category/categoryManagement", {
-      title: "Category Management",
-      categoriesArray,
-      activePage: "categories",
-    });
-  } catch (error) {
-    // add gracefull error management later
-    console.log(error);
-  }
+  res.render("admin/category/categoryManagement", {
+    title: "Category Management",
+    activePage: "categories",
+  });
 };
 
-exports.getCategories = async (req, res) => {
+exports.getCategories = async (req, res, next) => {
   try {
     const searchQuery = req.query.search || "";
+    const page = parseInt(req.query.page) || 0;
+    const limit = 5;
+    const skip = page * limit;
 
-    let filter = {};
+    const pipeline = [
+      {
+        $facet: {
+          paginatedResult: [
+            { $sort: { createdAt: 1 } },
+            { $skip: skip },
+            { $limit: limit },
+          ],
+          total: [{ $count: "totalCategories" }],
+        },
+      },
+    ];
+
     if (searchQuery) {
-      filter = { categoryName: { $regex: searchQuery, $options: "i" } };
+      query = searchQuery.trim();
+      pipeline.unshift({
+        $match: { $text: { $search: query } },
+      });
     }
 
-    const categoriesArray = await CategoriesSchema.find(filter);
+    const result = await CategoriesSchema.aggregate(pipeline);
 
-    res.status(200).json({
+    const categoriesArray = result[0]?.paginatedResult;
+    const total = result[0]?.total[0]?.totalCategories || 0;
+    const hasMore = skip + categoriesArray.length < total;
+
+    res.status(STATUS_CODES.SUCCESS).json({
       success: true,
       message: "Categories fetched successfully",
-      data: categoriesArray,
+      categoriesArray,
+      hasMore,
     });
   } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -1061,27 +991,30 @@ exports.getCategoryForm = (req, res) => {
 };
 
 // save new category
-exports.postCategoryForm = async (req, res) => {
+exports.postCategoryForm = async (req, res, next) => {
   try {
     const categoryName = req.body?.categoryName?.trim() || "";
     const isListed = req.body?.isListed;
 
     if (!categoryName || !isListed) {
-      return res.status(400).json({ error: "Please enter the values" });
+      throw new CustomError(
+        "Please enter the values",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     const existingCategory = await CategoriesSchema.findOne({
       categoryName: { $regex: new RegExp("^" + categoryName + "$", "i") },
     });
     if (existingCategory) {
-      console.log(existingCategory);
-      return res.status(400).json({
-        error: "Category with same name exists. Please try another name",
-      });
+      throw new CustomError(
+        "Category with same name exists. Please try another name",
+        STATUS_CODES.CONFLICT
+      );
     }
 
     if (!req.file) {
-      return res.status(400).json({ error: "No image uploaded" });
+      throw new CustomError("No image uploaded", STATUS_CODES.BAD_REQUEST);
     }
 
     const result = await new Promise((resolve, reject) => {
@@ -1104,37 +1037,47 @@ exports.postCategoryForm = async (req, res) => {
     });
 
     await newCategory.save();
-    res.status(200).json({ message: "Category added successfully!" });
+    res
+      .status(STATUS_CODES.CREATED)
+      .json({ message: "Category added successfully!" });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    next(error);
   }
 };
 
-exports.toggleListCategory = async (req, res) => {
+exports.toggleListCategory = async (req, res, next) => {
   try {
     const categoryId = req.params.id;
     if (!categoryId) {
-      return res.status(400).send("Category id not found.");
+      throw new CustomError(
+        "Category details not found",
+        STATUS_CODES.NOT_FOUND
+      );
     }
     const category = await CategoriesSchema.findById(categoryId);
     if (!category) {
-      return res.status(404).send("Category not found.");
+      throw new CustomError("Category not found", STATUS_CODES.NOT_FOUND);
     }
+
+    let responseMsg = "Successfully updated cateogory";
 
     const updatedProducts = await Product.updateMany(
       { categoryId },
       { isListed: !category.isListed }
     );
 
+    if (updatedProducts.matchedCount === 0) {
+      responseMsg = "Category updated! No products found for this category.";
+    } else if (updatedProducts.modifiedCount === 0) {
+      responseMsg =
+        "Products in this cateogry is found, but no changes were made.";
+    }
+
     category.isListed = !category.isListed;
     await category.save();
-
-    console.log("updated");
-    res.redirect("/admin/categories");
+    res.status(STATUS_CODES.SUCCESS).json({ message: responseMsg });
   } catch (error) {
-    console.log(error);
-    res.redirect("/admin/categories");
+    next(error);
   }
 };
 
@@ -1142,7 +1085,7 @@ exports.getUpdateCategoryForm = async (req, res) => {
   try {
     const categoryId = req.params.id;
     if (!categoryId) {
-      return res.status(400).send("Category id not found.");
+      res.redirect("/admin/categories");
     }
     const category = await CategoriesSchema.findById(categoryId);
     if (!category) {
@@ -1163,24 +1106,26 @@ exports.getUpdateCategoryForm = async (req, res) => {
   }
 };
 
-exports.postUpdateCategoryForm = async (req, res) => {
+exports.postUpdateCategoryForm = async (req, res, next) => {
   try {
     const id = req.session.categoryId;
     if (!id) {
-      return res.status(400).json({ error: "Session expired" });
+      throw new CustomError("Session expired", STATUS_CODES.BAD_REQUEST);
     }
 
     const category = await CategoriesSchema.findById(id);
     if (!category) {
-      return res.status(400).json({ error: "Category not found" });
+      throw new CustomError("Category not found", STATUS_CODES.NOT_FOUND);
     }
 
-    console.log(id);
     const categoryName = req.body?.categoryName?.trim() || "";
     const isListed = req.body?.isListed;
 
     if (!categoryName || !isListed) {
-      return res.status(400).json({ error: "Please enter the values" });
+      throw new CustomError(
+        "Please enter the values",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     const existingCategory = await CategoriesSchema.findOne({
@@ -1189,9 +1134,10 @@ exports.postUpdateCategoryForm = async (req, res) => {
     });
 
     if (existingCategory) {
-      return res.status(400).json({
-        error: "Category with same name exists. Please try another name",
-      });
+      throw new CustomError(
+        "Category with same name exists. Please try another name",
+        STATUS_CODES.CONFLICT
+      );
     }
 
     let result;
@@ -1214,26 +1160,25 @@ exports.postUpdateCategoryForm = async (req, res) => {
     category.isListed = isListed || category.isListed;
     if (req.file) {
       const publicId = extractPublicId(category.imagePath);
-      console.log(publicId);
       category.imagePath = result.filepath || category.imagePath;
       await cloudinary.uploader.destroy(publicId);
     }
 
     await category.save();
 
-    return res.status(200).json({ message: "Category updated successfully" });
+    return res
+      .status(STATUS_CODES.SUCCESS)
+      .json({ message: "Category updated successfully" });
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
 
 exports.getAvailableCategories = async (req, res, next) => {
   try {
     const categories = await getCategories();
-    res.status(200).json({ data: categories });
+    res.status(STATUS_CODES.SUCCESS).json({ data: categories });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -1273,14 +1218,16 @@ exports.saveNewOffer = async (req, res, next) => {
     // save new offer
     const savedOffer = await newOffer.save();
     if (!savedOffer) {
-      return res.status(404).json({ error: "Faild to create new offer" });
+      throw new CustomError(
+        "Faild to create new offer",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
-    return res.status(200).json({
+    return res.status(STATUS_CODES.CREATED).json({
       message: "Offer created successfully",
     });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -1319,13 +1266,12 @@ exports.getAllOffers = async (req, res, next) => {
     const offers = result[0]?.paginatedResult;
     const hasMore = skip + offers.length < totalOffers;
 
-    res.status(200).json({
+    res.status(STATUS_CODES.SUCCESS).json({
       totalOffers,
       offers,
       hasMore,
     });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -1335,14 +1281,12 @@ exports.getEditOfferForm = async (req, res) => {
     const offerId = req.params.id;
 
     if (!offerId) {
-      console.log("no offer id");
       return res.redirect("/admin/offers");
     }
 
     const offer = await Offer.findById(offerId);
 
     if (!offer) {
-      console.log("no offer found");
       return res.redirect("/admin/offers");
     }
 
@@ -1364,23 +1308,25 @@ exports.getSingleOfferDetails = async (req, res, next) => {
     const offerId = req.session.offerId;
 
     if (!offerId) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Offer ID is missing." });
+      throw new CustomError(
+        "Offer details is missing",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     let offer = await Offer.findById(offerId).lean();
 
     if (!offer) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Offer not found." });
+      throw new CustomError("Offer not found", STATUS_CODES.NOT_FOUND);
     }
 
     if (offer.target === "category") {
       const category = await Categories.findById(offer.categoryId);
       if (!category) {
-        return res.status(404).json({ error: "Offer category not found" });
+        throw new CustomError(
+          "Offer category not found",
+          STATUS_CODES.NOT_FOUND
+        );
       }
 
       offer.category = category.categoryName;
@@ -1388,14 +1334,12 @@ exports.getSingleOfferDetails = async (req, res, next) => {
       offer.category = "All";
     }
 
-    return res.status(200).json({ offer });
+    return res.status(STATUS_CODES.SUCCESS).json({ offer });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
 
-// updating...
 exports.saveUpdatedOffer = async (req, res, next) => {
   try {
     const { offerTitle, discount, startDate, endDate } = req.body;
@@ -1404,17 +1348,16 @@ exports.saveUpdatedOffer = async (req, res, next) => {
     const offerId = req.session.offerId;
 
     if (!offerId) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Offer ID is missing." });
+      throw new CustomError(
+        "Offer details is missing.",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     const offer = await Offer.findById(offerId);
 
     if (!offer) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Offer not found." });
+      throw new CustomError("Offer not found", STATUS_CODES.NOT_FOUND);
     }
 
     offer.offerTitle = offerTitle ?? offer.offerTitle;
@@ -1434,12 +1377,17 @@ exports.saveUpdatedOffer = async (req, res, next) => {
         },
       }
     );
+    if (!result.acknowledged && result) {
+      throw new CustomError(
+        "Faild to apply offer on products",
+        STATUS_CODES.BAD_REQUEST
+      );
+    }
 
-    return res.status(200).json({
+    return res.status(STATUS_CODES.SUCCESS).json({
       message: "Offer updated successfully",
     });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -1448,12 +1396,15 @@ exports.tooggleOfferStatus = async (req, res, next) => {
   try {
     const offerId = req.params.id;
     if (!offerId) {
-      return res.status(400).send("offer id not found.");
+      throw new CustomError(
+        "Offer details not found.",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     const offer = await Offer.findById(offerId);
     if (!offer) {
-      return res.status(404).send("offer not found.");
+      throw new CustomError("offer not found.", STATUS_CODES.NOT_FOUND);
     }
 
     offer.isActive = !offer.isActive;
@@ -1471,17 +1422,16 @@ exports.tooggleOfferStatus = async (req, res, next) => {
       }
     );
 
-    return res.status(200).json({
+    return res.status(STATUS_CODES.SUCCESS).json({
       message: "Offer status updated successfully",
     });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
 
 // render offer applay page for product or category
-exports.getOfferApplyPage = async (req, res, next) => {
+exports.getOfferApplyPage = async (req, res) => {
   try {
     const type = req.query.type;
     if (!type) {
@@ -1516,7 +1466,7 @@ exports.getOfferApplyPage = async (req, res, next) => {
     });
   } catch (error) {
     console.log(error);
-    next(error);
+    return res.redirect("/admin");
   }
 };
 
@@ -1528,7 +1478,6 @@ exports.getOfferOfType = async (req, res, next) => {
     const page = parseInt(req.query.page) || 0;
     const limit = 8;
     const skip = page * limit;
-    console.log("run");
 
     // product/cateogory
     const offertype = req.session.offertype;
@@ -1536,16 +1485,20 @@ exports.getOfferOfType = async (req, res, next) => {
     const offerTargetId = req.session.offerTargetId;
 
     if (!offertype || !offerTargetId) {
-      return res
-        .status(400)
-        .json({ error: "Session expired, faild to get offers" });
+      throw new CustomError(
+        "Session expired, faild to get offers",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     let product;
     if (offertype === "product") {
       product = await Product.findById(offerTargetId);
       if (!product) {
-        return res.status(404).json({ error: "Selected product is not found" });
+        throw new CustomError(
+          "Selected product is not found",
+          STATUS_CODES.NOT_FOUND
+        );
       }
     } else {
       product = await Product.findOne({ categoryId: offerTargetId });
@@ -1591,51 +1544,43 @@ exports.getOfferOfType = async (req, res, next) => {
     const total = aggregationResult[0]?.totalOffers[0]?.total || 0;
     const hasMore = skip + availableOffers.length < total;
 
-    res.status(200).json({ availableOffers, total, hasMore });
+    res.status(STATUS_CODES.SUCCESS).json({ availableOffers, total, hasMore });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
 
 exports.applyNewOffer = async (req, res, next) => {
-  /*
-get the offer id form path
-get the offer type from session and
-get the selected product/ targetId
-find the 
-based on type, 
-if type is product 
-  -find the product with id and update its discount, offerStartDate, offerEnddate, offerId
-if type is category
-  -find the all product with category id and update its its discount, offerStartDate, offerEnddate, offerid - using updateMany
-return success message
-*/
   try {
     const offerId = req.params?.id;
     const offertype = req.session?.offertype;
     const offerTargetId = req.session?.offerTargetId;
 
     if (!offerId) {
-      return res.status(400).json({ error: "Please select one offer" });
+      throw new CustomError(
+        "Please select one offer",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     if (!offertype || !offerTargetId) {
-      return res
-        .status(400)
-        .json({ error: "Session expired! failed to apply offer" });
+      throw new CustomError(
+        "Session expired! failed to apply offer",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     // validate offer
     const offer = await Offer.findById(offerId);
     if (!offer) {
-      return res
-        .status(400)
-        .json({ error: "Offer not found. Choose another offer" });
+      throw new CustomError(
+        "Offer not found. Choose another offer",
+        STATUS_CODES.NOT_FOUND
+      );
     }
 
     if (!offer.isActive) {
-      return res.status(400).json({ error: "Offer is inactive" });
+      throw new CustomError("Offer is inactive", STATUS_CODES.BAD_REQUEST);
     }
 
     // apply product offer to product only
@@ -1654,9 +1599,14 @@ return success message
       );
 
       if (!updatedProduct) {
-        return res.status(400).json({ error: "Selected product is not found" });
+        throw new CustomError(
+          "Selected product is not found",
+          STATUS_CODES.BAD_REQUEST
+        );
       }
-      return res.status(200).json({ message: "Offer applied Successfully" });
+      return res
+        .status(STATUS_CODES.SUCCESS)
+        .json({ message: "Offer applied Successfully" });
 
       // apply category offer to all products in the cateogory
     } else {
@@ -1674,17 +1624,16 @@ return success message
       );
 
       if (updatedProducts.modifiedCount === 0) {
-        return res.status(404).json({
-          error:
-            "No products were updated. They may already have a better discount.",
-        });
+        throw new CustomError(
+          "No products were updated. They may already have a better discount",
+          STATUS_CODES.CONFLICT
+        );
       }
-      return res.status(200).json({
+      return res.status(STATUS_CODES.SUCCESS).json({
         message: "Offer applied to all products in this category",
       });
     }
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -1695,9 +1644,10 @@ exports.removeExistingOffer = async (req, res, next) => {
     const offerTargetId = req.session?.offerTargetId;
 
     if (!offertype || !offerTargetId) {
-      return res
-        .status(400)
-        .json({ error: "Session expired! failed to apply offer" });
+      throw new CustomError(
+        "Session expired! failed to apply offer",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     // find the product and remove its offer related fealds
@@ -1715,10 +1665,9 @@ exports.removeExistingOffer = async (req, res, next) => {
         { new: true }
       );
 
-      if (!updatedProduct) {
-        return res.status(400).json({ error: "Selected product is not found" });
-      }
-      return res.status(200).json({ message: "Offer removed Successfully" });
+      return res
+        .status(STATUS_CODES.SUCCESS)
+        .json({ message: "Offer removed Successfully" });
 
       // remove the fealds from the producst inthe  cateogory
     } else {
@@ -1735,30 +1684,15 @@ exports.removeExistingOffer = async (req, res, next) => {
         }
       );
 
-      if (updatedProducts.modifiedCount === 0) {
-        return res.status(404).json({
-          error: "No products were updated.",
-        });
-      }
-      return res.status(200).json({
+      return res.status(STATUS_CODES.SUCCESS).json({
         message: "Offer removed from all products in this category",
       });
     }
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
 
-// update the offer in offer module
-// ---
-/*
-get the offer id and find the offer
-update its offer disocunt, or endDate of title
-1. find all the product with offer id
-2 update its discount, offerStartDate, offerEnddate, offerId
-3. return the message
-*/
 // ----------offer management end--------
 
 // -------------ORDER MANAGMENT START
@@ -1769,7 +1703,7 @@ exports.getOrderManagement = (req, res) => {
   });
 };
 
-exports.getAllOrders = async (req, res) => {
+exports.getAllOrders = async (req, res, next) => {
   try {
     const { search } = req.query;
     const page = parseInt(req.query.page) || 0;
@@ -1803,24 +1737,22 @@ exports.getAllOrders = async (req, res) => {
     });
 
     const result = await OrderSchema.aggregate(pipeline);
-    console.log(result);
 
     const totalorders = result[0]?.ordersCount[0]?.total || 0;
     const orders = result[0]?.paginatedResult;
     const hasMore = skip + orders.length < totalorders;
 
-    res.status(200).json({
+    res.status(STATUS_CODES.SUCCESS).json({
       totalorders,
       orders,
       hasMore,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
 
-exports.updateOrderStatus = async (req, res) => {
+exports.updateOrderStatus = async (req, res, next) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -1828,17 +1760,13 @@ exports.updateOrderStatus = async (req, res) => {
     const validStatuses = ["Ordered", "Shipped", "Delivered"];
     if (!validStatuses.includes(status)) {
       await session.abortTransaction();
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid order status" });
+      throw new CustomError("Invalid order status", STATUS_CODES.BAD_REQUEST);
     }
 
     const order = await OrderSchema.findById(orderId);
     if (!order) {
       await session.abortTransaction();
-      return res
-        .status(404)
-        .json({ success: false, message: "Order not found" });
+      throw new CustomError("Order not found", STATUS_CODES.NOT_FOUND);
     }
 
     order.orderStatus = status;
@@ -1851,9 +1779,10 @@ exports.updateOrderStatus = async (req, res) => {
 
     if (modifiedOrderItems.modifiedCount === 0) {
       await session.abortTransaction();
-      return res
-        .status(400)
-        .json({ success: false, message: "Order items not found" });
+      throw new CustomError(
+        "Order items not found! Updation failed",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     if (status === "Delivered") {
@@ -1876,12 +1805,11 @@ exports.updateOrderStatus = async (req, res) => {
     await order.save({ session });
 
     res
-      .status(200)
+      .status(STATUS_CODES.SUCCESS)
       .json({ success: true, message: "Order status updated successfully" });
   } catch (error) {
     await session.abortTransaction();
-    console.error("Error updating order status:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    next(error);
   } finally {
     session.endSession();
   }
@@ -1914,80 +1842,75 @@ exports.renderOrderDetailsPage = async (req, res) => {
 };
 
 // get user detail with id
-exports.getUserDataAndDeliveryInfo = async (req, res) => {
+exports.getUserDataAndDeliveryInfo = async (req, res, next) => {
   try {
     const orderId = req.session.orderId;
     if (!orderId) {
-      return res.status(400).json({ error: "Session expired" });
+      throw new CustomError("Session expired", STATUS_CODES.BAD_REQUEST);
     }
 
     const order = await OrderSchema.findById(orderId);
     if (!order) {
-      return res.status(404).json({ error: "Order not found" });
+      throw new CustomError("Order not found", STATUS_CODES.NOT_FOUND);
     }
-    console.log(order.userId);
 
     const user = await UserSchema.findById(order.userId);
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      throw new CustomError("User not found", STATUS_CODES.NOT_FOUND);
     }
 
     const address = await AddressSchema.findById(order.addressId);
     if (!address) {
-      return res.status(404).json({ error: "Address not found" });
+      throw new CustomError("Address not found", STATUS_CODES.NOT_FOUND);
     }
 
-    res.status(200).json({ user, address });
+    res.status(STATUS_CODES.SUCCESS).json({ user, address });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
 
-exports.getOrderItems = async (req, res) => {
+exports.getOrderItems = async (req, res, next) => {
   try {
     const orderId = req.session.orderId;
     if (!orderId) {
-      return res.status(400).json({ error: "Session expired" });
+      throw new CustomError("Session expired", STATUS_CODES.BAD_REQUEST);
     }
     const items = await OrderItem.find({ orderId: orderId });
 
-    console.log("The result");
     if (!items) {
-      return res.status(404).json({ error: "Items not found for order" });
+      throw new CustomError("Items not found for order", STATUS_CODES.NOT_FOUND);
     }
 
-    res.status(200).json({ items });
+    res.status(STATUS_CODES.SUCCESS).json({ items });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error)
   }
 };
 
 // get order items
-exports.cancelOrderByAdmin = async (req, res) => {
+exports.cancelOrderByAdmin = async (req, res, next) => {
   try {
     const { cancelReason } = req.body;
 
     if (!cancelReason) {
-      return res.status(400).json({ error: "Provide a valid reason" });
+      throw new CustomError("Provide a valid reason", STATUS_CODES.BAD_REQUEST);
     }
 
     const orderId = req.session.orderId;
     if (!orderId) {
-      return res.status(400).json({ error: "Session expired" });
+      throw new CustomError("Session expired", STATUS_CODES.BAD_REQUEST);
     }
 
     await cancelOrder(orderId, cancelReason);
 
-    res.status(200).json({ message: "Order cancelled successfully" });
+    res.status(STATUS_CODES.SUCCESS).json({ message: "Order cancelled successfully" });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
 
-exports.approveReturnItem = async (req, res) => {
+exports.approveReturnItem = async (req, res, next) => {
   try {
     let { id: itemId } = req.params;
 
@@ -2002,40 +1925,35 @@ exports.approveReturnItem = async (req, res) => {
     const order = await Order.findById(orderItem.orderId);
     const userId = order.userId;
 
-    refundUserAmount(amount, userId, "Order Item Return");
+    creditAmountToUser(amount, userId, "Order Item Return");
 
     orderItem.isRefunded = true;
     await orderItem.save();
-    res.status(200).json({ message: "Return approved successfully" });
+    res.status(STATUS_CODES.SUCCESS).json({ message: "Return approved successfully" });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error)
   }
 };
 
-// not completed ---
+// not tested ---
 exports.rejectReturnItemRefund = async (req, res, next) => {
   try {
     let { id: itemId } = req.params;
     const { reason } = req.body;
 
     if (!itemId) {
-      return res.status(400).json({ error: "Item details missing" });
+      throw new CustomError("Item details missing", STATUS_CODES.BAD_REQUEST);
     }
 
     if (!reason) {
-      return res
-        .status(400)
-        .json({ error: "Please provide a reson for rejection" });
+      throw new CustomError("Please provide a reson for rejection", STATUS_CODES.BAD_REQUEST);
     }
 
     const orderItem = await OrderItem.findById(itemId);
 
     //add somthing here
     if (!orderItem) {
-      return res
-        .status(400)
-        .json({ error: "Selected order item was not found" });
+      throw new CustomError("Selected order item was not found", STATUS_CODES.BAD_REQUEST);
     }
 
     orderItem.returnStatus = "rejected";
@@ -2046,9 +1964,8 @@ exports.rejectReturnItemRefund = async (req, res, next) => {
 
     await orderItem.save();
 
-    res.status(200).json({ message: "Return refund rejected successfully" });
+    res.status(STATUS_CODES.SUCCESS).json({ message: "Return refund rejected successfully" });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -2107,30 +2024,25 @@ exports.fetchSalesReportData = async (req, res, next) => {
           break;
 
         default:
-          return res
-            .status(400)
-            .json({ error: "Invalid period parameter or missing date range" });
+          throw new CustomError("Invalid period parameter or missing date range", STATUS_CODES.BAD_REQUEST);
       }
     }
 
     req.session.startDate = startDate;
     req.session.endDate = endDate;
-    //get total revenue
-    //get total coupon discount deductions
-    //get total orders count
-    console.log(startDate, endDate);
+    //get total revenue, get total coupon discount deductions, get total orders count
     const reportOverview = await getReportOverview(startDate, endDate);
 
     //get the all orders of this
     const allOrders = await getAllOrdersDetails(startDate, endDate);
 
-    res.status(200).json({ reportOverview, allOrders });
+    res.status(STATUS_CODES.SUCCESS).json({ reportOverview, allOrders });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
 
+// WHY I WROTE THIS ? 
 exports.fetchAllOrders = async (req, res, next) => {
   try {
     const startDate = req.session.startDate;
@@ -2146,10 +2058,13 @@ exports.fetchAllOrders = async (req, res, next) => {
   }
 };
 
-exports.downloadSalesReportPdf = async (req, res) => {
+exports.downloadSalesReportPdf = async (req, res, next) => {
   try {
     const startDate = req.session.startDate;
     const endDate = req.session.endDate;
+    if(!startDate || !endDate) {
+      throw new CustomError("Session expired", STATUS_CODES.BAD_REQUEST);
+    }
 
     const reportOverview = await getReportOverview(startDate, endDate);
     const allOrders = await getAllOrdersDetails(startDate, endDate);
@@ -2164,8 +2079,6 @@ exports.downloadSalesReportPdf = async (req, res) => {
       allOrders,
       reportDate: new Date().toLocaleDateString(),
     });
-
-    console.log("Generated HTML successfully!");
 
     // Launch Puppeteer
     const browser = await puppeteer.launch({
@@ -2189,16 +2102,17 @@ exports.downloadSalesReportPdf = async (req, res) => {
     );
     res.end(pdfBuffer); // Correctly sends binary data
   } catch (error) {
-    console.error("Error generating PDF:", error);
-    res.status(500).send("Error generating PDF");
+    next(error)
   }
 };
 
-exports.downloadSalesReportExcel = async (req, res) => {
+exports.downloadSalesReportExcel = async (req, res, next) => {
   try {
     const startDate = req.session.startDate;
     const endDate = req.session.endDate;
-    // validate thise
+    if(!startDate || !endDate) {
+      throw new CustomError("Session expired", STATUS_CODES.BAD_REQUEST);
+    }
 
     // inint workbook
     const workbook = new ExcelJS.Workbook();
@@ -2338,8 +2252,7 @@ exports.downloadSalesReportExcel = async (req, res) => {
 
     console.log("Excel file sent successfully!");
   } catch (error) {
-    console.error("Error generating excel:", error);
-    res.status(500).send("Error generating excel");
+    next(error)
   }
 };
 
@@ -2386,13 +2299,12 @@ exports.getAllCoupons = async (req, res, next) => {
     const coupons = result[0]?.paginatedResult;
     const hasMore = skip + coupons.length < totalCoupons;
 
-    res.status(200).json({
+    res.status(STATUS_CODES.SUCCESS).json({
       totalCoupons,
       coupons,
       hasMore,
     });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -2419,9 +2331,7 @@ exports.saveNewCoupon = async (req, res, next) => {
 
     const existingCoupon = await Coupons.findOne({ couponCode });
     if (existingCoupon) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Coupon code already exists!" });
+      throw new CustomError("Coupon code already exists!", STATUS_CODES.CONFLICT);
     }
 
     const newCoupon = new Coupons({
@@ -2435,10 +2345,9 @@ exports.saveNewCoupon = async (req, res, next) => {
 
     await newCoupon.save();
     return res
-      .status(201)
+      .status(STATUS_CODES.CREATED)
       .json({ success: true, message: "Coupon created successfully!" });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -2475,19 +2384,18 @@ exports.getEditCouponDetails = async (req, res, next) => {
     const couponId = req.session.selectedCouponId;
 
     if (!couponId) {
-      return res.status(400).json({ error: "Session Expired" });
+      throw new CustomError("Session Expired", STATUS_CODES.BAD_REQUEST);
     }
 
     const coupon = await Coupons.findById(couponId);
     if (!coupon) {
-      return res.status(400).json({ error: "Coupon not found" });
+      throw new CustomError("Coupon not found", STATUS_CODES.NOT_FOUND);
     }
 
     return res
-      .status(200)
+      .status(STATUS_CODES.SUCCESS)
       .json({ message: "Coupon fetched successfully", coupon });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -2497,12 +2405,12 @@ exports.saveUpdatedCoupon = async (req, res, next) => {
   try {
     const couponId = req.session.selectedCouponId;
     if (!couponId) {
-      return res.status(400).json({ error: "Session expired" });
+      throw new CustomError("Session expired", STATUS_CODES.BAD_REQUEST);
     }
 
     const coupon = await Coupons.findById(couponId);
     if (!coupon) {
-      return res.status(404).json({ error: "Coupon not found" });
+      throw new CustomError("Coupon not found", STATUS_CODES.NOT_FOUND);
     }
 
     const {
@@ -2520,7 +2428,7 @@ exports.saveUpdatedCoupon = async (req, res, next) => {
     });
 
     if (existingCoupon) {
-      return res.status(400).json({ error: "Coupon code already in use" });
+      throw new CustomError("Coupon code already in use", STATUS_CODES.CONFLICT);
     }
 
     coupon.couponCode = couponCode;
@@ -2531,9 +2439,8 @@ exports.saveUpdatedCoupon = async (req, res, next) => {
     coupon.description = description;
 
     await coupon.save();
-    res.status(200).json({ message: "Coupon updated successfully" });
+    res.status(STATUS_CODES.SUCCESS).json({ message: "Coupon updated successfully" });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -2543,20 +2450,19 @@ exports.toogleCouponStatus = async (req, res, next) => {
   try {
     const id = req.params.id;
     if (!id) {
-      return res.status(400).json({ error: "Select a coupon to delete" });
+      throw new CustomError("Select a coupon to delete", STATUS_CODES.BAD_REQUEST);
     }
 
     const coupon = await Coupons.findById(id);
     if (!coupon) {
-      return res.status(400).json({ error: "Coupon not found" });
+      throw new CustomError("Coupon not found", STATUS_CODES.NOT_FOUND);
     }
 
     coupon.isActive = !coupon.isActive;
 
     await coupon.save();
-    res.status(200).json({ message: "Updated listing status" });
+    res.status(STATUS_CODES.SUCCESS).json({ message: "Updated listing status" });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };

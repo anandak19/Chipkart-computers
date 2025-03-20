@@ -1,6 +1,8 @@
 const { mongoose } = require("mongoose");
 const Users = require("../models/User");
 const Wallet = require("../models/Wallet");
+const CustomError = require("./customError");
+const { STATUS_CODES } = require("./constants");
 
 const createNewUser = async (
   name,
@@ -17,9 +19,8 @@ const createNewUser = async (
     let referrer
     if (referralCode) {
       referrer = await Users.findOne({ referralCode });
-      console.log("referer", referrer)
       if (!referrer) {
-        throw new Error("Invalid Referral Link");
+        throw new CustomError("Invalid Referral Link", STATUS_CODES.BAD_REQUEST);
       }
     }
 
@@ -35,7 +36,7 @@ const createNewUser = async (
 
     if (!savedUser) {
       await session.abortTransaction();
-      throw new Error("Faild to save new user");
+      throw new CustomError("Faild to save new user", STATUS_CODES.BAD_REQUEST);
     }
 
     const newUserWallet = new Wallet({ userId: savedUser._id });
@@ -43,17 +44,19 @@ const createNewUser = async (
     const userWallet = await newUserWallet.save({ session });
     if (!userWallet) {
       await session.abortTransaction();
-      throw new Error("Faild to create user wallet");
+      throw new CustomError("Faild to create user wallet", STATUS_CODES.BAD_REQUEST);
     }
 
     await session.commitTransaction();
-
     return savedUser
 
   } catch (error) {
     console.error(error);
     await session.abortTransaction();
-    throw new Error("Error creating new user");
+    if (error instanceof CustomError) {
+      throw error;
+    }
+    throw new CustomError("Error creating new user", 500);
   } finally {
     session.endSession();
   }

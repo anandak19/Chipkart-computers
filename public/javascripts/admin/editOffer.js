@@ -2,7 +2,7 @@ const offerForm = document.getElementById("offerForm");
 
 const offerTitle = document.getElementById("offerTitle");
 const discount = document.getElementById("discount");
-const category= document.getElementById("category");
+const offerTarget= document.getElementById("offerTarget");
 const startDate = document.getElementById("startDate");
 const endDate = document.getElementById("endDate");
 
@@ -67,7 +67,7 @@ offerForm.addEventListener("submit", async(e) => {
 
   try {
     const res = await fetch('/admin/offers/edit/offer/details', {
-      method: 'POST',
+      method: 'PATCH',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(newOffer)
     })
@@ -98,7 +98,7 @@ const formatDate = (date) => {
 const showOffeDetails = (offer) => {
   offerTitle.value = offer.offerTitle
   discount.value = offer.discount
-  category.value = offer.category
+  offerTarget.value = offer.offerTarget
   startDate.value = formatDate(offer.startDate);
   endDate.value = formatDate(offer.endDate);
 }
@@ -109,7 +109,6 @@ const getOfferDetails = async() => {
         const res = await fetch('/admin/offers/edit/offer/details')
         const result = await res.json()
         if (res.ok) {
-            console.log(result.offer)
             showOffeDetails(result.offer)
         }else{
             alert("Error fetching offer details")

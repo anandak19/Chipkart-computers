@@ -107,7 +107,7 @@ personalDetailsForm.addEventListener("submit", (e) => {
     };
 
     fetch("/account/user", {
-      method: "POST",
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     })
@@ -189,7 +189,7 @@ const savePassword = async () => {
       };
 
       const response = await fetch("/account/user/password", {
-        method: "POST",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });

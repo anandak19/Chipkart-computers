@@ -95,7 +95,7 @@ updateCategoryForm.addEventListener("submit", async (e) => {
 
     try {
       const res = await fetch("/admin/categories/edit", {
-        method: "POST",
+        method: "PATCH",
         body: formData,
       });
 

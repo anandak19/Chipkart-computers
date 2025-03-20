@@ -29,8 +29,6 @@
                 name="query"
                 id="query"
                 placeholder="Search Product"
-                required
-                value="<%= searchQuery || '' %>"
               />
               <button type="submit">Search</button>
               <small id="errorMessage" class="text-danger"></small>
@@ -62,57 +60,20 @@
             </tr>
           </thead>
           <tbody id="productsTableBody">
-            <% if (productsArray.length === 0) { %>
-            <tr>
-              <td colspan="8" class="text-center">No Products found</td>
-            </tr>
-            <% } else { %> <% productsArray.forEach((product, index) => { %>
-            <tr>
-              <td><%= index + 1 %></td>
-              <td>
-                <img
-                  src="<%= product.images[0].filepath ? product.images[0].filepath : '/images/default/default.jpg' %>"
-                  alt="<%= product.productName %>"
-                  style="width: 100px; height: auto"
-                />
-              </td>
-
-              <td><%= product.productName %></td>
-              <td><%= product.categoryDetails.categoryName %></td>
-              <td><%= product.brand %></td>
-              <td><%= product.mrp %></td>
-              <td><%= product.discount %></td>
-              <td><%= product.finalPrice %></td>
-              <td><%= product.quantity %></td>
-              <td><a href="/admin/offers/apply/<%= product._id %>?type=product" class="btn btn-primary btn-sm mt-2">Offer</a></td>
-              <td>
-                <form action="/admin/products/toggle-listed/<%= product._id %>" method="post" style="display: inline">
-                <button class="btn <%= product.isListed ? 'btn-danger' : 'btn-success' %> btn-sm">
-                  <%= product.isListed ? 'Unlist' : 'List' %>
-                </button>
-              </form>
-                <a href="/admin/products/edit/<%= product._id %>" class="btn btn-primary btn-sm mt-2">Edit</a>
-              </td>
-            </tr>
-            <% }); %> <% } %>
           </tbody>
         </table>
 
-
-        <!-- pagination  -->
         <div class="pagination">
-          <form action="/admin/products" method="get" style="display: inline;">
-            <input type="hidden" name="page" value="<%= currentPage - 1 %>">
-            <button type="submit" <% if (currentPage <= 1) { %> disabled <% } %>>Previous</button>
-          </form>
-      
-          <span>Page <%= currentPage %> of <%= totalPages %></span>
-      
-          <form action="/admin/products" method="get" style="display: inline;">
-            <input type="hidden" name="page" value="<%= currentPage + 1 %>">
-            <button type="submit"  <% if (currentPage >= totalPages) { %> disabled <% } %>>Next</button>
-          </form>
+          <div class="pagination-btns">
+            <button class="prev-btn">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button class="next-btn">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
         </div>
+
 
       </div>
     </div>

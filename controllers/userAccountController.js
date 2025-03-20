@@ -31,6 +31,7 @@ const WalletTransaction = require("../models/WalletTransaction");
 const { decreaseProductQuantity } = require("../utils/productQtyManagement");
 const { addUserCoupon } = require("../utils/couponsManager");
 const { razorpay } = require("../config/razorpay");
+const { STATUS_CODES } = require("../utils/constants");
 
 // make a session validate middleware later that sends json response
 
@@ -52,7 +53,7 @@ exports.getUserDetails = async (req, res) => {
     }
 
     console.log(process.env.BASE_URL);
-    res.status(200).json({
+    res.status(STATUS_CODES.SUCCESS).json({
       id: user._id,
       name: user.name,
       email: user.email,
@@ -123,7 +124,7 @@ exports.postUserDetails = async (req, res) => {
     }
 
     return res
-      .status(200)
+      .status(STATUS_CODES.SUCCESS)
       .json({ message: "User details updated successfully", refresh });
   } catch (error) {
     console.error("Error fetching user details:", error);
@@ -160,7 +161,7 @@ exports.postChangePassword = async (req, res) => {
     user.password = hashedPassword;
     await user.save();
     await logoutUser(req, res);
-    return res.status(200).json({ message: "Password updated successfully." });
+    return res.status(STATUS_CODES.SUCCESS).json({ message: "Password updated successfully." });
   } catch (error) {
     console.error("Error changing password:", error);
     res.status(500).json({ error: "Internal server error." });
@@ -219,7 +220,7 @@ exports.addAddress = async (req, res) => {
     await newAddress.save();
 
     console.log(newAddress);
-    return res.status(200).json({ message: "Address added successfully" });
+    return res.status(STATUS_CODES.SUCCESS).json({ message: "Address added successfully" });
   } catch (error) {
     console.error("Error adding address:", error);
     return res.status(500).json({ error: "Internal server error" });
@@ -245,7 +246,7 @@ exports.getAddressDetails = async (req, res) => {
     }
 
     res
-      .status(200)
+      .status(STATUS_CODES.SUCCESS)
       .json({ message: "Address fetched successfully", addressDetails });
   } catch (error) {
     console.error(error);
@@ -268,7 +269,7 @@ exports.deleteAddress = async (req, res) => {
     });
 
     if (result.deletedCount === 1) {
-      return res.status(200).json({ message: "Successfully deleted address." });
+      return res.status(STATUS_CODES.SUCCESS).json({ message: "Successfully deleted address." });
     } else {
       return res.status(404).json({
         error: "No documents matched the query. Deleted 0 documents..",
@@ -330,7 +331,7 @@ exports.saveEditedAddress = async (req, res) => {
 
     await address.save();
 
-    return res.status(200).json({ message: "Address updated successfully" });
+    return res.status(STATUS_CODES.SUCCESS).json({ message: "Address updated successfully" });
   } catch (error) {
     console.error("Error updating address:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -368,7 +369,7 @@ exports.toggleAddress = async (req, res) => {
 
     await address.save();
 
-    return res.status(200).json({
+    return res.status(STATUS_CODES.SUCCESS).json({
       message: "Address updated successfully",
     });
   } catch (error) {
@@ -387,7 +388,7 @@ exports.getUsersAllAddress = async (req, res) => {
     const addressArray = await AddressSchema.find({ userId: req.user._id });
 
     return res
-      .status(200)
+      .status(STATUS_CODES.SUCCESS)
       .json({ message: "Address fetched successfully", data: addressArray });
   } catch (error) {
     console.error("Error fetching address:", error);
@@ -458,7 +459,7 @@ exports.getAllOrders = async (req, res) => {
     const hasMore = skip + paginatedResults.length < totalCount;
     console.log(paginatedResults);
 
-    res.status(200).json({ success: true, orders: paginatedResults, hasMore });
+    res.status(STATUS_CODES.SUCCESS).json({ success: true, orders: paginatedResults, hasMore });
   } catch (error) {
     console.error("Error fetching orders:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -516,7 +517,7 @@ exports.getDeliveryInfo = async (req, res) => {
       return res.status(404).json({ error: "Address not found" });
     }
 
-    res.status(200).json({ address });
+    res.status(STATUS_CODES.SUCCESS).json({ address });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });
@@ -561,7 +562,7 @@ exports.getRewards = async (req, res, next) => {
 
     const { discount } = coupon;
 
-    res.status(200).json({ message, discount });
+    res.status(STATUS_CODES.SUCCESS).json({ message, discount });
   } catch (error) {
     console.error(error);
     next(error);
@@ -570,28 +571,6 @@ exports.getRewards = async (req, res, next) => {
 
 exports.downloadInvoice = async (req, res, next) => {
   try {
-    const order = {
-      orderId: "INV-12345",
-      date: "2025-03-07",
-      shipping: {
-        name: "John Doe",
-        address: "123 Main St",
-        city: "New York",
-        zip: "10001",
-        country: "USA",
-      },
-      payment: {
-        method: "Credit Card",
-        transactionId: "TXN123456",
-      },
-      items: [
-        { name: "Laptop", unitPrice: 1200, quantity: 1 },
-        { name: "Mouse", unitPrice: 25, quantity: 2 },
-        { name: "Keyboard", unitPrice: 50, quantity: 1 },
-      ],
-      total: 1300, // Sum of all products
-      discount: 50, // Discount applied
-    };
 
     const orderId = req.session.ordId;
     if (!orderId) {
@@ -658,7 +637,7 @@ exports.createRetryPaymentOrder = async (req, res, next) => {
     };
     const order = await razorpay.orders.create(options);
 
-    res.status(200).json({ order });
+    res.status(STATUS_CODES.SUCCESS).json({ order });
   } catch (error) {
     console.log(error);
     next(error);
@@ -715,7 +694,7 @@ exports.varifyRetryPayment = async (req, res) => {
         console.log("Signature matched proceeding to place the order")
 
         // if the payment is varified successfully 
-        responseStatus = 200;
+        responseStatus = STATUS_CODES.SUCCESS;
         responseMessage = "Payment successful";
 
         // update order 
@@ -782,7 +761,7 @@ exports.getOrderItems = async (req, res) => {
       return res.status(404).json({ error: "Order items not found" });
     }
 
-    res.status(200).json({ items: orderItems });
+    res.status(STATUS_CODES.SUCCESS).json({ items: orderItems });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });
@@ -805,7 +784,7 @@ exports.cancelOrderByUser = async (req, res) => {
     // call the cancel order method here
     await cancelOrder(orderId, cancelReason);
 
-    res.status(200).json({ message: "Order cancelled successfully" });
+    res.status(STATUS_CODES.SUCCESS).json({ message: "Order cancelled successfully" });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });
@@ -905,7 +884,7 @@ exports.returnSelectedProducts = async (req, res) => {
         .json({ error: "No matching products found in order. Request faild" });
     }
 
-    res.status(200).json({ message: "Return request send" });
+    res.status(STATUS_CODES.SUCCESS).json({ message: "Return request send" });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });
@@ -959,7 +938,7 @@ exports.getAllWalletTransactions = async (req, res, next) => {
 
     const hasMore = skip + paginatedResult.length < totalCount;
     res
-      .status(200)
+      .status(STATUS_CODES.SUCCESS)
       .json({ success: true, transactions: paginatedResult, hasMore });
   } catch (error) {
     console.log(error);
@@ -1010,7 +989,7 @@ exports.getAllUserCoupons = async (req, res, next) => {
       return res.status(400).json({ error: "Faild to get the user coupons" });
     }
 
-    res.status(200).json({ userCoupons });
+    res.status(STATUS_CODES.SUCCESS).json({ userCoupons });
   } catch (error) {
     console.log(error);
     next(error);

@@ -165,7 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
 async function checkedAddres(addressId) {
   try {
     const response = await fetch("/checkout/address", {
-      method: "POST",
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ addressId: addressId }),
     });
@@ -180,7 +180,7 @@ async function checkedAddres(addressId) {
 }
 
 // place order with cod
-const placeOrderWithCod = async (paymentMethod) => {
+const placeOrder = async (paymentMethod) => {
   try {
     placeOrderBtn.disabled = true;
     placeOrderBtn.textContent = "Processing...";
@@ -314,7 +314,7 @@ const placeOrderWithOnline = async (paymentMethod) => {
 
           try {
             const varificationRes = await fetch("/checkout/varify-payment", {
-              method: "POST",
+              method: "PATCH",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ ...response, success: true }),
             });
@@ -363,7 +363,7 @@ const placeOrderWithOnline = async (paymentMethod) => {
 
         console.log(response.error);
         const varificationRes = await fetch("/checkout/varify-payment", {
-          method: "POST",
+          method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             razorpay_payment_id: response.error.metadata.payment_id,
@@ -398,10 +398,12 @@ placeOrderBtn.addEventListener("click", async () => {
   }
 
   if (paymentMethod === "COD") {
-    placeOrderWithCod(paymentMethod);
+    placeOrder(paymentMethod);
   } else if (paymentMethod === "Online") {
     placeOrderWithOnline(paymentMethod);
-  } else {
+  } else if(paymentMethod === "Wallet") {
+    placeOrder(paymentMethod);
+  }else{
     toastr.info("Please Choose a valid payment method");
   }
 });
@@ -422,8 +424,8 @@ couponForm.addEventListener("submit", async (e) => {
   }
 
   try {
-    const res = await fetch("/checkout/applay-coupon", {
-      method: "POST",
+    const res = await fetch("/checkout/apply-coupon", {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ couponCode: couponInput.trim() }),
     });

@@ -10,6 +10,7 @@ const {
 } = require("../utils/productHelpers");
 const WishlistItems = require("../models/WishlistItems");
 const Users = require("../models/User");
+const { STATUS_CODES } = require("../utils/constants");
 const { ObjectId } = require("mongoose").Types;
 
 exports.getHome = (req, res) => {
@@ -29,14 +30,6 @@ exports.getHome = (req, res) => {
 
 exports.getFeaturedProducts = async (req, res) => {
   try {
-    /*
-    find the products that are listed and featured is true
-    return the all the products
-    */
-    // const featuredProducts = await ProductSchema.find({
-    //   isListed: true,
-    //   isFeatured: true,
-    // });
 
     const featuredProducts = await ProductSchema.aggregate([
       {
@@ -45,7 +38,7 @@ exports.getFeaturedProducts = async (req, res) => {
       addFinalPriceStage,
     ]);
 
-    res.status(200).json({
+    res.status(STATUS_CODES.SUCCESS).json({
       success: true,
       data: featuredProducts,
     });
@@ -61,12 +54,6 @@ exports.getFeaturedProducts = async (req, res) => {
 // get latest products
 exports.getLatestProducts = async (req, res) => {
   try {
-    /*
-    find the products that are listed
-    sort the product based on createdAt : -1
-    limit the count of products to 10
-    return the the products
-    */
 
     const latestProducts = await ProductSchema.aggregate([
       {
@@ -81,7 +68,7 @@ exports.getLatestProducts = async (req, res) => {
       },
     ]);
 
-    res.status(200).json({
+    res.status(STATUS_CODES.SUCCESS).json({
       success: true,
       data: latestProducts,
     });
@@ -616,7 +603,7 @@ exports.getReviews = async (req, res) => {
 
     const averageRating = await calculateAverageRating(String(req.productId));
 
-    res.status(200).json({
+    res.status(STATUS_CODES.SUCCESS).json({
       status: "success",
       message: "Data fetched successfully",
       data: {
@@ -664,7 +651,7 @@ exports.getRelatedProducts = async (req, res) => {
       addFinalPriceStage,
     ]);
 
-    res.status(200).json({
+    res.status(STATUS_CODES.SUCCESS).json({
       success: true,
       data: relatedProducts,
     });
@@ -692,7 +679,7 @@ exports.getTopCategories = async (req, res, next) => {
     ]);
 
     console.log(topCategories);
-    res.status(200).json({ topCategories });
+    res.status(STATUS_CODES.SUCCESS).json({ topCategories });
   } catch (error) {
     console.log(error);
     next(error);
@@ -707,18 +694,18 @@ exports.getWishlistCount = async (req, res, next) => {
   try {
     const loggedInUser = req.session.user;
     if (!loggedInUser) {
-      return res.status(200).json({ count: 0 });
+      return res.status(STATUS_CODES.SUCCESS).json({ count: 0 });
     }
 
     const wishlist = await WishlistItems.find({ userId: loggedInUser.id });
 
     if (!wishlist) {
-      return res.status(200).json({ count: 0 });
+      return res.status(STATUS_CODES.SUCCESS).json({ count: 0 });
     }
 
     const itemCount = wishlist.length;
 
-    return res.status(200).json({ count: itemCount });
+    return res.status(STATUS_CODES.SUCCESS).json({ count: itemCount });
   } catch (error) {
     console.log(error);
     next(error);
@@ -740,7 +727,7 @@ exports.addWishlist = async (req, res, next) => {
         userId,
         productId,
       });
-      return res.status(200).json({ message: "Item removed from wishlist" });
+      return res.status(STATUS_CODES.SUCCESS).json({ message: "Item removed from wishlist" });
     }
 
     const newWishlistItem = new WishlistItems({
@@ -755,7 +742,7 @@ exports.addWishlist = async (req, res, next) => {
         .json({ error: "Error adding product to wishlist" });
     }
 
-    res.status(200).json({ message: "Added to wishlist" });
+    res.status(STATUS_CODES.SUCCESS).json({ message: "Added to wishlist" });
   } catch (error) {
     console.log(error);
     next(error);
@@ -812,7 +799,7 @@ exports.getWishlistItems = async (req, res, next) => {
     const products = result[0]?.paginatedResult || [];
     const hasMore = skip + products.length < productsCount;
 
-    res.status(200).json({ productsCount, products, hasMore });
+    res.status(STATUS_CODES.SUCCESS).json({ productsCount, products, hasMore });
   } catch (error) {
     console.log(error);
     next(error);

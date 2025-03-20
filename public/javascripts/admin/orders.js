@@ -1,11 +1,10 @@
-const orderTable = document.getElementById('orderTable')
-const searchForm = document.querySelector('.search-form')
-const prevBtn = document.querySelector('.prev-btn')
-const nextBtn = document.querySelector('.next-btn')
+const orderTable = document.getElementById("orderTable");
+const searchForm = document.querySelector(".search-form");
+const prevBtn = document.querySelector(".prev-btn");
+const nextBtn = document.querySelector(".next-btn");
 
 let page = 0;
-let search = ""; 
-
+let search = "";
 
 const showorders = (orders, totalorders) => {
   orderTable.innerHTML = "";
@@ -27,12 +26,19 @@ const showorders = (orders, totalorders) => {
             <td>${order.paymentMethod}</td>
             <td>
             ${
-              order.isCancelled ? '<span class="text-danger"><strong>Cancelled</strong></span>'
-              : `
+              order.isCancelled
+                ? '<span class="text-danger"><strong>Cancelled</strong></span>'
+                : `
               <select onchange="updateOrderStatus(this.value, '${order._id}')">
-                  <option value="Ordered" ${order.orderStatus === 'Ordered' ? 'selected' : ''}>Ordered</option>
-                  <option value="Shipped" ${order.orderStatus === 'Shipped' ? 'selected' : ''}>Shipped</option>
-                  <option value="Delivered" ${order.orderStatus === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                  <option value="Ordered" ${
+                    order.orderStatus === "Ordered" ? "selected" : ""
+                  }>Ordered</option>
+                  <option value="Shipped" ${
+                    order.orderStatus === "Shipped" ? "selected" : ""
+                  }>Shipped</option>
+                  <option value="Delivered" ${
+                    order.orderStatus === "Delivered" ? "selected" : ""
+                  }>Delivered</option>
               </select>
               `
             }
@@ -41,7 +47,6 @@ const showorders = (orders, totalorders) => {
         `;
       orderTable.appendChild(row);
     });
-
   } else {
     const row = document.createElement("tr");
     row.innerHTML = `No orders found`;
@@ -51,32 +56,34 @@ const showorders = (orders, totalorders) => {
 };
 
 function updateOrderStatus(status, orderId) {
-    fetch("/admin/orders/update-status", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ orderId, status }),
+  fetch("/admin/orders/update-status", {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ orderId, status }),
+  })
+    .then( async (response) => {
+      const data = await response.json();
+      if(!response.ok) {
+        throw new Error(data.error || "Failed to update order status");
+      }
+      return data;
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            toastr.success("Order status updated successfully!");
-        } else {
-            toastr.error(data.message || "Failed to update order status");
-        }
+    .then(() => {
+        toastr.success("Order status updated successfully!");
     })
-    .catch(error => {
-        console.error("Error updating order status:", error);
-        alert("Something went wrong. Please try again.");
+    .catch((error) => {
+      console.error("Error updating order status:", error);
+      toastr.error(error.message || "Something went wrong. Please try again.");
     });
 }
 
 // update paginators
 const updatePaginators = (hasMore) => {
-    prevBtn.disabled = page === 0;
-    nextBtn.disabled = !hasMore
-  };
+  prevBtn.disabled = page === 0;
+  nextBtn.disabled = !hasMore;
+};
 
 const getOrders = async (page = 0, search = "") => {
   try {
@@ -94,14 +101,14 @@ const getOrders = async (page = 0, search = "") => {
     let data;
     try {
       data = await response.json();
-      console.log(data)
+      console.log(data);
     } catch (jsonError) {
       console.error("Failed to parse JSON:", jsonError);
       alert("Invalid response from the server");
       return;
     }
 
-    const { hasMore, totalorders, orders} = data;
+    const { hasMore, totalorders, orders } = data;
 
     if (response.ok) {
       showorders(orders, totalorders);
@@ -117,18 +124,17 @@ const getOrders = async (page = 0, search = "") => {
 
 document.addEventListener("DOMContentLoaded", getOrders);
 
+prevBtn.addEventListener("click", () => {
+  page--;
+  getOrders(page);
+});
 
-prevBtn.addEventListener('click', () => {
-  page--
-  getOrders(page)
-})
+nextBtn.addEventListener("click", () => {
+  page++;
+  getOrders(page);
+});
 
-nextBtn.addEventListener('click', () => {
-  page++
-  getOrders(page)
-})
-
-// working 
+// working
 // searchForm.addEventListener('submit', (e) => {
 //     e.preventDefault()
 //     const errorMessage = document.getElementById('errorMessage')
@@ -136,12 +142,12 @@ nextBtn.addEventListener('click', () => {
 //     const search = searchInput.value.trim();
 //     errorMessage.innerText = ''
 //     let isValid = true
-  
+
 //     if(!search){
 //       isValid = false
 //       errorMessage.innerText = 'Enter Order Id'
 //     }
-  
+
 //     if (isValid) {
 //       getOrders(0, search)
 //     }

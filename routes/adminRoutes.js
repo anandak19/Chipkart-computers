@@ -28,17 +28,19 @@ router.get('/products/new', adminController.getProductForm)
 router.post('/products/new', upload.array('images'), newProductValidations, adminController.addNewProduct)
 router.get('/products/edit/:id', adminController.getEditProductForm)
 // update product validation middleware should be here 
-router.post('/products/edit/:id', upload.array('images'), adminController.postEditProductForm)
-router.post('/products/toggle-listed/:id', adminController.toggleListProduct)
+router.patch('/products/edit/:id', upload.array('images'), adminController.postEditProductForm)
+router.patch('/products/toggle-listed/:id', adminController.toggleListProduct)
 
 //category management
 router.get('/categories', isAdminLogin, adminController.getCategoryManagement)
 router.get('/categories/all', adminController.getCategories)
-router.post('/categories/toggle-listed/:id', adminController.toggleListCategory)
-router.get('/categories/edit/:id', adminController.getUpdateCategoryForm)
-router.post('/categories/edit', upload.single('image'), adminController.postUpdateCategoryForm)
 router.get('/categories/new', isAdminLogin,  adminController.getCategoryForm)
 router.post('/categories/new', upload.single('image'),  adminController.postCategoryForm)
+router.patch('/categories/toggle-listed/:id', adminController.toggleListCategory)
+router.get('/categories/edit/:id', adminController.getUpdateCategoryForm)
+router.patch('/categories/edit', upload.single('image'), adminController.postUpdateCategoryForm)
+// return listed categories only 
+router.get('/categories/available', adminController.getAvailableCategories)
 
 // offer management 
 // render the offer page
@@ -49,9 +51,8 @@ router.post('/offers/new', validateOffer, adminController.saveNewOffer)
 router.get('/offers/all', adminController.getAllOffers)
 router.get('/offers/edit/:id',isAdminLogin, adminController.getEditOfferForm)
 router.get('/offers/edit/offer/details', adminController.getSingleOfferDetails)
-router.post('/offers/edit/offer/details', adminController.saveUpdatedOffer)
+router.patch('/offers/edit/offer/details', adminController.saveUpdatedOffer)
 router.patch('/offers/unlist/:id', adminController.tooggleOfferStatus)
-// apply offer for product and category 
 router.get('/offers/apply/:id', adminController.getOfferApplyPage)
 // get the offer of selected type -product/category offer
 router.get('/offers/apply/available/all', adminController.getOfferOfType)
@@ -59,23 +60,18 @@ router.patch('/offers/apply/available/all/:id', adminController.applyNewOffer)
 router.patch('/offers/apply/available/remove-offer', adminController.removeExistingOffer)
 
 
-router.get('/categories/available', adminController.getAvailableCategories)
-
-router.get('/categories/available', adminController.getAvailableCategories)
-
 // render the order page to the admin
 router.get('/orders',isAdminLogin, adminController.getOrderManagement)
 router.get('/orders/all', adminController.getAllOrders)
 // of single order
 router.get('/orders/info', adminController.getUserDataAndDeliveryInfo)
 router.get('/orders/items', adminController.getOrderItems)
-router.post('/orders/cancel/order', adminController.cancelOrderByAdmin)
+router.patch('/orders/cancel/order', adminController.cancelOrderByAdmin)
 router.patch('/orders/return/approve/:id', adminController.approveReturnItem)
 router.patch('/orders/return/reject/:id', adminController.rejectReturnItemRefund)
 
-// router.get('/orders/all/:orderId', adminController.renderOrderDetailsPage)
 router.get('/orders/all/:orderId', isAdminLogin, adminController.renderOrderDetailsPage)
-router.post('/orders/update-status', adminController.updateOrderStatus)
+router.patch('/orders/update-status', adminController.updateOrderStatus)
 
 // REPORTS START
 // render the sales report page 
@@ -96,13 +92,5 @@ router.get('/coupons/edit/:id', adminController.getEditCouponForm)
 router.get('/coupons/details', adminController.getEditCouponDetails)
 router.patch('/coupons/details', validateCouponDetails, adminController.saveUpdatedCoupon)
 router.patch('/coupons/unlist/:id', adminController.toogleCouponStatus)
-
-/*
-optional  we need banner management page
-*/
-
-
-
-
 
 module.exports = router

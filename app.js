@@ -43,7 +43,7 @@ app.use((req, res, next) => {
 
   session({
     name: sessionName,
-    secret: "chipkart-computers",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
@@ -66,7 +66,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLINT_ID,
       clientSecret: process.env.GOOGLE_CLINT_SECRET,
-      callbackURL: "http://localhost:3000/auth/google/callback",
+      callbackURL: process.env.GOOGLE_CALLBACK_URL,
     },
     (_accessToken, _refreshToken, profile, done) => {
       return done(null, profile);

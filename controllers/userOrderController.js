@@ -25,6 +25,9 @@ const {
   getDeliveryAddress,
 } = require("../utils/sessionUtils");
 const { addUserCoupon } = require("../utils/couponsManager");
+const Wallet = require("../models/Wallet");
+const WalletTransaction = require("../models/WalletTransaction");
+const { STATUS_CODES } = require("../utils/constants");
 
 const maxQty = Number(process.env.MAX_QTY);
 
@@ -137,7 +140,7 @@ exports.getCartItems = async (req, res) => {
     const total = productCount ? productCount.total : 0;
     const hasMore = skip + products.length < total;
 
-    res.status(200).json({ products, total, hasMore });
+    res.status(STATUS_CODES.SUCCESS).json({ products, total, hasMore });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });
@@ -176,7 +179,7 @@ exports.addItemToCart = async (req, res) => {
       );
       if (existingProduct) {
         await session.commitTransaction();
-        return res.status(200).json({ message: "Product is already in cart" });
+        return res.status(STATUS_CODES.SUCCESS).json({ message: "Product is already in cart" });
       }
 
       // add the new product to cart
@@ -186,7 +189,7 @@ exports.addItemToCart = async (req, res) => {
     await cart.save({ session });
     await session.commitTransaction();
 
-    return res.status(200).json({ message: "Product added to cart" });
+    return res.status(STATUS_CODES.SUCCESS).json({ message: "Product added to cart" });
   } catch (error) {
     await session.abortTransaction();
     console.log(error);
@@ -258,7 +261,7 @@ exports.increaseCartItemQuantity = async (req, res) => {
     await cart.save({ session });
     await session.commitTransaction();
 
-    return res.status(200).json({ message: "Product incremented" });
+    return res.status(STATUS_CODES.SUCCESS).json({ message: "Product incremented" });
   } catch (error) {
     await session.abortTransaction();
     console.log(error);
@@ -321,7 +324,7 @@ exports.decreaseCartItemQuantity = async (req, res) => {
     await cart.save({ session });
 
     await session.commitTransaction();
-    return res.status(200).json({ message: "Product decremented" });
+    return res.status(STATUS_CODES.SUCCESS).json({ message: "Product decremented" });
   } catch (error) {
     await session.abortTransaction();
     console.log(error);
@@ -372,7 +375,7 @@ exports.deleteCartItem = async (req, res) => {
     await cart.save({ session });
     await session.commitTransaction();
 
-    return res.status(200).json({ message: "Product removed from cart" });
+    return res.status(STATUS_CODES.SUCCESS).json({ message: "Product removed from cart" });
   } catch (error) {
     await session.abortTransaction();
     console.log(error);
@@ -405,7 +408,7 @@ exports.getCartTotal = async (req, res) => {
       cartTotal = cartSubTotal + shippingFee;
     }
 
-    res.status(200).json({ cartSubTotal, shippingFee, cartTotal });
+    res.status(STATUS_CODES.SUCCESS).json({ cartSubTotal, shippingFee, cartTotal });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal server error." });
@@ -455,14 +458,14 @@ exports.getCheckoutAmount = async (req, res, next) => {
   try {
     const checkoutData = await calculateCheckoutAmount(req);
     console.log(checkoutData);
-    res.status(200).json(checkoutData);
+    res.status(STATUS_CODES.SUCCESS).json(checkoutData);
   } catch (error) {
     console.log(error);
     next(error);
   }
 };
 
-exports.applayCoupon = async (req, res, next) => {
+exports.applyCoupon = async (req, res, next) => {
   try {
     if (req.session.appliedCouponId) {
       return res
@@ -500,7 +503,7 @@ exports.applayCoupon = async (req, res, next) => {
     userCoupon.isRedeemed = true;
     await userCoupon.save();
 
-    res.status(200).json({ message: "Coupon applied successfully" });
+    res.status(STATUS_CODES.SUCCESS).json({ message: "Coupon applied successfully" });
   } catch (error) {
     console.log(error);
     next(error);
@@ -539,7 +542,7 @@ exports.removeAppliedCoupon = async (req, res, next) => {
     req.session.appliedCouponId = null;
     await userCoupon.save();
 
-    res.status(200).json({ message: "Coupon removed" });
+    res.status(STATUS_CODES.SUCCESS).json({ message: "Coupon removed" });
   } catch (error) {
     console.log(error);
     next(error);
@@ -563,7 +566,7 @@ exports.chooseDeliveryAddress = async (req, res) => {
     }
 
     req.session.deliveryAddress = addressId;
-    res.status(200).json({ message: "Address ID added to session" });
+    res.status(STATUS_CODES.SUCCESS).json({ message: "Address ID added to session" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
@@ -574,18 +577,18 @@ exports.getCartItemCount = async (req, res, next) => {
   try {
     const loggedInUser = req.session.user;
     if (!loggedInUser) {
-      return res.status(200).json({ count: 0 });
+      return res.status(STATUS_CODES.SUCCESS).json({ count: 0 });
     }
 
     const cart = await CartSchema.findOne({ userId: loggedInUser.id });
 
     if (!cart) {
-      return res.status(200).json({ count: 0 });
+      return res.status(STATUS_CODES.SUCCESS).json({ count: 0 });
     }
 
     const itemCount = cart.products.length;
 
-    return res.status(200).json({ count: itemCount });
+    return res.status(STATUS_CODES.SUCCESS).json({ count: itemCount });
   } catch (error) {
     console.log(error);
     next(error);
@@ -611,6 +614,7 @@ exports.placeOrder = async (req, res) => {
     const { paymentMethod } = req.body;
     const cart = req.cart;
     let isFirstOrder = false;
+    let isPaid = false;
 
     // if no payment method is choosen
     if (!paymentMethod) {
@@ -618,10 +622,49 @@ exports.placeOrder = async (req, res) => {
     }
 
     const checkoutData = await calculateCheckoutAmount(req);
-    if (checkoutData.totalPayable > 5000) {
+
+    if (paymentMethod === "COD") {
+      if (checkoutData.totalPayable > 5000) {
+        return res
+          .status(400)
+          .json({ error: "Orders above ₹5000 are not allowed for COD " });
+      }
+    } else if (paymentMethod === "Wallet") {
+      // check if the wallet amount is less than the totalPayable. if true return error
+      const userWallet = await Wallet.findOne({ userId }).session(session);
+      if (!userWallet) {
+        await session.abortTransaction();
+        return res.status(404).json({ error: "Wallet not found" });
+      }
+
+      if (
+        userWallet.balanceLeft === 0 ||
+        userWallet.balanceLeft < checkoutData.totalPayable
+      ) {
+        await session.abortTransaction();
+        return res.status(400).json({
+          error: "Insufficient balance in wallet! Try another method",
+        });
+      }
+
+      userWallet.balanceLeft -= checkoutData.totalPayable;
+      await userWallet.save({ session });
+
+      const newTransaction = new WalletTransaction ({
+        userId,
+        userWalletId: userWallet._id,
+        amount: checkoutData.totalPayable,
+        transactionType: "debit",
+        reason: "Used Wallet Payment",
+      });
+
+      await newTransaction.save({ session });
+      isPaid = true;
+
+    } else {
       return res
         .status(400)
-        .json({ error: "Orders above ₹5000 are not allowed for COD " });
+        .json({ error: "Please choose a valid payment method" });
     }
 
     // get address id , default address or address choosed from session
@@ -663,14 +706,14 @@ exports.placeOrder = async (req, res) => {
       shippingFee: checkoutData.shippingFee,
       discount: checkoutData.discountApplied,
       totalPayable: checkoutData.totalPayable,
-      paymentStatus: "Pending",
-      paymentMethod: "COD",
+      paymentStatus: isPaid ? "Paid" : "Pending",
+      paymentMethod: paymentMethod,
       isFirstOrder: isFirstOrder,
     });
 
-    console.log("Actual order:", newOrder)
+    console.log("Actual order:", newOrder);
     const order = await newOrder.save({ session });
-    console.log("saved order:", order)
+    console.log("saved order:", order);
 
     if (!order) {
       await session.abortTransaction();
@@ -729,7 +772,7 @@ exports.placeOrder = async (req, res) => {
 
     // check if the user got any discount coupon in this order
     const couponDiscount = await addUserCoupon(order._id, session);
-    console.log("order from outside",order)
+    console.log("order from outside", order);
 
     const redirectUrl = `/account/orders/all/ord/${order._id}`;
     req.session.orderMessage = `Order Placed Successfully`;
@@ -740,7 +783,7 @@ exports.placeOrder = async (req, res) => {
     await session.commitTransaction();
 
     req.session.appliedCouponId = null;
-    res.status(200).json({ message: "Order Placed Successfully", redirectUrl });
+    res.status(STATUS_CODES.SUCCESS).json({ message: "Order Placed Successfully", redirectUrl });
   } catch (error) {
     await session.abortTransaction();
     console.error(error);
@@ -776,7 +819,7 @@ exports.createRazorypayOrder = async (req, res) => {
 
     const order = await razorpay.orders.create(options);
     await session.commitTransaction();
-    res.status(200).json({ order });
+    res.status(STATUS_CODES.SUCCESS).json({ order });
   } catch (error) {
     await session.abortTransaction();
     console.error(error);
@@ -824,7 +867,7 @@ exports.varifyPayment = async (req, res) => {
         responseMessage = "Payment Verification Failed!";
       } else {
         isPaymentSuccess = true;
-        responseStatus = 200;
+        responseStatus = STATUS_CODES.SUCCESS;
         responseMessage = "Payment successful";
       }
     }
@@ -865,7 +908,7 @@ exports.varifyPayment = async (req, res) => {
         orderStatus: isPaymentSuccess ? "Ordered" : "Pending",
         razorpayPaymentId: success ? razorpay_payment_id : null,
         razorpayOrderId: razorpay_order_id,
-        isFirstOrder
+        isFirstOrder,
       });
 
       currentOrder = await newOrder.save({ session });
@@ -961,14 +1004,14 @@ exports.varifyPayment = async (req, res) => {
       const couponDiscount = await addUserCoupon(currentOrder._id, session);
 
       req.session.orderMessage = `Order Placed Successfully`;
-      req.session.orderErrorMessage = null
+      req.session.orderErrorMessage = null;
 
       if (couponDiscount) {
         req.session.couponMessage = `Congratulations! You will get a new coupon in this order`;
       }
 
       responseMessage = "Order Placed Successfully";
-      responseStatus = 200;
+      responseStatus = STATUS_CODES.SUCCESS;
     }
 
     await session.commitTransaction();

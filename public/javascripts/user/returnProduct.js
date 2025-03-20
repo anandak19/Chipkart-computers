@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const response = await fetch("/account/orders/all/ord/items/return", {
-        method: "POST",
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },

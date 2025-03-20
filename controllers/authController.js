@@ -7,6 +7,8 @@ const Session = mongoose.connection.collection("sessions");
 const { validatePassword } = require("../utils/validations");
 const logoutUser = require("../utils/logoutUser");
 const { createNewUser } = require("../utils/userHelpers");
+const { STATUS_CODES } = require("../utils/constants");
+const CustomError = require("../utils/customError");
 require("dotenv").config();
 
 // Geting signup page
@@ -26,27 +28,23 @@ exports.getUserSignup = (req, res) => {
 };
 
 // posting signup for varification
-exports.startOtpVerification = async (req, res) => {
+exports.startOtpVerification = async (req, res, next) => {
   try {
     let name, email;
     if (req.user) {
       email = req.user.email;
       name = req.user.name;
     }
-    console.log("Started otp sending");
 
     // If no email is provided, return an error
     if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "No email found in request",
-      });
+      throw new CustomError("No email found in request", STATUS_CODES.BAD_REQUEST);
     }
 
     const user = await UserSchema.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ error: "User not found" });
+      throw new CustomError("User not found", STATUS_CODES.NOT_FOUND);
     }
 
     // make this code a separate utility later
@@ -76,14 +74,13 @@ exports.startOtpVerification = async (req, res) => {
     req.session.userId = req.user._id;
     req.session.isLogin = true;
 
-    return res.status(200).json({
+    return res.status(STATUS_CODES.SUCCESS).json({
       status: "success",
       message: "OTP Send Successfully",
       redirectUrl: `/varify-otp/${String(req.user._id)}`,
     });
   } catch (error) {
-    console.error("An error occurred:", error);
-    return res.status(500).send("An internal server error occurred");
+    next(error)
   }
 };
 
@@ -96,11 +93,10 @@ exports.getVerify = async (req, res) => {
 };
 
 // submit the otp page
-exports.validateOtp = async (req, res) => {
+exports.validateOtp = async (req, res, next) => {
   try {
     const { otp } = req.body;
     const email = req.session.userEmail;
-    console.log("Verifying OTP and email:", otp);
 
     if (!email) {
       return res.status(400).json({
@@ -148,8 +144,7 @@ exports.validateOtp = async (req, res) => {
     console.log("Is verified:", req.session.isVerified);
     await user.save();
 
-    return res.status(200).json({
-      // Changed from 400 to 200
+    return res.status(STATUS_CODES.SUCCESS).json({
       success: true,
       message: "Verification successful!",
       redirect: true,
@@ -157,7 +152,6 @@ exports.validateOtp = async (req, res) => {
     });
   } catch (error) {
     console.error("Error during OTP verification:", error);
-
     return res.status(500).json({
       success: false,
       message: "Something went wrong. Please try again.",
@@ -179,8 +173,6 @@ exports.registerGoogleUser = async (req, res) => {
     if (!user) {
       // create new user and create a wallet for user
       const referralCode = req.cookies.referralCode;
-
-      console.log("referal code got in google ref", referralCode);
       user = await createNewUser(
         name,
         email,
@@ -235,9 +227,7 @@ exports.registerGoogleUser = async (req, res) => {
     return res.redirect("/account");
   } catch (error) {
     console.error("Error saving user to the database:", error);
-    return res
-      .status(500)
-      .send("An error occurred while processing your request.");
+    return res.redirect("/");
   }
 };
 
@@ -258,17 +248,12 @@ exports.getUserLogin = (req, res) => {
 };
 
 // post user login
-exports.postUserLogin = async (req, res) => {
+exports.postUserLogin = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    console.log("Started login process for email:", email);
-
     // Check if email and password are provided
     if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Email and password are required.",
-      });
+      throw new CustomError("Email and password are required.", STATUS_CODES.BAD_REQUEST);
     }
 
     // Find user by email
@@ -276,27 +261,18 @@ exports.postUserLogin = async (req, res) => {
 
     // Check if the user exists
     if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "You dont have account with us, Signup first!",
-      });
+      throw new CustomError("You dont have account with us, Signup first!", STATUS_CODES.BAD_REQUEST);
     }
 
     // Compare the provided password with the stored password in the database
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(400).json({
-        success: false,
-        message: "Wrong password.",
-      });
+      throw new CustomError("Wrong password.", STATUS_CODES.BAD_REQUEST);
     }
 
     // check if the user is blocked
     if (user.isBlocked) {
-      return res.status(400).json({
-        success: false,
-        message: `Your are being blocked for the reason: ${user.blockReason}`,
-      });
+      throw new CustomError(`Your are being blocked for the reason: ${user.blockReason}`, STATUS_CODES.BAD_REQUEST);
     }
 
     req.session.user = {
@@ -309,7 +285,7 @@ exports.postUserLogin = async (req, res) => {
     req.session.userEmail = user.email;
     req.session.userId = user._id.toString();
 
-    res.status(200).json({
+    res.status(STATUS_CODES.SUCCESS).json({
       success: true,
       message: "Login Successfull",
     });
@@ -319,10 +295,7 @@ exports.postUserLogin = async (req, res) => {
     update this api name too 
     */
   } catch (error) {
-    console.error("Error in login:", error);
-    return res
-      .status(500)
-      .json({ success: true, error: "Internal server error" });
+    next(error)
   }
 };
 
@@ -333,7 +306,7 @@ exports.logoutUser = async (req, res) => {
     return res.redirect("/");
   } catch (error) {
     console.error("Logout Error:", error);
-    res.status(500).send({ message: error.message });
+    return res.redirect("/");
   }
 };
 
@@ -398,17 +371,17 @@ exports.getForgotPassword = async (req, res) => {
 // user will send a email in body
 // server varify email and user, create a token and save it in user with 1 hr expiration
 // send the reset link to usr in email
-exports.postForgotPassword = async (req, res) => {
+exports.postForgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
     if (!email) {
-      return res.status(400).json({ error: "Email is needed" });
+      throw new CustomError( "Email is needed", STATUS_CODES.BAD_REQUEST);
     }
 
     const user = await UserSchema.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ error: "User not found" });
+      throw new CustomError("User not found", STATUS_CODES.NOT_FOUND);
     }
 
     const resetToken = crypto.randomBytes(32).toString("hex");
@@ -426,11 +399,10 @@ exports.postForgotPassword = async (req, res) => {
     req.session.passwordResetSuccess = false;
     req.session.isPasswordUpdated = false;
     res
-      .status(200)
+      .status(STATUS_CODES.SUCCESS)
       .json({ message: "Check yor email for password reset link" });
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({ error: "Internal server error" });
+    next(error)
   }
 };
 
@@ -469,16 +441,15 @@ exports.getNewPasswordPage = async (req, res) => {
   }
 };
 
-exports.postNewPassword = async (req, res) => {
+exports.postNewPassword = async (req, res, next) => {
   // check if the user was alredy submited and changed the password
-
   try {
     const { token } = req.params;
     const { password, confirmPassword } = req.body;
     console.log(token);
 
     if (!token) {
-      res.status(400).json({ error: "Token not found" });
+      throw new CustomError("Your are not authenticated", STATUS_CODES.BAD_REQUEST);
     }
 
     const user = await UserSchema.findOne({
@@ -487,12 +458,12 @@ exports.postNewPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ error: "Invalid or expired token." });
+      throw new CustomError("Invalid or expired token.", STATUS_CODES.BAD_REQUEST);
     }
 
-    const alertMessage = await validatePassword(password, confirmPassword);
+    const alertMessage = validatePassword(password, confirmPassword);
     if (alertMessage) {
-      res.status(400).json({ error: alertMessage });
+      throw new CustomError(alertMessage, STATUS_CODES.BAD_REQUEST);
     }
 
     user.password = await bcrypt.hash(password, 10);
@@ -503,10 +474,9 @@ exports.postNewPassword = async (req, res) => {
 
     req.session.passwordResetSuccess = true;
 
-    res.status(200).json({ message: "Password saved succesfully" });
+    res.status(STATUS_CODES.SUCCESS).json({ message: "Password saved succesfully" });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error)
   }
 };
 

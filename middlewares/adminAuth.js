@@ -12,7 +12,6 @@ const isAdminLoginSubmitted = (req, res, next) => {
 const isAdminLogin = async(req, res, next) => {
     const isAdminLogin = req?.session?.isAdminLogin || false;
     const adminId = req?.session?.adminId || false;
-    console.log(isAdminLogin)
     if (!isAdminLogin || !adminId) {
         return res.redirect('/admin/login');
     }

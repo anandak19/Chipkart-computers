@@ -51,8 +51,8 @@ router.post('/products/wishlist/add/:id', varifyLoginUserSession, validateProduc
 // personal details 
 router.get('/account', isLogin,  userAccountController.getAccount)
 router.get('/account/user', userAccountController.getUserDetails)
-router.post('/account/user', userAccountController.postUserDetails)
-router.post('/account/user/password', userAccountController.postChangePassword)
+router.patch('/account/user', userAccountController.postUserDetails)
+router.patch('/account/user/password', userAccountController.postChangePassword)
 
 
 // user address 
@@ -77,16 +77,15 @@ router.get('/account/orders/all/ord/info/rewards', userAccountController.getRewa
 router.get('/account/orders/all/ord/invoice/download', userAccountController.downloadInvoice)
 // retry payment 
 
-// --- not tested 
 router.post('/account/orders/all/ord/payment/retry', userAccountController.createRetryPaymentOrder)
 router.patch('/account/orders/all/ord/payment/varify', userAccountController.varifyRetryPayment)
 
 // updated
 
 router.get('/account/orders/all/ord/info/itemes', userAccountController.getOrderItems)
-router.post('/account/orders/all/ord/cancel/order', varifyLoginUserSession, userAccountController.cancelOrderByUser)
+router.patch('/account/orders/all/ord/cancel/order', varifyLoginUserSession, userAccountController.cancelOrderByUser)
 router.get('/account/orders/all/ord/items/return', userAccountController.getReturnProductPage)
-router.post('/account/orders/all/ord/items/return', userAccountController.returnSelectedProducts)
+router.patch('/account/orders/all/ord/items/return', userAccountController.returnSelectedProducts)
 
 // ORDERS ROUTES START
 router.get('/account/wallet', getUser, userAccountController.getWallet)
@@ -113,16 +112,16 @@ router.get('/cart/count', userOrderController.getCartItemCount)
 // eg of cart checkout: /checkout?cart=true 
 router.get('/checkout', getUser,  userOrderController.getCheckoutPage)
 router.get('/checkout/amount', varifyLoginUserSession, userOrderController.getCheckoutAmount)
-router.post('/checkout/applay-coupon', varifyLoginUserSession, userOrderController.applayCoupon)
+router.patch('/checkout/apply-coupon', varifyLoginUserSession, userOrderController.applyCoupon)
 router.patch('/checkout/remove-coupon', varifyLoginUserSession, userOrderController.removeAppliedCoupon)
 // api calls
-router.post('/checkout/address', userOrderController.chooseDeliveryAddress)
+router.patch('/checkout/address', userOrderController.chooseDeliveryAddress)
 // place order with cod
 router.post('/checkout/confirm', varifyLoginUserSession, checkIsblocked, compareOrderItems, userOrderController.placeOrder)
 // online payment
 router.post('/checkout/create-order', varifyLoginUserSession, compareOrderItems, userOrderController.createRazorypayOrder)
 // varify payment and place the order by online 
-router.post('/checkout/varify-payment', varifyLoginUserSession, compareOrderItems,  userOrderController.varifyPayment)
+router.patch('/checkout/varify-payment', varifyLoginUserSession, compareOrderItems,  userOrderController.varifyPayment)
 
 router.get('/checkout/address/new', userOrderController.getAddAnotherAddressPage)
 

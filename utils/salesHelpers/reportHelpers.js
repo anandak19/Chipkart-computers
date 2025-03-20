@@ -1,5 +1,7 @@
 const Order = require("../../models/Order");
 const OrderItem = require("../../models/orderItem");
+const { STATUS_CODES } = require("../constants");
+const CustomError = require("../customError");
 
 const getReportOverview = async (startDate, endDate) => {
   try {
@@ -82,8 +84,7 @@ const getReportOverview = async (startDate, endDate) => {
 
     return reportAmountData;
   } catch (error) {
-    console.error("Error fetching report amounts:", error);
-    throw new Error("Failed to fetch report amounts");
+    throw new CustomError("Failed to fetch report amounts", STATUS_CODES.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -164,8 +165,7 @@ const getAllOrdersDetails = async (
 
     return ordersDetails;
   } catch (error) {
-    console.error("Error fetching orders data:", error);
-    throw new Error("Failed to fetch orders details");
+    throw new CustomError("Failed to fetch orders details", STATUS_CODES.INTERNAL_SERVER_ERROR);
   }
 };
 

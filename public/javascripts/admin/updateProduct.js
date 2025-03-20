@@ -186,7 +186,7 @@ if (updateProductBtn) {
     // Send Request to update
     try {
       const res = await fetch(`/admin/products/edit/${window.productId}`, {
-        method: "POST",
+        method: "PATCH",
         body: formData,
       });
 

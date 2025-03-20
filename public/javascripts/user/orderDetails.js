@@ -146,7 +146,7 @@ cancelOrderForm.addEventListener("submit", async (e) => {
 
   try {
     const response = await fetch("/account/orders/all/ord/cancel/order", {
-      method: "POST",
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ cancelReason: reason }),
     });
