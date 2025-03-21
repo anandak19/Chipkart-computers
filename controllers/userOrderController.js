@@ -28,6 +28,7 @@ const { addUserCoupon } = require("../utils/couponsManager");
 const Wallet = require("../models/Wallet");
 const WalletTransaction = require("../models/WalletTransaction");
 const { STATUS_CODES } = require("../utils/constants");
+const CustomError = require("../utils/customError");
 
 const maxQty = Number(process.env.MAX_QTY);
 
@@ -35,18 +36,16 @@ exports.getCartPage = (req, res) => {
   res.render("user/account/cart");
 };
 
-exports.getCartItems = async (req, res) => {
+exports.getCartItems = async (req, res, next) => {
   try {
     if (!req.user) {
-      return res.status(404).json({ error: "User not found in request." });
+      throw new CustomError("User details not found", STATUS_CODES.BAD_REQUEST);
     }
     const userId = req.user._id;
     const { p } = req.query;
     const page = Number(p) || 0;
     const limit = 5;
     const skip = page * limit;
-
-    console.log(userId);
 
     const pipeline = [
       {
@@ -135,30 +134,29 @@ exports.getCartItems = async (req, res) => {
 
     const productCount = cart[0].productCount[0];
     const products = cart[0]?.paginatedResult || [];
-    console.log(products);
 
     const total = productCount ? productCount.total : 0;
     const hasMore = skip + products.length < total;
 
     res.status(STATUS_CODES.SUCCESS).json({ products, total, hasMore });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
 
 // to add an an item to cart, product quantity will decrese in products too
 // FIXED
-exports.addItemToCart = async (req, res) => {
+exports.addItemToCart = async (req, res, next) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     if (!req.user || !req.product) {
       await session.abortTransaction();
-      return res
-        .status(404)
-        .json({ error: "User or product not found in request." });
+      throw new CustomError(
+        "User or product not found in request.",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     const productId = req.product._id;
@@ -179,7 +177,9 @@ exports.addItemToCart = async (req, res) => {
       );
       if (existingProduct) {
         await session.commitTransaction();
-        return res.status(STATUS_CODES.SUCCESS).json({ message: "Product is already in cart" });
+        return res
+          .status(STATUS_CODES.SUCCESS)
+          .json({ message: "Product is already in cart" });
       }
 
       // add the new product to cart
@@ -189,11 +189,12 @@ exports.addItemToCart = async (req, res) => {
     await cart.save({ session });
     await session.commitTransaction();
 
-    return res.status(STATUS_CODES.SUCCESS).json({ message: "Product added to cart" });
+    return res
+      .status(STATUS_CODES.SUCCESS)
+      .json({ message: "Product added to cart" });
   } catch (error) {
     await session.abortTransaction();
-    console.log(error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error);
   } finally {
     session.endSession();
   }
@@ -201,16 +202,16 @@ exports.addItemToCart = async (req, res) => {
 
 // to increase the quantity of the item in the cart
 // FIXED
-exports.increaseCartItemQuantity = async (req, res) => {
+exports.increaseCartItemQuantity = async (req, res, next) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     if (!req.user || !req.product) {
-      await session.abortTransaction();
-      return res
-        .status(404)
-        .json({ error: "User or product not found in request." });
+      throw new CustomError(
+        "User or product not found in request.",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     const productId = req.product._id;
@@ -220,10 +221,10 @@ exports.increaseCartItemQuantity = async (req, res) => {
     let cart = await CartSchema.findOne({ userId }).session(session);
 
     if (!cart) {
-      await session.abortTransaction();
-      return res.status(404).json({
-        error: "You have no existing cart! Add an item to cart first",
-      });
+      throw new CustomError(
+        "You have no existing cart! Add an item to cart first",
+        STATUS_CODES.NOT_FOUND
+      );
     }
 
     // find the requested product from cart
@@ -232,40 +233,36 @@ exports.increaseCartItemQuantity = async (req, res) => {
     );
 
     if (productIndex === -1) {
-      await session.abortTransaction();
-      return res.status(404).json({
-        error:
-          "Product not founded in your cart! Add the product to cart first",
-      });
+      throw new CustomError(
+        "Product not founded in your cart! Add the product to cart first",
+        STATUS_CODES.NOT_FOUND
+      );
     }
 
     if (cart.products[productIndex].quantity >= req.product.quantity) {
-      await session.abortTransaction();
-      return res.status(404).json({
-        error: "No stocks left",
-      });
+      throw new CustomError("No stocks left", STATUS_CODES.CONFLICT);
     }
 
     // check if the current quantity is greater than limit
     if (cart.products[productIndex].quantity >= maxQty) {
-      await session.abortTransaction();
-      return res
-        .status(400)
-        .json({ error: `User can add only upto ${maxQty} quantity of item` });
+      throw new CustomError(
+        `User can add only upto ${maxQty} quantity of item`,
+        STATUS_CODES.CONFLICT
+      );
     }
 
     // decrement product quantity from db
-
     cart.products[productIndex].quantity++;
 
     await cart.save({ session });
     await session.commitTransaction();
 
-    return res.status(STATUS_CODES.SUCCESS).json({ message: "Product incremented" });
+    return res
+      .status(STATUS_CODES.SUCCESS)
+      .json({ message: "Product incremented" });
   } catch (error) {
     await session.abortTransaction();
-    console.log(error);
-    return res.status(500).json({ error: "Internal server error" });
+    next(error);
   } finally {
     session.endSession();
   }
@@ -273,16 +270,16 @@ exports.increaseCartItemQuantity = async (req, res) => {
 
 // to decrease the cart item quantity
 // FIXED
-exports.decreaseCartItemQuantity = async (req, res) => {
+exports.decreaseCartItemQuantity = async (req, res, next) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     if (!req.user || !req.product) {
-      await session.abortTransaction();
-      return res
-        .status(404)
-        .json({ error: "User or product not found in request." });
+      throw new CustomError(
+        "User or product not found in request.",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     const productId = req.product._id;
@@ -292,10 +289,10 @@ exports.decreaseCartItemQuantity = async (req, res) => {
     let cart = await CartSchema.findOne({ userId }).session(session);
 
     if (!cart) {
-      await session.abortTransaction();
-      return res.status(404).json({
-        error: "You have no existing cart! Add an item to cart first",
-      });
+      throw new CustomError(
+        "You have no existing cart! Add an item to cart first",
+        STATUS_CODES.NOT_FOUND
+      );
     }
 
     // find the requested product from cart
@@ -304,31 +301,30 @@ exports.decreaseCartItemQuantity = async (req, res) => {
     );
 
     if (productIndex === -1) {
-      await session.abortTransaction();
-      return res.status(404).json({
-        error:
-          "Product not founded in users cart! Add the product to cart first",
-      });
+      throw new CustomError(
+        "Product not founded in users cart! Add the product to cart first",
+        STATUS_CODES.CONFLICT
+      );
     }
 
     // check if the current quantity is greater than limit
     if (cart.products[productIndex].quantity === 1) {
-      await session.abortTransaction();
-      return res.status(404).json({
-        error:
-          "Minimum 1 one quantity is needed. Try deleting the item to remove from cart",
-      });
+      throw new CustomError(
+        "Minimum 1 one quantity is needed. Try deleting the item to remove from cart",
+        STATUS_CODES.CONFLICT
+      );
     }
 
     cart.products[productIndex].quantity--;
     await cart.save({ session });
 
     await session.commitTransaction();
-    return res.status(STATUS_CODES.SUCCESS).json({ message: "Product decremented" });
+    return res
+      .status(STATUS_CODES.SUCCESS)
+      .json({ message: "Product decremented" });
   } catch (error) {
     await session.abortTransaction();
-    console.log(error);
-    return res.status(500).json({ error: "Internal server error" });
+    next(error);
   } finally {
     session.endSession();
   }
@@ -336,21 +332,24 @@ exports.decreaseCartItemQuantity = async (req, res) => {
 
 // to remove a item from cart
 // FIXED
-exports.deleteCartItem = async (req, res) => {
+exports.deleteCartItem = async (req, res, next) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     const { productId } = req.body;
     if (!productId) {
-      return res
-        .status(400)
-        .json({ error: "Product not found in request! Select one product" });
+      throw new CustomError(
+        "Product not found in request! Select one product",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     if (!req.user) {
-      await session.abortTransaction();
-      return res.status(404).json({ error: "User not found in request." });
+      throw new CustomError(
+        "User not found in request.",
+        STATUS_CODES.NOT_FOUND
+      );
     }
 
     const userId = req.user._id;
@@ -359,8 +358,7 @@ exports.deleteCartItem = async (req, res) => {
     let cart = await CartSchema.findOne({ userId }).session(session);
 
     if (!cart) {
-      await session.abortTransaction();
-      return res.status(404).json({ error: "User have no cart." });
+      throw new CustomError("User have no cart.", STATUS_CODES.NOT_FOUND);
     }
 
     // find the requested product from cart
@@ -375,21 +373,25 @@ exports.deleteCartItem = async (req, res) => {
     await cart.save({ session });
     await session.commitTransaction();
 
-    return res.status(STATUS_CODES.SUCCESS).json({ message: "Product removed from cart" });
+    return res
+      .status(STATUS_CODES.SUCCESS)
+      .json({ message: "Product removed from cart" });
   } catch (error) {
     await session.abortTransaction();
-    console.log(error);
-    return res.status(500).json({ error: "Internal server error" });
+    next(error);
   } finally {
     session.endSession();
   }
 };
 
 // get the cart total prices
-exports.getCartTotal = async (req, res) => {
+exports.getCartTotal = async (req, res, next) => {
   try {
     if (!req.user) {
-      return res.status(404).json({ error: "User not found in request." });
+      throw new CustomError(
+        "User not found in request.",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     const userId = req.user._id;
@@ -408,10 +410,11 @@ exports.getCartTotal = async (req, res) => {
       cartTotal = cartSubTotal + shippingFee;
     }
 
-    res.status(STATUS_CODES.SUCCESS).json({ cartSubTotal, shippingFee, cartTotal });
+    res
+      .status(STATUS_CODES.SUCCESS)
+      .json({ cartSubTotal, shippingFee, cartTotal });
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({ error: "Internal server error." });
+    next(error);
   }
 };
 
@@ -449,7 +452,7 @@ exports.getCheckoutPage = async (req, res) => {
     res.render("user/account/orders/checkout");
   } catch (error) {
     console.error("Error fetching checkout:", error);
-    res.status(500).send("Internal Server Error");
+    return res.redirect("/cart");
   }
 };
 
@@ -457,10 +460,14 @@ exports.getCheckoutPage = async (req, res) => {
 exports.getCheckoutAmount = async (req, res, next) => {
   try {
     const checkoutData = await calculateCheckoutAmount(req);
-    console.log(checkoutData);
+    if (!checkoutData) {
+      throw new CustomError(
+        "Faild to fetch check out amount",
+        STATUS_CODES.NOT_FOUND
+      );
+    }
     res.status(STATUS_CODES.SUCCESS).json(checkoutData);
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -468,44 +475,50 @@ exports.getCheckoutAmount = async (req, res, next) => {
 exports.applyCoupon = async (req, res, next) => {
   try {
     if (req.session.appliedCouponId) {
-      return res
-        .status(404)
-        .json({ error: "You can only use one coupon is a single order" });
+      throw new CustomError(
+        "You can only use one coupon is a single order",
+        STATUS_CODES.CONFLICT
+      );
     }
 
     const { couponCode } = req.body;
     if (!couponCode) {
-      return res.status(400).json({ error: "Coupon code needed" });
+      throw new CustomError("Coupon code needed", STATUS_CODES.BAD_REQUEST);
     }
 
     const userCoupon = await UserCoupon.findOne({ couponCode });
 
     if (!userCoupon) {
-      return res
-        .status(404)
-        .json({ error: "You didt have any coupon with this code" });
+      throw new CustomError(
+        "You didt have any coupon with this code",
+        STATUS_CODES.NOT_FOUND
+      );
     }
 
     const coupon = await Coupons.findOne({ couponCode, isActive: true });
 
     if (!coupon) {
-      return res.status(404).json({ error: "Coupon not found" });
+      throw new CustomError("Coupon not found", STATUS_CODES.NOT_FOUND);
     }
 
     const today = new Date();
     const endDate = new Date(coupon.endDate);
 
     if (today > endDate) {
-      return res.status(400).json({ error: "Coupon validity expired" });
+      throw new CustomError(
+        "Coupon validity expired",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     req.session.appliedCouponId = coupon._id;
     userCoupon.isRedeemed = true;
     await userCoupon.save();
 
-    res.status(STATUS_CODES.SUCCESS).json({ message: "Coupon applied successfully" });
+    res
+      .status(STATUS_CODES.SUCCESS)
+      .json({ message: "Coupon applied successfully" });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -515,7 +528,7 @@ exports.removeAppliedCoupon = async (req, res, next) => {
     const userId = req.user._id;
     const couponId = req.session.appliedCouponId;
     if (!userId || !couponId) {
-      return res.status(400).json({ error: "Session expired" });
+      throw new CustomError("Session expired", STATUS_CODES.BAD_REQUEST);
     }
     /*
   find this coupon using it id and get the coupon code
@@ -525,7 +538,10 @@ exports.removeAppliedCoupon = async (req, res, next) => {
   */
     const coupon = await Coupons.findById(couponId);
     if (!coupon) {
-      return res.status(404).json({ error: "Applied coupon was not found" });
+      throw new CustomError(
+        "Applied coupon was not found",
+        STATUS_CODES.NOT_FOUND
+      );
     }
 
     const userCoupon = await UserCoupon.findOne({
@@ -533,9 +549,10 @@ exports.removeAppliedCoupon = async (req, res, next) => {
       userId: userId,
     });
     if (!userCoupon) {
-      return res
-        .status(404)
-        .json({ error: "Applied coupon was not found in your coupons" });
+      throw new CustomError(
+        "You dont have any coupon with this code",
+        STATUS_CODES.NOT_FOUND
+      );
     }
 
     userCoupon.isRedeemed = false;
@@ -544,32 +561,32 @@ exports.removeAppliedCoupon = async (req, res, next) => {
 
     res.status(STATUS_CODES.SUCCESS).json({ message: "Coupon removed" });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
 
 // save changed delivery address to session
-exports.chooseDeliveryAddress = async (req, res) => {
+exports.chooseDeliveryAddress = async (req, res, next) => {
   try {
     console.log(req.body);
     const { addressId } = req.body;
 
     if (!addressId) {
-      return res.status(400).json({ error: "Choose an address" });
+      throw new CustomError("Choose an address", STATUS_CODES.BAD_REQUEST);
     }
 
     const address = await AddressShema.findById(addressId);
 
     if (!address) {
-      return res.status(404).json({ error: "Address not found" });
+      throw new CustomError("Address not found", STATUS_CODES.NOT_FOUND);
     }
 
     req.session.deliveryAddress = addressId;
-    res.status(STATUS_CODES.SUCCESS).json({ message: "Address ID added to session" });
+    res
+      .status(STATUS_CODES.SUCCESS)
+      .json({ message: "Address ID added to session" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
 
@@ -590,7 +607,6 @@ exports.getCartItemCount = async (req, res, next) => {
 
     return res.status(STATUS_CODES.SUCCESS).json({ count: itemCount });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -601,13 +617,13 @@ optional session needed - choose address
 */
 
 // to place an order without coupon COD
-exports.placeOrder = async (req, res) => {
+exports.placeOrder = async (req, res, next) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     if (!req.user) {
-      return res.status(404).json({ error: "User not found in request." });
+      throw new CustomError( "User not found in request.", STATUS_CODES.BAD_REQUEST);
     }
 
     const userId = req.user._id;
@@ -618,39 +634,36 @@ exports.placeOrder = async (req, res) => {
 
     // if no payment method is choosen
     if (!paymentMethod) {
-      return res.status(404).json({ error: "Please choose a payment method." });
+      throw new CustomError(
+        "Please choose a payment method.",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     const checkoutData = await calculateCheckoutAmount(req);
 
     if (paymentMethod === "COD") {
       if (checkoutData.totalPayable > 5000) {
-        return res
-          .status(400)
-          .json({ error: "Orders above ₹5000 are not allowed for COD " });
+        throw new CustomError( "Orders above ₹5000 are not allowed for COD ", STATUS_CODES.BAD_REQUEST);
       }
     } else if (paymentMethod === "Wallet") {
       // check if the wallet amount is less than the totalPayable. if true return error
       const userWallet = await Wallet.findOne({ userId }).session(session);
       if (!userWallet) {
-        await session.abortTransaction();
-        return res.status(404).json({ error: "Wallet not found" });
+        throw new CustomError( "Wallet not found", STATUS_CODES.NOT_FOUND);
       }
 
       if (
         userWallet.balanceLeft === 0 ||
         userWallet.balanceLeft < checkoutData.totalPayable
       ) {
-        await session.abortTransaction();
-        return res.status(400).json({
-          error: "Insufficient balance in wallet! Try another method",
-        });
+        throw new CustomError( "Insufficient balance in wallet! Try another method", STATUS_CODES.BAD_REQUEST);
       }
 
       userWallet.balanceLeft -= checkoutData.totalPayable;
       await userWallet.save({ session });
 
-      const newTransaction = new WalletTransaction ({
+      const newTransaction = new WalletTransaction({
         userId,
         userWalletId: userWallet._id,
         amount: checkoutData.totalPayable,
@@ -660,11 +673,8 @@ exports.placeOrder = async (req, res) => {
 
       await newTransaction.save({ session });
       isPaid = true;
-
     } else {
-      return res
-        .status(400)
-        .json({ error: "Please choose a valid payment method" });
+      throw new CustomError( "Please choose a valid payment method", STATUS_CODES.BAD_REQUEST);
     }
 
     // get address id , default address or address choosed from session
@@ -679,7 +689,7 @@ exports.placeOrder = async (req, res) => {
           session
         );
         if (!updatedProduct) {
-          throw new Error(`Product with ID ${item.productId} is not available`);
+          throw new CustomError(`Product with ID ${item.productId} is not available`, STATUS_CODES.CONFLICT);
         }
       }
     } else if (req.session.checkoutProductId) {
@@ -711,21 +721,16 @@ exports.placeOrder = async (req, res) => {
       isFirstOrder: isFirstOrder,
     });
 
-    console.log("Actual order:", newOrder);
     const order = await newOrder.save({ session });
-    console.log("saved order:", order);
 
     if (!order) {
-      await session.abortTransaction();
-      return res.status(400).json({ error: "Faild to place order" });
+      throw new CustomError( "Faild to place order", STATUS_CODES.BAD_REQUEST);
     }
 
     // save order items, if cart-save cart items and delete the cart, if product-save product to orderItems
     if (req.session.cartCheckout) {
       // get cart items with calculated final price
       const cartItemsDetails = await getUserCartItems(userId);
-      console.log("order item details", cartItemsDetails);
-      console.log("one order item ", cartItemsDetails[0]);
       // create each order items with follwing field
       const orderItems = cartItemsDetails.map((item) => ({
         orderId: order._id,
@@ -739,7 +744,6 @@ exports.placeOrder = async (req, res) => {
         subTotalPrice: item.subTotalPrice,
         productId: item.productId,
       }));
-      console.log("modifid order items", orderItems);
 
       const insertedOrderItems = await OrderItem.insertMany(orderItems, {
         session,
@@ -747,14 +751,12 @@ exports.placeOrder = async (req, res) => {
 
       // check if all items in the order where inserted to db
       if (insertedOrderItems.length !== orderItems.length) {
-        await session.abortTransaction();
-        throw new Error("Not all order items were added");
+        throw new CustomError("Not all order items were added", STATUS_CODES.CONFLICT);
       }
 
       // delete old cart
       await CartSchema.deleteOne({ userId }, { session });
     } else if (req.session.checkoutProductId) {
-      console.log("single item", cart);
       const newOrderItem = new OrderItem({
         orderId: order._id,
         productName: cart[0].productName,
@@ -772,7 +774,6 @@ exports.placeOrder = async (req, res) => {
 
     // check if the user got any discount coupon in this order
     const couponDiscount = await addUserCoupon(order._id, session);
-    console.log("order from outside", order);
 
     const redirectUrl = `/account/orders/all/ord/${order._id}`;
     req.session.orderMessage = `Order Placed Successfully`;
@@ -783,24 +784,25 @@ exports.placeOrder = async (req, res) => {
     await session.commitTransaction();
 
     req.session.appliedCouponId = null;
-    res.status(STATUS_CODES.SUCCESS).json({ message: "Order Placed Successfully", redirectUrl });
+    res
+      .status(STATUS_CODES.SUCCESS)
+      .json({ message: "Order Placed Successfully", redirectUrl });
   } catch (error) {
     await session.abortTransaction();
-    console.error(error);
-    return res.status(500).json({ error: error.message });
+    next(error)
   } finally {
     session.endSession();
   }
 };
 
 // create order to pay using razorpay
-exports.createRazorypayOrder = async (req, res) => {
+exports.createRazorypayOrder = async (req, res, next) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     if (!req.user) {
-      return res.status(404).json({ error: "User not found in request." });
+      throw new CustomError("User not found in request.", STATUS_CODES.NOT_FOUND);
     }
 
     const cart = req.cart;
@@ -822,8 +824,7 @@ exports.createRazorypayOrder = async (req, res) => {
     res.status(STATUS_CODES.SUCCESS).json({ order });
   } catch (error) {
     await session.abortTransaction();
-    console.error(error);
-    return res.status(500).json({ error: error.message });
+    next(error)
   } finally {
     session.endSession();
   }
@@ -831,7 +832,7 @@ exports.createRazorypayOrder = async (req, res) => {
 
 // varify payment
 // create the order / if payment is sucess place the order
-exports.varifyPayment = async (req, res) => {
+exports.varifyPayment = async (req, res, next) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -842,14 +843,13 @@ exports.varifyPayment = async (req, res) => {
       razorpay_signature,
       success,
     } = req.body;
-    console.log(req.body);
     const cart = req.cart;
     const userId = req.user._id;
 
     let redirectUrl;
     let isPaymentSuccess = false;
 
-    let responseStatus = 400;
+    let responseStatus = STATUS_CODES.BAD_REQUEST;
     let responseMessage = "Payment failed!";
 
     // init "currentOrder"
@@ -873,15 +873,12 @@ exports.varifyPayment = async (req, res) => {
     }
 
     // from the orders database check if their is a order with razorpay_order_id exists
-    console.log(razorpay_order_id);
     currentOrder = await OrderSchema.findOne({
       razorpayOrderId: razorpay_order_id,
     });
-    console.log("the current order is", currentOrder);
 
     // new order create
     if (!currentOrder) {
-      console.log("no order detected");
       const checkoutData = await calculateCheckoutAmount(req);
       const addressId = await getDeliveryAddress(req);
 
@@ -912,12 +909,10 @@ exports.varifyPayment = async (req, res) => {
       });
 
       currentOrder = await newOrder.save({ session });
-      console.log("new order created", currentOrder);
 
       // if order creation faild
       if (!currentOrder) {
-        await session.abortTransaction();
-        return res.status(400).json({ error: "Faild to place order" });
+        throw new CustomError( "Faild to place order", STATUS_CODES.BAD_REQUEST);
       }
 
       // create new order item(s) and save to db
@@ -945,8 +940,7 @@ exports.varifyPayment = async (req, res) => {
 
         // check if all items in the order where inserted to db
         if (insertedOrderItems.length !== orderItems.length) {
-          await session.abortTransaction();
-          throw new Error("Not all order items were added");
+          throw new CustomError( "Not all order items were added", STATUS_CODES.BAD_REQUEST);
         }
 
         // delete old cart
@@ -967,7 +961,6 @@ exports.varifyPayment = async (req, res) => {
 
         await newOrderItem.save({ session });
       }
-      console.log("order items created");
     }
 
     redirectUrl = `/account/orders/all/ord/${currentOrder._id}`;
@@ -984,9 +977,7 @@ exports.varifyPayment = async (req, res) => {
             session
           );
           if (!updatedProduct) {
-            throw new Error(
-              `Product with ID ${item.productId} is not available`
-            );
+            throw new CustomError( `Product with ID ${item.productId} is not available`, STATUS_CODES.BAD_REQUEST);
           }
         }
       } else if (req.session.checkoutProductId) {
@@ -997,7 +988,7 @@ exports.varifyPayment = async (req, res) => {
         );
 
         if (!updatedProduct) {
-          throw new Error(`Product is not available`);
+          throw new CustomError( `Product is not available`, STATUS_CODES.BAD_REQUEST);
         }
       }
 
@@ -1019,18 +1010,9 @@ exports.varifyPayment = async (req, res) => {
       .status(responseStatus)
       .json({ message: responseMessage, redirectUrl: redirectUrl || null });
 
-    // -------------------------------------------- end of new logic ------------------------------------------
-
-    // if success = false
-    // return the error message with OrderId for rediring the user to order summary page for retry the payment
-
-    // internal server errors
   } catch (error) {
-    console.error(error);
     await session.abortTransaction();
-    res
-      .status(500)
-      .json({ success: false, message: "Error verifying payment" });
+    next(error)
   } finally {
     session.endSession();
   }
@@ -1039,20 +1021,3 @@ exports.varifyPayment = async (req, res) => {
 exports.getAddAnotherAddressPage = async (req, res) => {
   res.render("user/account/address/addAnotherAddress");
 };
-
-/*
---controllers
-to add a product to cart
-to get the cart page
-to increese the quantity of a product in cart
-to decreese teh quantity of a product in cart
-to remove a product from cart
-
-to get order placing page (order proceed)
-to applay coupen on order
-to use the wallet amount on order
-to place the order
-
-to get the order history page
-to cancel a order
-*/

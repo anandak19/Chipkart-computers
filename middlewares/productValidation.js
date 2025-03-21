@@ -11,6 +11,8 @@ const {
 } = require("../utils/productValidators");
 const ProductSchema = require("../models/Product");
 const CartSchema = require("../models/Cart");
+const { STATUS_CODES } = require("../utils/constants");
+const CustomError = require("../utils/customError");
 
 const newProductValidations = async (req, res, next) => {
   try {
@@ -30,16 +32,15 @@ const newProductValidations = async (req, res, next) => {
       validateDescription(description);
 
     if (errorMessage) {
-      return res.json({ success: false, message: errorMessage });
+      throw new CustomError( errorMessage, STATUS_CODES.BAD_REQUEST);
     }
 
     if (!req.files || req.files.length !== 4) {
-      return res.json({ success: false, message: "Minimum 4 images required" });
+      throw new CustomError( "Minimum 4 images required", STATUS_CODES.BAD_REQUEST);
     }
     return next();
   } catch (error) {
-    console.log(error);
-    return res.redirect("/admin/products");
+    next(error)
   }
 };
 
@@ -63,13 +64,12 @@ const updateProductValidations = async (req, res, next) => {
       validateDescription(description);
 
     if (errorMessage) {
-      return res.json({ success: false, message: errorMessage });
+      throw new CustomError( errorMessage, STATUS_CODES.BAD_REQUEST);
     }
 
     return next();
   } catch (error) {
-    console.log(error);
-    return res.redirect("/admin/products");
+    next(error)
   }
 };
 
@@ -77,22 +77,18 @@ const updateProductValidations = async (req, res, next) => {
 // check if the product is present, check if the product is in db,
 const validateProduct = async (req, res, next) => {
   try {
-    console.log("body", req.body);
     const productId = req.params.id;
     if (!productId) {
-      console.log("Id not found");
-      return res.status(404).send("Id not found");
+      throw new CustomError( "product details not found", STATUS_CODES.NOT_FOUND);
     }
     const product = await ProductSchema.findById(productId);
     if (!product) {
-      console.log("Product not found");
-      return res.status(404).send("Product not found");
+      throw new CustomError( "Product not found", STATUS_CODES.NOT_FOUND);
     }
-    console.log("Product validatation passed");
     req.productId = product._id;
     return next();
   } catch (error) {
-    console.log(error);
+    next(error)
   }
 };
 
@@ -100,32 +96,26 @@ const checkProductAvailability = async (req, res, next) => {
   try {
     const { productId } = req.body;
     if (!productId) {
-      return res
-        .status(400)
-        .json({ error: "Product not found in request! Select one product" });
+      throw new CustomError( "Product not found in request! Select one product" , STATUS_CODES.BAD_REQUEST);
     }
 
     const product = await ProductSchema.findById(productId);
     if (!product) {
-      console.log("Product not found");
-      return res.status(404).json({ error: "Product not found" });
+      throw new CustomError( "Product not found", STATUS_CODES.NOT_FOUND);
     }
 
     if (!product.isListed) {
-      return res
-        .status(403)
-        .json({ error: "Product not available at this moment" });
+      throw new CustomError( "Product not available at this moment", STATUS_CODES.FORBIDDEN);
     }
 
     if (product.quantity <= 0) {
-      return res.status(410).json({ error: "Product became out of stock" });
+      throw new CustomError( "Product became out of stock", STATUS_CODES.CONFLICT);
     }
 
     req.product = product;
 
     return next();
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };

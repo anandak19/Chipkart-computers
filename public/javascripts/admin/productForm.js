@@ -211,7 +211,7 @@ if (saveProductBtn) {
         }
         croppedImages.length = 0;
       } else {
-        alert(data.message);
+        alert(data.error);
       }
     } catch (error) {
       console.error(error);
@@ -268,7 +268,7 @@ if (updateProductBtn) {
         }
         croppedImages.length = 0;
       } else {
-        alert(data.message);
+        alert(data.error);
       }
     } catch (error) {
       console.error(error);

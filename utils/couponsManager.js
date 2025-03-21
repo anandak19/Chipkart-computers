@@ -2,19 +2,22 @@ const { mongoose } = require("mongoose");
 const Coupons = require("../models/Coupon");
 const Order = require("../models/Order");
 const UserCoupon = require("../models/UserCoupon");
+const CustomError = require("./customError");
+const { STATUS_CODES } = require("./constants");
 
 const addUserCoupon = async (orderId, session) => {
   try {
     if (!orderId) {
-      throw new Error("Order ID is required");
+      throw new CustomError(
+        "Order details is required for reward crediting",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
-    console.log("order id of current order from coupon", orderId)
     const order = await Order.findById(orderId).session(session);
-    console.log("the actual order", order)
- 
+
     if (!order) {
-      throw new Error("Order not found");
+      throw new CustomError("Order not found", STATUS_CODES.NOT_FOUND);
     }
 
     const totalPayable = order.totalPayable;
@@ -23,7 +26,6 @@ const addUserCoupon = async (orderId, session) => {
     // user coupons
     const userCoupon =
       (await UserCoupon.find({ userId }).session(session)) ?? [];
-    console.log("User coupon", userCoupon);
 
     // couponid couponCode
     const now = new Date();
@@ -46,36 +48,36 @@ const addUserCoupon = async (orderId, session) => {
       { session }
     );
 
-    console.log("Avail coupon", availableCoupons);
-
     // if the user has coupon call this
     let unusedCoupon = null;
 
     if (userCoupon.length > 0) {
       unusedCoupon = availableCoupons.find(
         (coupon) =>
-          !userCoupon.some(
-            (used) => used.couponCode === coupon.couponCode
-          )
+          !userCoupon.some((used) => used.couponCode === coupon.couponCode)
       );
     } else {
       unusedCoupon = availableCoupons[0] || null;
     }
-    
+
     if (unusedCoupon) {
       const newCoupon = new UserCoupon({
         userId: userId,
         couponCode: unusedCoupon.couponCode,
-        orderId: orderId
+        orderId: orderId,
       });
       await newCoupon.save({ session });
     }
 
-
     return unusedCoupon?.discount ?? null;
   } catch (error) {
-    console.error("Error fetching categories:", error.message);
-    throw error;
+    if (error instanceof CustomError) {
+      throw error;
+    }
+    throw new CustomError(
+      "Error fetching categories",
+      STATUS_CODES.INTERNAL_SERVER_ERROR
+    );
   }
 };
 

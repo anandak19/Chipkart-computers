@@ -17,16 +17,12 @@ const signupValidations = async (req, res, next) => {
       (validateName(name)) ||
       (await validatePhoneNumber(phoneNumber)) ||
       (await validateEmail(email)) ||
-      (await validatePassword(password, confirmPassword));
+      (validatePassword(password, confirmPassword));
 
     if (alertMessage) {
-      return res.status(400).json({
-        success: false,
-        message: alertMessage,
-      });
+      throw new CustomError( alertMessage, STATUS_CODES.BAD_REQUEST);
     }
 
-    console.log("End of signup validation")
     password = await bcrypt.hash(password, 10);
 
     // save the user to database 
@@ -40,7 +36,7 @@ const signupValidations = async (req, res, next) => {
     // add user id to session too 
     return next()
   } catch (error) {
-    console.log(error);
+    next(error)
   }
 };
 

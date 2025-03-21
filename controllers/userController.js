@@ -11,6 +11,7 @@ const {
 const WishlistItems = require("../models/WishlistItems");
 const Users = require("../models/User");
 const { STATUS_CODES } = require("../utils/constants");
+const CustomError = require("../utils/customError");
 const { ObjectId } = require("mongoose").Types;
 
 exports.getHome = (req, res) => {
@@ -28,7 +29,7 @@ exports.getHome = (req, res) => {
   res.render("user/home");
 };
 
-exports.getFeaturedProducts = async (req, res) => {
+exports.getFeaturedProducts = async (req, res, next) => {
   try {
 
     const featuredProducts = await ProductSchema.aggregate([
@@ -43,16 +44,12 @@ exports.getFeaturedProducts = async (req, res) => {
       data: featuredProducts,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      success: false,
-      message: "An error occurred while fetching featured products",
-    });
+    next(error)
   }
 };
 
 // get latest products
-exports.getLatestProducts = async (req, res) => {
+exports.getLatestProducts = async (req, res, next) => {
   try {
 
     const latestProducts = await ProductSchema.aggregate([
@@ -73,11 +70,7 @@ exports.getLatestProducts = async (req, res) => {
       data: latestProducts,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      success: false,
-      message: "An error occurred while fetching latest products",
-    });
+    next(error)
   }
 };
 
@@ -99,154 +92,15 @@ exports.getProductsPage = async (req, res) => {
         },
       },
     ]);
-    //  res.json(products)
     res.render("user/productPage", { categoryArray });
   } catch (error) {
     console.log(error);
-  }
-};
-
-exports.getAvailableProducts = async (req, res) => {
-  try {
-    const { categoryId, priceOrder, ratingsAbove, sortBy } = req.query;
-
-    const filters = { isListed: true };
-    const sort = {};
-
-    let { isFeatured, isNew } = req.query;
-    isFeatured = isFeatured === "true";
-    isNew = isNew === "true";
-
-    const { page = "0" } = req.query;
-    const pageNumber = parseInt(page, 10) || 0;
-
-    let limit = 5;
-    let skip = pageNumber * limit;
-
-    if (isFeatured) {
-      filters.isFeatured = isFeatured;
-    }
-
-    // filter by category id
-    if (categoryId) {
-      filters.categoryId = categoryId;
-    }
-    // Default - sort price in ascending----------------
-    if (priceOrder) {
-      sort.finalPrice = priceOrder === "desc" ? -1 : 1;
-    }
-    // sort by name of product
-    if (sortBy === "a-z") {
-      sort.productNameLower = 1;
-    } else if (sortBy == "z-a") {
-      sort.productNameLower = -1;
-    }
-
-    // if new products only is asked
-    if (isNew) {
-      sort.createdAt = 1;
-      limit = 10;
-      skip = 0;
-    }
-
-    // --declare the pipeline
-    const pipeline = [
-      {
-        $match: filters,
-      },
-      {
-        $addFields: {
-          productNameLower: { $toLower: "$productName" },
-          productIdStr: { $toString: "$_id" },
-        },
-      },
-    ];
-
-    // -- to join with the review collection
-    pipeline.push({
-      $lookup: {
-        from: "userreviews",
-        localField: "productIdStr",
-        foreignField: "productId",
-        as: "productReviews",
-      },
-    });
-
-    // --to find the avarage rating
-    pipeline.push({
-      $addFields: {
-        averageRating: {
-          $cond: {
-            if: { $gt: [{ $size: "$productReviews" }, 0] },
-            then: {
-              $divide: [
-                { $sum: "$productReviews.rating" },
-                { $size: "$productReviews" },
-              ],
-            },
-            else: 0,
-          },
-        },
-      },
-    });
-
-    // --to remove unnessasary fields
-    pipeline.push({
-      $project: {
-        _id: 1,
-        productReviews: 0,
-        productIdStr: 0,
-        description: 0,
-        highlights: 0,
-      },
-    });
-
-    // if ratings above is asked
-    if (ratingsAbove) {
-      const rating = parseFloat(ratingsAbove);
-      pipeline.push({
-        $match: {
-          averageRating: { $gt: rating },
-        },
-      });
-    }
-
-    if (sort && Object.keys(sort).length > 0) {
-      pipeline.push({
-        $sort: sort,
-      });
-    }
-
-    // Add skip and limit stages for pagination
-    pipeline.push({
-      $facet: {
-        productCount: [{ $count: "total" }],
-        paginatedResults: [{ $skip: skip }, { $limit: limit }],
-      },
-    });
-
-    const result = await ProductSchema.aggregate(pipeline);
-
-    const productCount = result[0].productCount[0];
-    const products = result[0].paginatedResults;
-
-    const total = productCount ? productCount.total : 0;
-    const hasMore = skip + products.length < total;
-
-    // console.log("filter is: ", filters);
-    // console.log("sort is:", sort);
-    // console.log("limit is:", limit);
-    // console.log("skip is", skip);
-
-    res.json({ products, total, hasMore });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.redirect('/')
   }
 };
 
 // WORKING..
-exports.getAvailableProducts2 = async (req, res) => {
+exports.getAvailableProducts2 = async (req, res, next) => {
   try {
     const { categoryId, priceOrder, ratingsAbove, sortBy, search } = req.query;
     console.log(search);
@@ -423,19 +277,18 @@ exports.getAvailableProducts2 = async (req, res) => {
     // console.log("limit is:", limit);
     // console.log("skip is", skip);
 
-    res.json({ products, total, hasMore });
+    res.status(STATUS_CODES.SUCCESS).json({ products, total, hasMore });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    next(error)
   }
 };
 
 // render the product details page with its detials
-exports.getProductDetailsPage = async (req, res) => {
+exports.getProductDetailsPage = async (req, res, next) => {
   try {
     const productId = req.params.id;
     if (!productId) {
-      return res.status(404).json({ error: "Choose a product first" });
+      throw new CustomError( "Choose a product first", STATUS_CODES.BAD_REQUEST);
     }
     const product = await getProductWithFinalPrice(productId);
 
@@ -453,17 +306,15 @@ exports.getProductDetailsPage = async (req, res) => {
 
     res.render("user/productDetailPage", { product });
   } catch (error) {
-    console.log(error);
-    return res.status(500).send("Internal server error");
+    next(error)
   }
 };
 
-exports.getAddReviewForm = async (req, res) => {
+exports.getAddReviewForm = async (req, res, next) => {
   try {
     const productId = req.params.id;
-    console.log("Product ID for review:", productId);
     if (!productId) {
-      return res.status(404).send("Id not found");
+      res.redirect('/products/p')
     }
 
     const productDetails = await ProductSchema.aggregate([
@@ -484,23 +335,19 @@ exports.getAddReviewForm = async (req, res) => {
     ]);
 
     if (!productDetails) {
-      console.log("Product not found for review");
-      return res.status(404).send("Product not found");
+      res.redirect('/products/p')
     }
 
     const product = productDetails[0] || null;
 
     res.render("user/addReview", { product });
   } catch (error) {
-    console.error("Error loading review form:", error);
-    return res.status(500).send("Internal server error");
+    next(error)
   }
 };
 
 // update need
-exports.postAddReviewForm = async (req, res) => {
-  console.log("Product ID:", req.params.id);
-  console.log("Attempting to post a review");
+exports.postAddReviewForm = async (req, res, next) => {
 
   try {
     console.log(req.body);
@@ -509,15 +356,11 @@ exports.postAddReviewForm = async (req, res) => {
     const productId = req.params?.id;
 
     if (!userId || !productId) {
-      return res
-        .status(400)
-        .json({ message: "Invalid user or product information" });
+      throw new CustomError( "Invalid user or product information", STATUS_CODES.BAD_REQUEST);
     }
 
     if (!rating || !review) {
-      return res
-        .status(400)
-        .json({ message: "Rating and review are required" });
+      throw new CustomError( "Rating and review are required", STATUS_CODES.BAD_REQUEST);
     }
 
     const newReview = new UserReviewsSchema({
@@ -528,32 +371,21 @@ exports.postAddReviewForm = async (req, res) => {
     });
 
     const savedReview = await newReview.save();
-    console.log(savedReview);
 
     if (savedReview) {
       return res
-        .status(201)
+        .status(STATUS_CODES.CREATED)
         .json({ message: "Review saved successfully", review: savedReview });
     } else {
-      return res.status(500).json({ message: "Failed to save the review" });
+      throw new CustomError( "Failed to save the review", STATUS_CODES.BAD_REQUEST);
     }
   } catch (error) {
-    console.error("Error while saving review:", error);
-    return res.status(500).json({
-      message: "An error occurred while posting the review",
-      error: error.message,
-    });
+    next(error)
   }
 };
 
-exports.getReviews = async (req, res) => {
-  /*
-  find the all the reviews of the product in reviews collections
-  if the reviews are found, return in the order of last added first
-  use pagination - 3 is the limit default page = 0
-  */
+exports.getReviews = async (req, res, next) => {
   try {
-    console.log("finding revius of product id-- ", String(req.productId));
     const { page = "0" } = req.query;
     const pageNumber = parseInt(page, 10) || 0;
     let limit = 3;
@@ -614,25 +446,15 @@ exports.getReviews = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(400).json(error);
+    next(error)
   }
 };
 
-exports.getRelatedProducts = async (req, res) => {
-  /*
-  find the product by its id from db
-  get the category of that product
-  find all the product with that category except the current product
-  limit the count to 10
-  return the related products
-  */
-
+exports.getRelatedProducts = async (req, res, next) => {
   try {
     const currentProduct = await ProductSchema.findById(req.productId);
     if (!currentProduct) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Product not found" });
+      throw new CustomError( "Product not found", STATUS_CODES.NOT_FOUND);
     }
 
     const { categoryId } = currentProduct;
@@ -656,11 +478,7 @@ exports.getRelatedProducts = async (req, res) => {
       data: relatedProducts,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "An error occurred while fetching related products",
-    });
+    next(error)
   }
 };
 
@@ -677,11 +495,8 @@ exports.getTopCategories = async (req, res, next) => {
         $limit: 5,
       },
     ]);
-
-    console.log(topCategories);
     res.status(STATUS_CODES.SUCCESS).json({ topCategories });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -707,7 +522,6 @@ exports.getWishlistCount = async (req, res, next) => {
 
     return res.status(STATUS_CODES.SUCCESS).json({ count: itemCount });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -717,7 +531,7 @@ exports.addWishlist = async (req, res, next) => {
     const userId = req.user._id;
     const productId = req.productId;
     if (!userId || !productId) {
-      return res.status(400).json({ error: "Error geting user or product" });
+      throw new CustomError( "Error geting user or product", STATUS_CODES.BAD_REQUEST);
     }
 
     const existingItem = await WishlistItems.findOne({ userId, productId });
@@ -737,14 +551,11 @@ exports.addWishlist = async (req, res, next) => {
 
     const savedItem = await newWishlistItem.save();
     if (!savedItem) {
-      return res
-        .status(400)
-        .json({ error: "Error adding product to wishlist" });
+      throw new CustomError( "Error adding product to wishlist", STATUS_CODES.BAD_REQUEST);
     }
 
     res.status(STATUS_CODES.SUCCESS).json({ message: "Added to wishlist" });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -757,7 +568,7 @@ exports.getWishlistItems = async (req, res, next) => {
     const skip = limit * page;
 
     if (!userId) {
-      return res.status(400).json({ error: "Error geting user" });
+      throw new CustomError( "Error geting user", STATUS_CODES.BAD_REQUEST);
     }
 
     const result = await WishlistItems.aggregate([
@@ -801,7 +612,6 @@ exports.getWishlistItems = async (req, res, next) => {
 
     res.status(STATUS_CODES.SUCCESS).json({ productsCount, products, hasMore });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };

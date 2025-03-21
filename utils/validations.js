@@ -51,7 +51,6 @@ const validateUpdatedEmail = async (email) => {
 
 const validatePassword = (password, confirmPassword) => {
   if (!password || !passwordRegex.test(password)) {
-    console.log("paswrd err");
     return "Password must be at least 4 characters long and include at least one letter and one number.";
   }
   if (password !== confirmPassword) {

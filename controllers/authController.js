@@ -202,13 +202,10 @@ exports.registerGoogleUser = async (req, res) => {
       );
 
       await Session.deleteMany({ "session.userId": req.session.userId });
-      console.log("Sessions deleted due to block.");
 
       req.session.destroy((err) => {
         if (err) {
           console.error("Error destroying session:", err);
-        } else {
-          console.log("User session destroyed due to block.");
         }
       });
 

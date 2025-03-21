@@ -1,6 +1,8 @@
 const Address = require("../models/Address");
 const Coupons = require("../models/Coupon");
 const { getCartTotal } = require("./cartManagement");
+const { STATUS_CODES } = require("./constants");
+const CustomError = require("./customError");
 const { getProductWithFinalPrice } = require("./productHelpers");
 
 const calculateCheckoutAmount = async (req) => {
@@ -27,8 +29,10 @@ const calculateCheckoutAmount = async (req) => {
 
     return { total: totalAmount, shippingFee, discountApplied: discountAmount, totalPayable };
   } catch (error) {
-    console.log(error);
-    throw new Error("Error calculating checkout amount");
+    if (error instanceof CustomError) {
+      throw error;
+    }
+    throw new CustomError('Error calculating checkout amount', STATUS_CODES.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -49,13 +53,15 @@ const getDeliveryAddress = async (req) => {
     }
 
     if (!addressId) {
-      throw new Error("No delivery address found");
+      throw new CustomError( "No delivery address found! Add an address", STATUS_CODES.NOT_FOUND);
     }
 
     return addressId;
   } catch (error) {
-    console.log(error);
-    throw new Error("Error fetching delivery address");
+    if (error instanceof CustomError) {
+      throw error;
+    }
+    throw new CustomError("Error fetching delivery address", STATUS_CODES.INTERNAL_SERVER_ERROR);
   }
 };
 

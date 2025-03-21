@@ -1,11 +1,13 @@
 const Product = require("../models/Product");
+const { STATUS_CODES } = require("./constants");
+const CustomError = require("./customError");
 
 const getProductWithFinalPrice = async (productId) => {
   try {
     const product = await Product.findById(productId);
 
     if (!product) {
-      throw new Error("Product not found");
+      throw new CustomError( "Product not found", STATUS_CODES.NOT_FOUND);
     }
 
     const today = new Date();
@@ -27,8 +29,10 @@ const getProductWithFinalPrice = async (productId) => {
 
     return product;
   } catch (error) {
-    console.error("Error fetching product:", error.message);
-    return null;
+    if (error instanceof CustomError) {
+      throw error;
+    }
+    throw new CustomError('Error calculating final price of product', STATUS_CODES.INTERNAL_SERVER_ERROR);
   }
 };
 

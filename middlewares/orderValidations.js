@@ -3,6 +3,8 @@ const { checkProductsAvailability } = require("../utils/cartManagement");
 const CartSchema = require("../models/Cart");
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
+const CustomError = require("../utils/customError");
+const { STATUS_CODES } = require("../utils/constants");
 
 const compareOrderItems = async (req, res, next) => {
   try {
@@ -12,15 +14,15 @@ const compareOrderItems = async (req, res, next) => {
 
       const product = await Product.findById(req.session.checkoutProductId)
       if (!product) {
-        return res.status(400).json({ error: "Product not found" });
+        throw new CustomError( "Product not found", STATUS_CODES.BAD_REQUEST);
       }
       
       if (!product.isListed) {
-        return res.status(400).json({error: `"${product.productName}" is unavailable`})
+        throw new CustomError( `"${product.productName}" is unavailable`, STATUS_CODES.BAD_REQUEST);
       }
 
       if (product.quantity === 0) {
-        return res.status(400).json({error: `"${product.productName}" is out of stock!`})
+        throw new CustomError( `"${product.productName}" is out of stock!`, STATUS_CODES.BAD_REQUEST);
       }
       req.cart = [product]
 
@@ -29,7 +31,7 @@ const compareOrderItems = async (req, res, next) => {
 
       const cart = await CartSchema.findOne({ userId });
       if (!cart || !cart.products || cart.products.length === 0) {
-        return res.status(400).json({ error: "Cart is empty" });
+        throw new CustomError( "Cart is empty", STATUS_CODES.BAD_REQUEST);
       }
 
       // validate each item quantity and avialability of items
@@ -40,7 +42,7 @@ const compareOrderItems = async (req, res, next) => {
     return next();
 
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    next(error)
   }
 };
 

@@ -86,12 +86,11 @@ document.querySelector("form").addEventListener("submit", (e) => {
       body: body,
     }).then(response => response.json())
     .then(data => {
-        console.log(data)
         if (data.status === 'success' && data.redirectUrl) {
             localStorage.removeItem("otpStartTime");
             window.location.replace(data.redirectUrl);
         }else{
-            alert(data.message)
+            alert(data.error)
             submitBtn.classList.remove('loading')
             submitBtn.disabled = false 
         }

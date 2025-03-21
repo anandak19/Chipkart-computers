@@ -1,5 +1,7 @@
 const CartSchema = require("../models/Cart");
 const ProductSchema = require("../models/Product");
+const { STATUS_CODES } = require("./constants");
+const CustomError = require("./customError");
 const { addFinalPriceStage } = require("./productHelpers");
 
 const getUserCartItems = async (userId) => {
@@ -100,24 +102,19 @@ const checkProductsAvailability = async (cart) => {
       const product = await ProductSchema.findById(item.productId);
 
       if (!product) {
-        throw new Error(`Product with ID ${item.productId} not found`);
+        throw new CustomError( `Product with ID ${item.productId} not found`, STATUS_CODES.NOT_FOUND);
       }
-      console.log(item);
 
       if (!product.isListed) {
-        throw new Error(`"${product.productName}" is not available`);
+        throw new CustomError( `"${product.productName}" is not available`, STATUS_CODES.FORBIDDEN);
       }
 
       if (product.quantity === 0) {
-        throw new Error(
-          `"${product.productName}" is out of stock!. Try again after removing it from cart`
-        );
+        throw new CustomError(`"${product.productName}" is out of stock!. Try again after removing it from cart`, STATUS_CODES.CONFLICT);
       }
 
       if (item.quantity > product.quantity) {
-        throw new Error(
-          `Requsted quantity for the product "${product.productName}" is not available. Try again after decreesing the quantity`
-        );
+        throw new CustomError(`Requsted quantity for the product "${product.productName}" is not available. Try again after decreesing the quantity`, STATUS_CODES.CONFLICT);
       }
 
       return product;
