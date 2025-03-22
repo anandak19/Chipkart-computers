@@ -294,7 +294,6 @@ const placeOrderWithOnline = async (paymentMethod) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
     });
-    console.log("✅ API Call Made to /checkout/create-order");
 
     const result = await res.json();
     console.log("resutl", result);
@@ -377,6 +376,8 @@ const placeOrderWithOnline = async (paymentMethod) => {
         redirectUrl = varificationResult.redirectUrl;
       });
 
+    }else{
+      toastr.error(result.error);
     }
   } catch (error) {
     console.error(error);
@@ -390,7 +391,6 @@ const placeOrderWithOnline = async (paymentMethod) => {
 
 // method to place the order
 placeOrderBtn.addEventListener("click", async () => {
-  console.log(paymentMethod);
 
   if (!paymentMethod) {
     toastr.info("Please Choose a payment method");

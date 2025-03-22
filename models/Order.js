@@ -26,7 +26,7 @@ const OrderSchema = new Schema(
     paymentMethod: {
       type: String,
       required: true,
-      enum: ["COD", "Online"],
+      enum: ["COD", "Wallet", "Online"],
       trim: true,
     },
 

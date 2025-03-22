@@ -281,6 +281,8 @@ retryPayBtn.addEventListener("click", async () => {
         const varificationResult = await varificationRes.json();
         alert(varificationResult.message);
       });
+    }else{
+      toastr.error(result.error)
     }
   } catch (error) {
     console.error(error);
