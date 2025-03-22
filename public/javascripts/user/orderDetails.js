@@ -289,3 +289,4 @@ retryPayBtn.addEventListener("click", async () => {
     alert("Error placing order on razorpay");
   }
 });
+ 
