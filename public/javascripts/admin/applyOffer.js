@@ -48,9 +48,7 @@ const getAvailbleOffers = async (page = 0) => {
 
     const result = await res.json();
 
-    console.log(result);
     if (res.ok) {
-      console.log(result);
       showOffers(result.availableOffers);
     } else {
       alert(result.error || "Somthing went wrong");
@@ -70,7 +68,7 @@ async function applyOffer(offerId) {
     })
     const result = await res.json()
     if(res.ok) {
-      alert(result.message)
+      toastr.success(result.message)
       getAvailbleOffers()
     }else{
       alert(result.error)
@@ -89,7 +87,7 @@ async function removeOffer() {
     })
     const result = await res.json()
     if(res.ok) {
-      alert(result.message)
+      toastr.success(result.message)
       getAvailbleOffers()
     }else{
       alert(result.error)

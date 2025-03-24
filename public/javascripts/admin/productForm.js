@@ -203,7 +203,7 @@ if (saveProductBtn) {
 
       const data = await res.json();
       if (data.success) {
-        alert(data.message);
+        toastr.success(data.message);
         productForm.reset();
         for (let i = 0; i < croppedImages.length; i++) {
           document.getElementById(`image${i}`).removeAttribute("src");

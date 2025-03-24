@@ -77,7 +77,6 @@ const getTopSelling = async () => {
       showTopSelling(data.bestSellingBrands, "bestSellingBrands");
     } else {
       alert(data.error);
-      toastr.error(data.error);
     }
   } catch (error) {
     console.error(error);

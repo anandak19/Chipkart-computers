@@ -31,6 +31,49 @@ const showOverview = (reportOverview) => {
   totalDiscount.innerText = reportOverview.totalCouponDiscount;
 };
 
+// get all orders 
+let page = 0;
+const getAllOrders = async (page = 0) => {
+  try {
+    const url = `/admin/reports/orders?page=${page}`
+    const res = await fetch(url);
+    const result = await res.json();
+    if (!res.ok) {
+      alert("Error fetching orders")
+      console.error(result.error);
+    }else{
+      showAllOrders(result.orders)
+      updatePaginators(result.hasMore)
+    }
+
+  } catch (error) {
+    alert("Somthing went wrong")
+    console.error(error);
+  }
+};
+
+const nxtBtn = document.querySelector(".next-btn");
+const prevBtn = document.querySelector(".prev-btn");
+
+function updatePaginators(hasMore) {
+  prevBtn.disabled = page === 0;
+  nxtBtn.disabled = !hasMore;
+}
+
+// method to next page
+nxtBtn.addEventListener("click", () => {
+  page++;
+  getAllOrders(page);
+});
+
+// method to previous page
+prevBtn.addEventListener("click", () => {
+  page--;
+  getAllOrders(page);
+});
+
+
+
 // method to get the orders and other details
 const getSalesReportData = async (
   period = null,
@@ -62,7 +105,8 @@ const getSalesReportData = async (
     if (res.ok) {
       console.log(result);
       showOverview(result.reportOverview);
-      showAllOrders(result.allOrders);
+      // showAllOrders(result.allOrders);
+      getAllOrders()
     } else {
       alert(res.error);
     }
@@ -71,6 +115,8 @@ const getSalesReportData = async (
     alert("Somthing went wrong");
   }
 };
+
+
 
 // method to call on dom loaded
 document.addEventListener("DOMContentLoaded", () => {
@@ -109,15 +155,14 @@ endDate.addEventListener("change", () => {
   getCustomeFilterData();
 });
 
-//pdf generate 
-const pdfBtn = document.getElementById('pdfBtn')
+//pdf generate
+const pdfBtn = document.getElementById("pdfBtn");
 async function generatePdf() {
   try {
     pdfBtn.disabled = true;
     pdfBtn.textContent = "Generating PDF...";
 
     window.location.href = "/admin/reports/data/dowload/pdf";
-
   } catch (error) {
     console.log(error);
     alert("Something went wrong");
@@ -129,14 +174,13 @@ async function generatePdf() {
   }
 }
 
-const excelBtn = document.getElementById('excelBtn')
+const excelBtn = document.getElementById("excelBtn");
 async function generateExcel() {
   try {
     excelBtn.disabled = true;
     excelBtn.textContent = "Generating Excel...";
 
     window.location.href = "/admin/reports/data/dowload/excel";
-
   } catch (error) {
     console.log(error);
     alert("Something went wrong");

@@ -52,7 +52,7 @@ exports.getChartData = async (req, res, next) => {
     if (!validPeriods.includes(period)) {
       throw new CustomError(
         "Invalid period. Choose from yearly, monthly, or weekly.",
-        400
+        STATUS_CODES.BAD_REQUEST
       );
     }
 
@@ -642,12 +642,12 @@ exports.getAllProducts = async (req, res, next) => {
       query = query.trim();
       pipeline.unshift({
         $search: {
-          index: 'product_search',
+          index: "product_search",
           text: {
             query: query,
-            path: ["productName", "brand"]
-          }
-        }
+            path: ["productName", "brand"],
+          },
+        },
       });
     }
 
@@ -970,12 +970,11 @@ exports.getCategories = async (req, res, next) => {
           index: "category_search",
           text: {
             query: query,
-            path: "categoryName"
-          }
-        }
+            path: "categoryName",
+          },
+        },
       });
     }
-    
 
     const result = await CategoriesSchema.aggregate(pipeline);
 
@@ -1722,35 +1721,31 @@ exports.getAllOrders = async (req, res, next) => {
     const page = parseInt(req.query.page) || 0;
     const limit = 5; //make this to 5 later
     const skip = page * limit;
-    const pipeline = [];
 
+    const matchStage = { paymentStatus: "Paid" };
     if (search) {
-      console.log("Search is", search)
+      console.log("Search is", search);
       const query = search.trim();
-      pipeline.push({
-        $match: {
-          orderId: { $regex: query, $options: "i" },
-        },
-      });
+      matchStage.orderId = { $regex: query, $options: "i" };
     }
 
-    pipeline.push({
-      $lookup: {
-        from: "orderitems",
-        localField: "_id",
-        foreignField: "orderId",
-        as: "items",
+    const result = await OrderSchema.aggregate([
+      { $match: matchStage },
+      {
+        $lookup: {
+          from: "orderitems",
+          localField: "_id",
+          foreignField: "orderId",
+          as: "items",
+        },
       },
-    });
-
-    pipeline.push({
-      $facet: {
-        ordersCount: [{ $count: "total" }],
-        paginatedResult: [{ $skip: skip }, { $limit: limit }],
+      {
+        $facet: {
+          ordersCount: [{ $count: "total" }],
+          paginatedResult: [{ $skip: skip }, { $limit: limit }],
+        },
       },
-    });
-
-    const result = await OrderSchema.aggregate(pipeline);
+    ]);
 
     const totalorders = result[0]?.ordersCount[0]?.total || 0;
     const orders = result[0]?.paginatedResult;
@@ -1893,12 +1888,15 @@ exports.getOrderItems = async (req, res, next) => {
     const items = await OrderItem.find({ orderId: orderId });
 
     if (!items) {
-      throw new CustomError("Items not found for order", STATUS_CODES.NOT_FOUND);
+      throw new CustomError(
+        "Items not found for order",
+        STATUS_CODES.NOT_FOUND
+      );
     }
 
     res.status(STATUS_CODES.SUCCESS).json({ items });
   } catch (error) {
-    next(error)
+    next(error);
   }
 };
 
@@ -1918,7 +1916,9 @@ exports.cancelOrderByAdmin = async (req, res, next) => {
 
     await cancelOrder(orderId, cancelReason);
 
-    res.status(STATUS_CODES.SUCCESS).json({ message: "Order cancelled successfully" });
+    res
+      .status(STATUS_CODES.SUCCESS)
+      .json({ message: "Order cancelled successfully" });
   } catch (error) {
     next(error);
   }
@@ -1943,9 +1943,11 @@ exports.approveReturnItem = async (req, res, next) => {
 
     orderItem.isRefunded = true;
     await orderItem.save();
-    res.status(STATUS_CODES.SUCCESS).json({ message: "Return approved successfully" });
+    res
+      .status(STATUS_CODES.SUCCESS)
+      .json({ message: "Return approved successfully" });
   } catch (error) {
-    next(error)
+    next(error);
   }
 };
 
@@ -1960,14 +1962,20 @@ exports.rejectReturnItemRefund = async (req, res, next) => {
     }
 
     if (!reason) {
-      throw new CustomError("Please provide a reson for rejection", STATUS_CODES.BAD_REQUEST);
+      throw new CustomError(
+        "Please provide a reson for rejection",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     const orderItem = await OrderItem.findById(itemId);
 
     //add somthing here
     if (!orderItem) {
-      throw new CustomError("Selected order item was not found", STATUS_CODES.BAD_REQUEST);
+      throw new CustomError(
+        "Selected order item was not found",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     orderItem.returnStatus = "rejected";
@@ -1978,7 +1986,9 @@ exports.rejectReturnItemRefund = async (req, res, next) => {
 
     await orderItem.save();
 
-    res.status(STATUS_CODES.SUCCESS).json({ message: "Return refund rejected successfully" });
+    res
+      .status(STATUS_CODES.SUCCESS)
+      .json({ message: "Return refund rejected successfully" });
   } catch (error) {
     next(error);
   }
@@ -2038,7 +2048,10 @@ exports.fetchSalesReportData = async (req, res, next) => {
           break;
 
         default:
-          throw new CustomError("Invalid period parameter or missing date range", STATUS_CODES.BAD_REQUEST);
+          throw new CustomError(
+            "Invalid period parameter or missing date range",
+            STATUS_CODES.BAD_REQUEST
+          );
       }
     }
 
@@ -2056,18 +2069,22 @@ exports.fetchSalesReportData = async (req, res, next) => {
   }
 };
 
-// WHY I WROTE THIS ? 
 exports.fetchAllOrders = async (req, res, next) => {
   try {
     const startDate = req.session.startDate;
     const endDate = req.session.endDate;
-    const page = req.query.page;
+    const page = Number(req.query.page) || 0;
+    const limit = 5;
+    const skip = page * limit;
 
     const allOrders = await getAllOrdersDetails(startDate, endDate, page, true);
 
-    console.log(allOrders);
+    const totalorders = allOrders[0]?.total[0]?.totalOrders || 0;
+    const orders = allOrders[0]?.paginatedResult;
+    const hasMore = skip + orders.length < totalorders;
+
+    res.status(STATUS_CODES.SUCCESS).json({ totalorders, orders, hasMore });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -2076,7 +2093,7 @@ exports.downloadSalesReportPdf = async (req, res, next) => {
   try {
     const startDate = req.session.startDate;
     const endDate = req.session.endDate;
-    if(!startDate || !endDate) {
+    if (!startDate || !endDate) {
       throw new CustomError("Session expired", STATUS_CODES.BAD_REQUEST);
     }
 
@@ -2116,7 +2133,7 @@ exports.downloadSalesReportPdf = async (req, res, next) => {
     );
     res.end(pdfBuffer); // Correctly sends binary data
   } catch (error) {
-    next(error)
+    next(error);
   }
 };
 
@@ -2124,7 +2141,7 @@ exports.downloadSalesReportExcel = async (req, res, next) => {
   try {
     const startDate = req.session.startDate;
     const endDate = req.session.endDate;
-    if(!startDate || !endDate) {
+    if (!startDate || !endDate) {
       throw new CustomError("Session expired", STATUS_CODES.BAD_REQUEST);
     }
 
@@ -2266,7 +2283,7 @@ exports.downloadSalesReportExcel = async (req, res, next) => {
 
     console.log("Excel file sent successfully!");
   } catch (error) {
-    next(error)
+    next(error);
   }
 };
 
@@ -2345,7 +2362,10 @@ exports.saveNewCoupon = async (req, res, next) => {
 
     const existingCoupon = await Coupons.findOne({ couponCode });
     if (existingCoupon) {
-      throw new CustomError("Coupon code already exists!", STATUS_CODES.CONFLICT);
+      throw new CustomError(
+        "Coupon code already exists!",
+        STATUS_CODES.CONFLICT
+      );
     }
 
     const newCoupon = new Coupons({
@@ -2442,7 +2462,10 @@ exports.saveUpdatedCoupon = async (req, res, next) => {
     });
 
     if (existingCoupon) {
-      throw new CustomError("Coupon code already in use", STATUS_CODES.CONFLICT);
+      throw new CustomError(
+        "Coupon code already in use",
+        STATUS_CODES.CONFLICT
+      );
     }
 
     coupon.couponCode = couponCode;
@@ -2453,7 +2476,9 @@ exports.saveUpdatedCoupon = async (req, res, next) => {
     coupon.description = description;
 
     await coupon.save();
-    res.status(STATUS_CODES.SUCCESS).json({ message: "Coupon updated successfully" });
+    res
+      .status(STATUS_CODES.SUCCESS)
+      .json({ message: "Coupon updated successfully" });
   } catch (error) {
     next(error);
   }
@@ -2464,7 +2489,10 @@ exports.toogleCouponStatus = async (req, res, next) => {
   try {
     const id = req.params.id;
     if (!id) {
-      throw new CustomError("Select a coupon to delete", STATUS_CODES.BAD_REQUEST);
+      throw new CustomError(
+        "Select a coupon to delete",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     const coupon = await Coupons.findById(id);
@@ -2475,7 +2503,9 @@ exports.toogleCouponStatus = async (req, res, next) => {
     coupon.isActive = !coupon.isActive;
 
     await coupon.save();
-    res.status(STATUS_CODES.SUCCESS).json({ message: "Updated listing status" });
+    res
+      .status(STATUS_CODES.SUCCESS)
+      .json({ message: "Updated listing status" });
   } catch (error) {
     next(error);
   }

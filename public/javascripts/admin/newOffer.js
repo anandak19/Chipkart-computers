@@ -90,7 +90,7 @@ offerForm.addEventListener("submit", async (e) => {
 
     const result = await res.json();
     if (res.ok) {
-      alert(result.message);
+      toastr.success(result.message);
       offerForm.reset()
     } else {
       alert(result.error);

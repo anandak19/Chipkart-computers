@@ -195,7 +195,7 @@ if (updateProductBtn) {
 
       const data = await res.json();
       if (data.success) {
-        alert(data.message);
+        toastr.success(data.message);
         location.reload();
         for (let i = 0; i < croppedImages.length; i++) {
           document.getElementById(`image${i}`).removeAttribute("src");
