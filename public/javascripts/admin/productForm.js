@@ -151,7 +151,7 @@ if (croppedImages.length > 0) {
 }
 
 const saveProductBtn = document.getElementById("saveProductBtn");
-const updateProductBtn = document.getElementById("updateProductBtn");
+const loader = document.getElementById("loader");
 
 // API call to save the new product details with images to server
 if (saveProductBtn) {
@@ -192,11 +192,10 @@ if (saveProductBtn) {
       formData.append(`positions[${index}]`, index + 1);
     });
 
-    console.log(feature.value);
-
-    // Send Request
-    console.log(formData);
     try {
+      saveProductBtn.classList.add("disabled");
+      loader.style.display = "inline-block";
+
       const res = await fetch("/admin/products/new", {
         method: "POST",
         body: formData,
@@ -216,69 +215,15 @@ if (saveProductBtn) {
     } catch (error) {
       console.error(error);
       alert("Something went wrong");
+    }finally{
+      saveProductBtn.classList.remove("disabled");
+      loader.style.display = "none";
     }
   });
 }
 
-// API call to update the product data
-if (updateProductBtn) {
-  updateProductBtn.addEventListener("click", async () => {
-    console.log(window.productId);
-
-    const highlightValues = Array.from(highlights)
-      .map((input) => input.value.trim())
-      .filter((value) => value !== "");
-
-    const result = validateProductForm(highlightValues);
-    if (!result) {
-      return;
-    }
-
-    // Create FormData
-    const formData = new FormData();
-    formData.append("productName", productName.value.trim());
-    formData.append("categoryId", category.value);
-    formData.append("brand", brandName.value.trim());
-    formData.append("mrp", mrp.value.trim());
-    formData.append("quantity", stockCount.value.trim());
-    formData.append("isFeatured", discount.value.trim());
-    formData.append("highlights", JSON.stringify(highlightValues));
-    formData.append("description", description.value);
-    if (croppedImages && croppedImages.length > 0) {
-      croppedImages.forEach((imageBlob, index) => {
-        formData.append("images", imageBlob, `cropped-image-${index + 1}.jpeg`);
-      });
-    }
-
-    // Send Request to update
-    console.log(formData);
-
-    try {
-      const res = await fetch(`/admin/products/edit/${window.productId}`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        alert(data.message);
-        productForm.reset();
-        for (let i = 0; i < croppedImages.length; i++) {
-          document.getElementById(`image${i}`).removeAttribute("src");
-        }
-        croppedImages.length = 0;
-      } else {
-        alert(data.error);
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Something went wrong");
-    }
-  });
-}
 
 /*
-
 
 PRODUCT IMAGE UPLOAD AND UPDATE - EXECUTION PLAN
 

@@ -62,13 +62,14 @@
           <div class="image-container mt-4">
             <label class="image-box" for="imageInput">
               <span class="upload-text">Choose Category Image</span>
-              <img id="previewImage" src="/images/sample-product.jpg" />
+              <img id="previewImage" src="" />
             </label>
             <input type="file" id="imageInput" accept="image/*" />
           </div>
           <div class="savebtn-container">
             <button type="submit" class="savebtn" id="savebtn">
               Save Category
+              <img src="/images/icons/loader-gif.gif" alt="" id="loader">
             </button>
           </div>
           <% if(errorMessage) { %>

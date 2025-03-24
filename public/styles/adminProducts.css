@@ -153,7 +153,7 @@ textarea {
 }
 
  
-.submit-btn button:hover {
+.submit-btn button:hover:not(.disabled) {
   background-color: #125BB5; 
   transform: translateY(-2px); 
   box-shadow: 0px 6px 12px rgba(39, 39, 39, 0.6); 
@@ -164,4 +164,12 @@ textarea {
   background-color: #104E96; 
   transform: translateY(0); 
   box-shadow: 0px 4px 8px rgba(39, 39, 39, 0.4); 
+}
+
+#loader {
+  width: 20px;
+  height: 20px;
+  display: none;
+  vertical-align: middle;
+  margin-left: 10px;
 }

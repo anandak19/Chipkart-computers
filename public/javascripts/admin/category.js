@@ -58,9 +58,14 @@ cropButton.addEventListener("click", () => {
   }, "image/jpeg");
 });
 
+const saveBtn = document.querySelector(".savebtn")
+const loader = document.getElementById('loader')
 categoryForm.addEventListener("submit", async(e) => {
   e.preventDefault();
   let isValid = true;
+
+  loader.style.display = 'inline-block'
+  saveBtn.classList.add("disabled"); 
 
   const category = categoryName.value.trim();
   const isListedVal =  isListed.value
@@ -91,24 +96,26 @@ categoryForm.addEventListener("submit", async(e) => {
 
     const data = await res.json()
     if (!res.ok) {
-      console.error(data.error);
-      error.innerHTML = data.error || "Faild to add"
+      alert(data.error);
+      error.innerHTML = "Faild to add"
     };
 
     if (res.ok) {
       const result = data
-      alert("Category added")
+      toastr.success(result.message)
   
       categoryForm.reset()
       croppedImage = ''
       uploadText.style.display = "flex";
       previewImage.style.display = "none";
-      console.log("Success:", result);
     }
       
     } catch (error) {
-      console.error("Error:", error);
+      alert("Failed to submit the form. Please try again.")
       error.innerHTML = "Failed to submit the form. Please try again.";
+    } finally {
+      loader.style.display = 'none'
+      saveBtn.classList.remove("disabled"); 
     }
 
   }

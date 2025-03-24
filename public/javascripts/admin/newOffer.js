@@ -13,6 +13,8 @@ const offerTargetError = document.getElementById("offerTargetError");
 const startDateError = document.getElementById("startDateError");
 const endDateError = document.getElementById("endDateError");
 
+const saveBtn = document.getElementById("saveBtn");
+
 // on submitting offer form
 offerForm.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -77,6 +79,9 @@ offerForm.addEventListener("submit", async (e) => {
   };
 
   try {
+
+    saveBtn.classList.add('disabled')
+
     const res = await fetch("/admin/offers/new", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -86,11 +91,14 @@ offerForm.addEventListener("submit", async (e) => {
     const result = await res.json();
     if (res.ok) {
       alert(result.message);
+      offerForm.reset()
     } else {
       alert(result.error);
     }
   } catch (error) {
     console.error(error);
     alert("Somthing went wrong");
+  }finally{
+    saveBtn.classList.remove('disabled')
   }
 });

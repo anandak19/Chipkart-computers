@@ -143,8 +143,8 @@ const validateProductForm = (highlightValues) => {
   return true; // Return true if all validations pass
 };
 
-const saveProductBtn = document.getElementById("saveProductBtn");
 const updateProductBtn = document.getElementById("updateProductBtn");
+const loader = document.getElementById("loader");
 
 // API call to update the product data ---------------------------------------------------------
 if (updateProductBtn) {
@@ -185,6 +185,9 @@ if (updateProductBtn) {
 
     // Send Request to update
     try {
+      updateProductBtn.classList.add("disabled");
+      loader.style.display = "inline-block";
+
       const res = await fetch(`/admin/products/edit/${window.productId}`, {
         method: "PATCH",
         body: formData,
@@ -204,6 +207,9 @@ if (updateProductBtn) {
     } catch (error) {
       console.error(error);
       alert("Something went wrong");
+    } finally {
+      updateProductBtn.classList.remove("disabled");
+      loader.style.display = "none";
     }
   });
 }
@@ -211,6 +217,6 @@ if (updateProductBtn) {
 function deleteImage(imageId, elemId) {
   if (!imageToDelete.includes(imageId)) {
     imageToDelete.push(imageId);
-    document.getElementById(elemId).src = ''
+    document.getElementById(elemId).src = "";
   }
 }

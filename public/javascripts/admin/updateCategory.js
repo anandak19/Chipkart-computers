@@ -4,21 +4,16 @@ const isListed = document.getElementById("isListed");
 const error = document.getElementById("error");
 const nameRegex = /^[a-zA-Z\s]+$/;
 
-
 const previewImage = document.getElementById("previewImage");
 document.addEventListener("DOMContentLoaded", () => {
-    const categoryDetails = JSON.parse(categoryData);
-  
-    categoryName.value = categoryDetails.categoryName
-    isListed.value = categoryDetails.isListed
-    if (categoryDetails.imagePath) {
-      previewImage.src = categoryDetails.imagePath
-    }
-  });
+  const categoryDetails = JSON.parse(categoryData);
 
-
-
-
+  categoryName.value = categoryDetails.categoryName;
+  isListed.value = categoryDetails.isListed;
+  if (categoryDetails.imagePath) {
+    previewImage.src = categoryDetails.imagePath;
+  }
+});
 
 // name valiations
 categoryName.addEventListener("input", () => {
@@ -76,6 +71,12 @@ updateCategoryForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   let isValid = true;
 
+  const saveBtn = document.querySelector(".savebtn");
+  const loader = document.getElementById("loader");
+
+  loader.style.display = "inline-block";
+  saveBtn.classList.add("disabled");
+
   const category = categoryName.value.trim();
   const isListedVal = isListed.value;
   error.innerHTML = "";
@@ -107,16 +108,17 @@ updateCategoryForm.addEventListener("submit", async (e) => {
 
       if (res.ok) {
         const result = data;
-        alert("Category added");
         location.reload();
-        console.log("Success:", result);
+        toastr.success(result.message)
       }
     } catch (error) {
+      alert(result.error)
       console.error("Error:", error);
       error.innerHTML = "Failed to submit the form. Please try again.";
+    } finally {
+      loader.style.display = "none";
+      saveBtn.classList.remove("disabled");
     }
   }
 });
 // ------------------------------------
-
-

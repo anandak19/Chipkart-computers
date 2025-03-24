@@ -27,7 +27,7 @@ router.get('/products/latest', userController.getLatestProducts)
 // render all product page with Categories 
 router.get('/products', userController.getProductsPage)
 // api to get available products with optional filters and pagiantion 
-router.get('/products/p', userController.getAvailableProducts2)  // working ...
+router.get('/products/p', userController.getAvailableProducts)
 // api to get product details page 
 router.get('/products/:id', userController.getProductDetailsPage)
 // render add review page           isLogin,

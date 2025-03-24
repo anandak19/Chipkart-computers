@@ -206,8 +206,10 @@
               </div>
             </div>
             <div class="submit-btn">
-            <p></p>
-              <button id="updateProductBtn">Update and Save</button>
+              <button id="updateProductBtn">
+                Update and Save
+                <img src="/images/icons/loader-gif.gif" alt="" id="loader" />
+              </button>
               <% if( errorMessage ) {%>
               <small class="text-danger"><%= errorMessage %></small>
               <% } %> <% if( successMessage ) {%>

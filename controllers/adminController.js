@@ -641,7 +641,13 @@ exports.getAllProducts = async (req, res, next) => {
     if (query) {
       query = query.trim();
       pipeline.unshift({
-        $match: { $text: { $search: query } },
+        $search: {
+          index: 'product_search',
+          text: {
+            query: query,
+            path: ["productName", "brand"]
+          }
+        }
       });
     }
 
@@ -960,9 +966,16 @@ exports.getCategories = async (req, res, next) => {
     if (searchQuery) {
       query = searchQuery.trim();
       pipeline.unshift({
-        $match: { $text: { $search: query } },
+        $search: {
+          index: "category_search",
+          text: {
+            query: query,
+            path: "categoryName"
+          }
+        }
       });
     }
+    
 
     const result = await CategoriesSchema.aggregate(pipeline);
 
@@ -1712,6 +1725,7 @@ exports.getAllOrders = async (req, res, next) => {
     const pipeline = [];
 
     if (search) {
+      console.log("Search is", search)
       const query = search.trim();
       pipeline.push({
         $match: {

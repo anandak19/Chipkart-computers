@@ -100,10 +100,9 @@ exports.getProductsPage = async (req, res) => {
 };
 
 // WORKING..
-exports.getAvailableProducts2 = async (req, res, next) => {
+exports.getAvailableProducts = async (req, res, next) => {
   try {
     const { categoryId, priceOrder, ratingsAbove, sortBy, search } = req.query;
-    console.log(search);
 
     const filters = { isListed: true };
     const sort = {};
@@ -149,7 +148,13 @@ exports.getAvailableProducts2 = async (req, res, next) => {
     if (search) {
       const query = search.trim();
       pipeline.push({
-        $match: { $text: { $search: search } },
+        $search: {
+          index: 'product_search',
+          text: {
+            query: query,
+            path: ["productName", "brand"]
+          }
+        } 
       });
     }
     pipeline.push({

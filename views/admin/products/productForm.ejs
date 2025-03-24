@@ -24,7 +24,6 @@
       <%- include("../../partials/adminHeader") %>
 
       <div class="main-content">
-
         <div class="page-head-section">
           <button class="back-button" id="backButton">Back</button>
         </div>
@@ -194,7 +193,10 @@
               </div>
             </div>
             <div class="submit-btn">
-              <button id="saveProductBtn">Save</button>
+              <button id="saveProductBtn">
+                Save
+                <img src="/images/icons/loader-gif.gif" alt="" id="loader" />
+              </button>
               <% if( errorMessage ) {%>
               <small class="text-danger"><%= errorMessage %></small>
               <% } %> <% if( successMessage ) {%>

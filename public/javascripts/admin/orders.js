@@ -63,15 +63,15 @@ function updateOrderStatus(status, orderId) {
     },
     body: JSON.stringify({ orderId, status }),
   })
-    .then( async (response) => {
+    .then(async (response) => {
       const data = await response.json();
-      if(!response.ok) {
+      if (!response.ok) {
         throw new Error(data.error || "Failed to update order status");
       }
       return data;
     })
     .then(() => {
-        toastr.success("Order status updated successfully!");
+      toastr.success("Order status updated successfully!");
     })
     .catch((error) => {
       console.error("Error updating order status:", error);
@@ -135,21 +135,27 @@ nextBtn.addEventListener("click", () => {
 });
 
 // working
-// searchForm.addEventListener('submit', (e) => {
-//     e.preventDefault()
-//     const errorMessage = document.getElementById('errorMessage')
-//     const searchInput = document.getElementById('searchQuery');
-//     const search = searchInput.value.trim();
-//     errorMessage.innerText = ''
-//     let isValid = true
+const errorMessage = document.getElementById("errorMessage");
+const searchInput = document.getElementById("searchQuery");
+searchForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const search = searchInput.value.trim();
+  errorMessage.innerText = "";
+  let isValid = true;
 
-//     if(!search){
-//       isValid = false
-//       errorMessage.innerText = 'Enter Order Id'
-//     }
+  if (!search) {
+    isValid = false;
+    errorMessage.innerText = "Enter Order Id";
+  }
 
-//     if (isValid) {
-//       getOrders(0, search)
-//     }
+  if (isValid) {
+    getOrders(0, search);
+  }
+});
 
-//   })
+searchInput.addEventListener("input", () => {
+  const query = searchInput.value.trim();
+  if (query === "") {
+    getOrders(0)
+  }
+});

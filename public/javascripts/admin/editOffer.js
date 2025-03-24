@@ -12,6 +12,8 @@ const discountError = document.getElementById("discountError");
 const startDateError = document.getElementById("startDateError");
 const endDateError = document.getElementById("endDateError");
 
+const saveBtn = document.getElementById("saveBtn");
+
 // on submitting offer form
 offerForm.addEventListener("submit", async(e) => {
   e.preventDefault();
@@ -66,6 +68,9 @@ offerForm.addEventListener("submit", async(e) => {
   }
 
   try {
+
+    saveBtn.classList.add('disabled')
+
     const res = await fetch('/admin/offers/edit/offer/details', {
       method: 'PATCH',
       headers: {'Content-Type': 'application/json'},
@@ -82,6 +87,8 @@ offerForm.addEventListener("submit", async(e) => {
   } catch (error) {
     console.error(error);
     alert('Somthing went wrong')
+  }finally{
+    saveBtn.classList.remove('disabled')
   }
 
 });
