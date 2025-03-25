@@ -33,6 +33,7 @@ const { addUserCoupon } = require("../utils/couponsManager");
 const { razorpay } = require("../config/razorpay");
 const { STATUS_CODES } = require("../utils/constants");
 const CustomError = require("../utils/customError");
+const Product = require("../models/Product");
 
 // make a session validate middleware later that sends json response
 
@@ -651,6 +652,32 @@ exports.createRetryPaymentOrder = async (req, res, next) => {
       );
     }
 
+    const orderItems = await OrderItem.find({ orderId: selectedOrder._id });
+
+    for (const item of orderItems) {
+      const product = await Product.findById(item.productId);
+      if (!product) {
+        throw new CustomError(
+          `Product with ID ${item.productId} not found`,
+          STATUS_CODES.NOT_FOUND
+        );
+      }
+
+      if (!product.isListed) {
+        throw new CustomError(
+          `This item is currently unavailable: ${product.productName}`,
+          STATUS_CODES.GONE
+        );
+      }
+
+      if (product.quantity < item.quantity) {
+        throw new CustomError(
+          `Not enough stock for ${product.productName}. Available: ${product.quantity}`,
+          STATUS_CODES.BAD_REQUEST
+        );
+      }
+    }
+
     // create razorpay order with amount
     const options = {
       amount: selectedOrder.totalPayable * 100,
@@ -905,10 +932,12 @@ exports.returnSelectedProducts = async (req, res, next) => {
         STATUS_CODES.NOT_FOUND
       );
     }
-    
-    const redirectUrl = `/account/orders/all/ord/${orderId}`
 
-    res.status(STATUS_CODES.SUCCESS).json({ success: true, message: "Return request send", redirectUrl });
+    const redirectUrl = `/account/orders/all/ord/${orderId}`;
+
+    res
+      .status(STATUS_CODES.SUCCESS)
+      .json({ success: true, message: "Return request send", redirectUrl });
   } catch (error) {
     next(error);
   }

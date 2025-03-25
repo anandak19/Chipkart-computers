@@ -17,6 +17,21 @@ const connectDB = async () => {
     } 
 };
 
+const disconnectDB = async () => {
+    try {
+        await mongoose.connection.close();
+        console.log("MongoDB connection closed.");
+    } catch (error) {
+        console.error("Error closing MongoDB connection:", error);
+    }
+};
+
+process.on("SIGINT", async () => {
+    await disconnectDB();
+    process.exit(0);
+});
+
+
 // Event Listeners for Connection
 mongoose.connection.on("connected", () => {
     console.log(" MongoDB connection established");
