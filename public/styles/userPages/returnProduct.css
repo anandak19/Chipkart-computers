@@ -30,3 +30,6 @@
     background-color: #c82333; 
 }
 
+#returnReason{
+    display: none;
+}

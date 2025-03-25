@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   closeBtn.addEventListener("click", () => {
     returnDialogModal.style.display = "none";
+    returnItemForm.reset()
   });
 
   returnItemForm.addEventListener("submit", async (e) => {
@@ -51,7 +52,11 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log(data);
       if (response.ok) {
         toastr.success("Your return request has been submitted successfully!");
-        // returnDialogModal.style.display = "none";
+        returnDialogModal.style.display = "none";
+        returnItemForm.reset()
+        setTimeout(() => {
+          window.location.href = data.redirectUrl;
+      }, 2000);
       } else {
         toastr.error(data.error);
       }
@@ -60,4 +65,15 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Error");
     }
   });
+});
+
+document.getElementById("returnReasonSelect").addEventListener("change", function () {
+  const reasonInput = document.getElementById("returnReason");
+  if (this.value === "Other") {
+    reasonInput.style.display = "block";
+    reasonInput.focus();
+  } else {
+    reasonInput.style.display = "none";
+    reasonInput.value = this.value; 
+  }
 });

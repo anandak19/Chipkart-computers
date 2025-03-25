@@ -905,8 +905,10 @@ exports.returnSelectedProducts = async (req, res, next) => {
         STATUS_CODES.NOT_FOUND
       );
     }
+    
+    const redirectUrl = `/account/orders/all/ord/${orderId}`
 
-    res.status(STATUS_CODES.SUCCESS).json({ message: "Return request send" });
+    res.status(STATUS_CODES.SUCCESS).json({ success: true, message: "Return request send", redirectUrl });
   } catch (error) {
     next(error);
   }

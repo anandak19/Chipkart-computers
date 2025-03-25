@@ -191,12 +191,10 @@ window.addEventListener("load", () => {
   getRelatedProducts();
 });
 
-
-// method to buy now 
+// method to buy now
 function buyNow(productId) {
   window.location.replace(`/checkout?productId=${productId}`);
 } 
-
 
 // add to wishlist 
 async function addWishlist(id) {
@@ -208,6 +206,7 @@ async function addWishlist(id) {
 
     const result = await res.json()
     if (res.ok) {
+      // getWishlistCount()
       window.location.reload()
     }else{
       alert(result.error)

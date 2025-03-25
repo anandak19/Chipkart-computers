@@ -241,8 +241,8 @@ async function addWishlist(id) {
 
     const result = await res.json() 
     if (res.ok) {
-      console.log(result)
       applyFilters();
+      getWishlistCount()
     }else{
       alert(result.error)
     }
