@@ -355,9 +355,8 @@ exports.getAddReviewForm = async (req, res, next) => {
 exports.postAddReviewForm = async (req, res, next) => {
 
   try {
-    console.log(req.body);
     const { rating, review } = req.body;
-    const userId = req.session?.userId;
+    const userId = req.user._id;
     const productId = req.params?.id;
 
     if (!userId || !productId) {

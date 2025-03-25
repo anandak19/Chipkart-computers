@@ -421,11 +421,8 @@ exports.getCartTotal = async (req, res, next) => {
 // CHECK OUT PAGE
 exports.getCheckoutPage = async (req, res) => {
   try {
-    if (!req.user) {
-      return res.redirect("/login");
-    }
 
-    const userId = req.user._id;
+    const userId = req.userId;
 
     const { cart, productId } = req.query;
 
@@ -433,6 +430,7 @@ exports.getCheckoutPage = async (req, res) => {
       const userCart = await CartSchema.findOne({ userId });
 
       if (!cart || userCart?.products.length === 0 || !userCart) {
+        console.log(userCart)
         return res.redirect("/cart");
       }
 

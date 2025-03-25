@@ -33,7 +33,7 @@ router.get('/products/:id', userController.getProductDetailsPage)
 // render add review page           isLogin,
 router.get('/products/:id/review/new', isLogin,  userController.getAddReviewForm)
 // check if the user was already given review -  TEST THIS ROUTE AFTER LOGIN IN !!
-router.post('/products/:id/review/new',isLogin, validateProduct, validateNewReview, userController.postAddReviewForm)
+router.post('/products/:id/review/new',varifyLoginUserSession, validateProduct, validateNewReview, userController.postAddReviewForm)
 // get all the reviews of a product 
 router.get('/products/:id/review', validateProduct, userController.getReviews)
 // get related products 
@@ -50,9 +50,9 @@ router.post('/products/wishlist/add/:id', varifyLoginUserSession, validateProduc
 // isLogin middleware will come here 
 // personal details 
 router.get('/account', isLogin,  userAccountController.getAccount)
-router.get('/account/user', userAccountController.getUserDetails)
-router.patch('/account/user', userAccountController.postUserDetails)
-router.patch('/account/user/password', userAccountController.postChangePassword)
+router.get('/account/user', varifyLoginUserSession, userAccountController.getUserDetails)
+router.patch('/account/user', varifyLoginUserSession, userAccountController.postUserDetails)
+router.patch('/account/user/password', varifyLoginUserSession, userAccountController.postChangePassword)
 
 
 // user address 
@@ -71,28 +71,28 @@ router.patch('/account/address/toogle/:id', varifyLoginUserSession, userAccountC
 router.get('/account/orders', isLogin, userAccountController.getOrderHistory)
 // updated 
 router.get('/account/orders/all', varifyLoginUserSession, userAccountController.getAllOrders)
-router.get('/account/orders/all/ord/:id', userAccountController.getOrderDetaillsPage)
-router.get('/account/orders/all/ord/info/address', userAccountController.getDeliveryInfo)
-router.get('/account/orders/all/ord/info/rewards', userAccountController.getRewards)
-router.get('/account/orders/all/ord/invoice/download', userAccountController.downloadInvoice)
+router.get('/account/orders/all/ord/:id', isLogin, userAccountController.getOrderDetaillsPage)
+router.get('/account/orders/all/ord/info/address', varifyLoginUserSession, userAccountController.getDeliveryInfo)
+router.get('/account/orders/all/ord/info/rewards',varifyLoginUserSession,  userAccountController.getRewards)
+router.get('/account/orders/all/ord/invoice/download', varifyLoginUserSession, userAccountController.downloadInvoice)
 // retry payment 
 
-router.post('/account/orders/all/ord/payment/retry', userAccountController.createRetryPaymentOrder)
-router.patch('/account/orders/all/ord/payment/varify', userAccountController.varifyRetryPayment)
+router.post('/account/orders/all/ord/payment/retry', varifyLoginUserSession, userAccountController.createRetryPaymentOrder)
+router.patch('/account/orders/all/ord/payment/varify', varifyLoginUserSession, userAccountController.varifyRetryPayment)
 
 // updated
 
-router.get('/account/orders/all/ord/info/itemes', userAccountController.getOrderItems)
+router.get('/account/orders/all/ord/info/itemes', varifyLoginUserSession, userAccountController.getOrderItems)
 router.patch('/account/orders/all/ord/cancel/order', varifyLoginUserSession, userAccountController.cancelOrderByUser)
-router.get('/account/orders/all/ord/items/return', userAccountController.getReturnProductPage)
-router.patch('/account/orders/all/ord/items/return', userAccountController.returnSelectedProducts)
+router.get('/account/orders/all/ord/items/return', isLogin, userAccountController.getReturnProductPage)
+router.patch('/account/orders/all/ord/items/return', varifyLoginUserSession, userAccountController.returnSelectedProducts)
 
 // ORDERS ROUTES START
-router.get('/account/wallet', getUser, userAccountController.getWallet)
-router.get('/account/wallet/all', getUser, userAccountController.getAllWalletTransactions)
+router.get('/account/wallet', varifyLoginUserSession, userAccountController.getWallet)
+router.get('/account/wallet/all', varifyLoginUserSession, userAccountController.getAllWalletTransactions)
 
 // coupons based routes
-router.get('/account/coupons', userAccountController.getCoupons)
+router.get('/account/coupons', isLogin, userAccountController.getCoupons)
 router.get('/account/coupons/all', varifyLoginUserSession, userAccountController.getAllUserCoupons)
 
 // ORDER BASED ROUTES
@@ -110,12 +110,12 @@ router.get('/cart/count', userOrderController.getCartItemCount)
 
 // eg for product checkout: /checkout?productId=sdfsfksdfhsdfh
 // eg of cart checkout: /checkout?cart=true 
-router.get('/checkout', getUser,  userOrderController.getCheckoutPage)
+router.get('/checkout', isLogin,  userOrderController.getCheckoutPage)
 router.get('/checkout/amount', varifyLoginUserSession, userOrderController.getCheckoutAmount)
 router.patch('/checkout/apply-coupon', varifyLoginUserSession, userOrderController.applyCoupon)
 router.patch('/checkout/remove-coupon', varifyLoginUserSession, userOrderController.removeAppliedCoupon)
 // api calls
-router.patch('/checkout/address', userOrderController.chooseDeliveryAddress)
+router.patch('/checkout/address', varifyLoginUserSession, userOrderController.chooseDeliveryAddress)
 // place order with cod
 router.post('/checkout/confirm', varifyLoginUserSession, checkIsblocked, compareOrderItems, userOrderController.placeOrder)
 // online payment
@@ -123,6 +123,6 @@ router.post('/checkout/create-order', varifyLoginUserSession, compareOrderItems,
 // varify payment and place the order by online 
 router.patch('/checkout/varify-payment', varifyLoginUserSession, compareOrderItems,  userOrderController.varifyPayment)
 
-router.get('/checkout/address/new', userOrderController.getAddAnotherAddressPage)
+router.get('/checkout/address/new', isLogin, userOrderController.getAddAnotherAddressPage)
 
 module.exports = router 

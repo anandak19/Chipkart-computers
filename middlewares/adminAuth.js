@@ -30,7 +30,6 @@ const isAdmin = async (req, res, next) => {
   try {
     const isAdminLogin = req?.session?.isAdminLogin || false;
     const adminId = req?.session?.adminId || false;
-    console.log(isAdminLogin)
 
     if (!isAdminLogin || !adminId) {
       throw new CustomError("Please login and try again.", STATUS_CODES.BAD_REQUEST);
