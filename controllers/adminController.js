@@ -2115,7 +2115,7 @@ exports.downloadSalesReportPdf = async (req, res, next) => {
     const browser = await puppeteer.launch({
       executablePath: puppeteer.executablePath(),
       headless: "new",
-      args: ["--no-sandbox"],
+      args: ["--no-sandbox", '--disable-setuid-sandbox', '--disable-audio-output'],
     });
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "load" });
