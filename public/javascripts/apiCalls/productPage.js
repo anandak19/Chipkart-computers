@@ -52,7 +52,7 @@ const showProducts = (products, total, hasMore) => {
               <div class="rating-price">
                 <div class="price">
                   <p class="selling-price">₹${product.finalPrice || "N/A"}</p>
-                  <p class="actual-price">₹${product.mrp || "N/A"}</p>
+                  ${product.mrp > product.finalPrice ? `<p class="actual-price">₹${product.mrp}</p>` : ""}
                 </div>
                 <div class="item-rating">
                     <span>&#9733; ${rating}</span>

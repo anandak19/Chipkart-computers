@@ -66,9 +66,15 @@
             </div>
             <div class="price">
               <span class="current-price">₹<%= product.finalPrice %></span>
-              <span class="mrp">₹<%= product.mrp %></span>
+              <% if (product.mrp > product.finalPrice) { %>
+                  <span class="mrp">₹<%= product.mrp %></span>
+              <% } %>
+              
             </div>
-            <p class="discount"><%= product.discount %>% Discount Applied</p>
+            <% if (product.discount > 0) { %>
+              <p class="discount"><%= product.discount %>% Discount Applied</p>
+          <% } %>
+          
 
             <p class="description"><%= product.description %></p>
             <div class="keypoints">

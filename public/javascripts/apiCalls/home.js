@@ -34,9 +34,7 @@ const showFeaturedProducts = (products) => {
                       <p class="card-product-price">${
                         product.finalPrice || "N/A"
                       }</p>
-                      <p class="card-product-discount">${
-                        product.discount || "0"
-                      }% Off</p> 
+                      ${product.discount > 0 ? `<p class="card-product-discount">${product.discount}% Off</p>` : ""}
                     </div>
                   </div>
                 </div>
@@ -102,9 +100,7 @@ const showLatestProducts = (products) => {
                         <p class="card-product-price">${
                           product.finalPrice || "N/A"
                         }</p>
-                        <p class="card-product-discount">${
-                          product.discount || "0"
-                        }% Off</p> 
+                      ${product.discount > 0 ? `<p class="card-product-discount">${product.discount}% Off</p>` : ""}
                       </div>
                     </div>
                   </div>
