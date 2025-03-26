@@ -102,6 +102,7 @@ const creditAmountToUser = async (amount, userId, reason, session = null) => {
 // edated
 const cancelOrder = async (orderId, cancelReason) => {
   try {
+    console.log("This is the mobile view branch and this route is cancelling the order")
     const orderDetails = await Order.findById(orderId);
     if (!orderDetails) {
       throw new CustomError(`Order not found`, STATUS_CODES.NOT_FOUND)

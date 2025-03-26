@@ -5,7 +5,6 @@ toastr.options = {
     hideMethod: "fadeOut"
 };
 
-
 async function addToCart(id) {
     try {
         const response = await fetch('/cart/add', {
@@ -36,3 +35,4 @@ async function addToCart(id) {
     }
 
 }
+

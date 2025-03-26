@@ -829,8 +829,19 @@ exports.cancelOrderByUser = async (req, res, next) => {
     if (!orderId) {
       throw new CustomError("Session expired", STATUS_CODES.BAD_REQUEST);
     }
+
+    const orderItems = await OrderItem.find({orderId})
+    for(const item of orderItems) {
+      const product = await Product.findById(item.productId)
+      if(product.quantity < 5) {
+
+      }else {
+        await cancelOrder(orderId, cancelReason);
+      }
+      
+    }
     // call the cancel order method here
-    await cancelOrder(orderId, cancelReason);
+    
 
     res
       .status(STATUS_CODES.SUCCESS)
