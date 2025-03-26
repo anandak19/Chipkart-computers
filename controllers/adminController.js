@@ -682,7 +682,6 @@ exports.getProductForm = (req, res) => {
       },
     ])
       .then((categoryArray) => {
-        console.log(categoryArray);
         res.render("admin/products/productForm", {
           title: "Product Management - New",
           categoryArray,
