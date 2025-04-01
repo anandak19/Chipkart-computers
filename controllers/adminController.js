@@ -2128,7 +2128,7 @@ exports.downloadSalesReportPdf = async (req, res, next) => {
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
-      'attachment; filename="sales-report.pdf"'
+      `attachment; filename="sales-report-${new Date().toISOString().replace(/[:.]/g, "-")}.pdf"`
     );
     res.end(pdfBuffer); // Correctly sends binary data
   } catch (error) {
@@ -2274,9 +2274,9 @@ exports.downloadSalesReportExcel = async (req, res, next) => {
 
     res.setHeader(
       "Content-Disposition",
-      "attachment; filename=Orders_Report.xlsx"
+      `attachment; filename="Orders_Report-${new Date().toISOString().replace(/[:.]/g, "-")}.xlsx"`
     );
-
+    
     await workbook.xlsx.write(res);
     res.end();
 

@@ -10,9 +10,11 @@ const UserCouponSchema = new Schema(
       required: true,
     },
     couponCode: { type: String, required: true },
-    orderId: { type: String, required: true },
-    isRedeemed: { type: Boolean, default: false },
-    isCredited: { type: Boolean, default: false }
+    couponId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Coupon",
+      required: true,
+    },
   },
   { timestamps: true }
 );

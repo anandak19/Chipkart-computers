@@ -97,8 +97,6 @@ const getTotalPayable = async () => {
     const response = await fetch("/checkout/amount");
     const data = await response.json();
     if (response.ok) {
-      console.log(data);
-
       totalAmount.innerText = `₹${data.total.toLocaleString("en-IN")}`;
       shippingFee.innerText = `₹${data.shippingFee.toLocaleString("en-IN")}`;
       discountAmount.innerText = `₹${data.discountApplied.toLocaleString(
@@ -286,7 +284,6 @@ const placeOrder = async (paymentMethod) => {
 // copy
 
 const placeOrderWithOnline = async (paymentMethod) => {
-
   let redirectUrl = "";
 
   try {
@@ -321,7 +318,7 @@ const placeOrderWithOnline = async (paymentMethod) => {
             const varificationResult = await varificationRes.json();
 
             if (varificationRes.ok) {
-              redirectUrl = varificationResult.redirectUrl; 
+              redirectUrl = varificationResult.redirectUrl;
               placeOrderBtn.disabled = true;
               toastr.success(varificationResult.message);
               placeOrderBtn.textContent = "Order Placed";
@@ -375,8 +372,7 @@ const placeOrderWithOnline = async (paymentMethod) => {
         alert(varificationResult.message);
         redirectUrl = varificationResult.redirectUrl;
       });
-
-    }else{
+    } else {
       toastr.error(result.error);
     }
   } catch (error) {
@@ -385,13 +381,11 @@ const placeOrderWithOnline = async (paymentMethod) => {
   }
 };
 
-
 // e commerce transaction - on
 // after hosting make it off
 
 // method to place the order
 placeOrderBtn.addEventListener("click", async () => {
-
   if (!paymentMethod) {
     toastr.info("Please Choose a payment method");
     return;
@@ -401,9 +395,9 @@ placeOrderBtn.addEventListener("click", async () => {
     placeOrder(paymentMethod);
   } else if (paymentMethod === "Online") {
     placeOrderWithOnline(paymentMethod);
-  } else if(paymentMethod === "Wallet") {
+  } else if (paymentMethod === "Wallet") {
     placeOrder(paymentMethod);
-  }else{
+  } else {
     toastr.info("Please Choose a valid payment method");
   }
 });
@@ -442,3 +436,62 @@ couponForm.addEventListener("submit", async (e) => {
     alert("Somthing went wrong");
   }
 });
+
+const showCoutpons = (couponsArray) => {
+  console.log(couponsArray);
+  const couponsContainer = document.getElementById("couponsContainer");
+  couponsContainer.innerHTML = "";
+  if (couponsArray.length > 0) {
+    couponsArray.forEach((coupon) => {
+      const couponDiv = document.createElement("div");
+      couponDiv.classList.add("coupon");
+
+      couponDiv.innerHTML = `
+          <div class="coupon-details">
+              <p>${coupon.discount}% OFF</p>
+              <p>Min Order: ₹${coupon.minOrderAmount}</p>
+              <p>Code: <strong>${coupon.couponCode}</strong></p>
+          </div>
+          <p class="desc">${coupon.description}</p>
+          <button class="copy-btn" onclick="copyCoupon('${coupon.couponCode}')">Copy Code</button>
+      `;
+
+      couponsContainer.appendChild(couponDiv);
+    });
+  } else {
+    couponsContainer.innerHTML = '<p class="text-center">Nothing to show</p>';
+  }
+};
+
+// Open Modal
+async function openCouponModal() {
+  document.querySelector(".coupon-modal").style.display = "flex";
+  document.body.classList.add("modal-open");
+
+  try {
+    const res = await fetch("/checkout/coupons");
+    const data = await res.json();
+    console.log(data);
+    if (res.ok) {
+      showCoutpons(data.availableCoupons);
+    } else {
+      alert(data.error);
+    }
+  } catch (error) {
+    alert("Error fetching coupons");
+    console.error(error);
+  }
+}
+
+// Close Modal
+function closeModal() {
+  document.querySelector(".coupon-modal").style.display = "none";
+  document.body.classList.remove("modal-open");
+}
+
+// Copy Coupon Code to Clipboard
+function copyCoupon(code) {
+  navigator.clipboard.writeText(code).then(() => {
+    toastr.success("Coupon Code Copied: " + code);
+  });
+}

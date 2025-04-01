@@ -40,13 +40,23 @@ const renderAddressses = (addresses) => {
   }
 };
 
+
+const nextBtn = document.getElementById("nextBtn");
+const prevBtn = document.getElementById("prevBtn");
+let page = 0;
+const updatePaginators = (hasMore) => {
+  prevBtn.disabled = page === 0;
+  nextBtn.disabled = !hasMore;
+};
+
 // method to get all the address of user
-const getUserAddress = async () => {
+const getUserAddress = async (page=0) => {
   try {
-    const response = await fetch("/account/address/all");
+    const response = await fetch(`/account/address/all?page=${page}`);
     data = await response.json();
     if (response.ok) {
       renderAddressses(data.data);
+      updatePaginators(data.hasMore);
     }
   } catch (error) {
     console.log(error);
@@ -75,7 +85,7 @@ async function deleteAddress(event) {
 
     if (response.ok) {
       alert("Address deleted successfully!");
-      getUserAddress();
+      getUserAddress(page);
     } else {
       alert(data.error || "Failed to delete the address.");
     }
@@ -104,7 +114,7 @@ async function setDefaultAddress(event) {
     const data = await response.json();
 
     if (response.ok) {
-      getUserAddress();
+      getUserAddress(page);
     } else {
       alert(data.error || "Failed to update the address.");
     }
@@ -115,3 +125,14 @@ async function setDefaultAddress(event) {
 }
 
 document.addEventListener("DOMContentLoaded", getUserAddress);
+
+
+prevBtn.addEventListener("click", () => {
+  page--;
+  getUserAddress(page);
+});
+
+nextBtn.addEventListener("click", () => {
+  page++;
+  getUserAddress(page);
+});

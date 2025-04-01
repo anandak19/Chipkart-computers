@@ -111,6 +111,7 @@ router.get('/cart/count', userOrderController.getCartItemCount)
 // eg of cart checkout: /checkout?cart=true 
 router.get('/checkout', isLogin,  userOrderController.getCheckoutPage)
 router.get('/checkout/amount', varifyLoginUserSession, userOrderController.getCheckoutAmount)
+router.get('/checkout/coupons', varifyLoginUserSession, userOrderController.getApplicableCoupons)
 router.patch('/checkout/apply-coupon', varifyLoginUserSession, userOrderController.applyCoupon)
 router.patch('/checkout/remove-coupon', varifyLoginUserSession, userOrderController.removeAppliedCoupon)
 // api calls

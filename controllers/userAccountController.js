@@ -402,6 +402,10 @@ exports.toggleAddress = async (req, res, next) => {
 // get all address of user
 exports.getUsersAllAddress = async (req, res, next) => {
   try {
+    const page = Number(req.query.page) || 0
+    const limit =  5
+    const skip = limit * page
+
     if (!req.user) {
       throw new CustomError(
         "User not found in request.",
@@ -409,11 +413,29 @@ exports.getUsersAllAddress = async (req, res, next) => {
       );
     }
 
-    const addressArray = await AddressSchema.find({ userId: req.user._id });
+    const result = await AddressSchema.aggregate([
+      {
+        $match: {
+          userId: req.user._id.toString()
+        }
+      },
+      {
+        $facet: {
+          paginatedResult: [{$sort: {createdAt: -1}}, {$skip: skip}, {$limit: limit}],
+          totalCount: [{$count: "total"}]
+        }
+      }
+    ])
+
+    const addressArray = result[0].paginatedResult;
+    const totalCount =
+      result[0].totalCount.length > 0 ? result[0].totalCount[0].total : 0;
+
+    const hasMore = skip + addressArray.length < totalCount;
 
     return res
       .status(STATUS_CODES.SUCCESS)
-      .json({ message: "Address fetched successfully", data: addressArray });
+      .json({ message: "Address fetched successfully", data: addressArray, hasMore });
   } catch (error) {
     next(error);
   }
@@ -830,17 +852,8 @@ exports.cancelOrderByUser = async (req, res, next) => {
       throw new CustomError("Session expired", STATUS_CODES.BAD_REQUEST);
     }
 
-    const orderItems = await OrderItem.find({orderId})
-    for(const item of orderItems) {
-      const product = await Product.findById(item.productId)
-      if(product.quantity < 5) {
-
-      }else {
-        await cancelOrder(orderId, cancelReason);
-      }
-      
-    }
     // call the cancel order method here
+    await cancelOrder(orderId, cancelReason);
     
 
     res
@@ -1012,49 +1025,45 @@ exports.getCoupons = (req, res) => {
   res.render("user/account/coupons", { currentPage: "coupons" });
 };
 
+// fetch all coupons, user has avail 
 exports.getAllUserCoupons = async (req, res, next) => {
   try {
     const userId = req.user._id;
+    const page = Number(req.query.page) || 0
+    const limit = 5
+    const skip = limit * page
 
-    const userCoupons = await UserCoupon.aggregate([
+    // Fetch used coupons by the user
+    const usedCoupons = await UserCoupon.find({ userId }).lean(); 
+    const usedCouponIds = usedCoupons.map(doc => new mongoose.Types.ObjectId(doc.couponId)); 
+
+    // Fetch available coupons
+    const result = await Coupons.aggregate([
       {
-        $match: { userId: userId, isRedeemed: false, isCredited: true },
-      },
+        $match: {
+          _id: { $nin: usedCouponIds },  
+          startDate: { $lte: new Date() },
+          endDate: { $gte: new Date() },
+          isActive: true
+        }
+      }, 
       {
-        $sort: { createdAt: -1 },
-      },
-      {
-        $lookup: {
-          from: "coupons",
-          localField: "couponCode",
-          foreignField: "couponCode",
-          as: "couponDetails",
-        },
-      },
-      {
-        $unwind: "$couponDetails",
-      },
-      {
-        $replaceRoot: {
-          newRoot: { $mergeObjects: ["$$ROOT", "$couponDetails"] },
-        },
-      },
-      {
-        $project: {
-          couponDetails: 0,
-        },
-      },
+        $facet: {
+          totalCount: [{ $count: "count" }],
+          paginatedResults: [{$sort: {createdAt: -1}}, {$skip: skip}, {$limit: limit}]
+        }
+      }
     ]);
 
-    if (!userCoupons) {
-      throw new CustomError(
-        "Faild to get the user coupons",
-        STATUS_CODES.BAD_REQUEST
-      );
-    }
+    const availableCoupons = result[0].paginatedResults;
+    const totalCount =
+    result[0].totalCount.length > 0 ? result[0].totalCount[0].count : 0;
 
-    res.status(STATUS_CODES.SUCCESS).json({ userCoupons });
+    const hasMore = skip + availableCoupons.length < totalCount;
+
+    res.status(200).json({ availableCoupons, hasMore });
   } catch (error) {
     next(error);
   }
 };
+

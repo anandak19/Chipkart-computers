@@ -21,9 +21,9 @@ const showCoupons = (coupons) => {
                       coupon._id
                     }" class="btn btn-primary btn-sm">Edit</a>
                     <button class="btn ${
-                        coupon.isActive ? "btn-success" : "btn-danger"
+                        coupon.isActive ? "btn-danger"  : "btn-success" 
                         }  btn-sm" onclick="toggleStatus('${coupon._id}')">${
-                            coupon.isActive ? "Make Active" : "Make Inactive"
+                            coupon.isActive ? "Make Inactive"  : "Make Active"
                     }</button>
                 </td>
             `;

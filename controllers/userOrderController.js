@@ -421,7 +421,6 @@ exports.getCartTotal = async (req, res, next) => {
 // CHECK OUT PAGE
 exports.getCheckoutPage = async (req, res) => {
   try {
-
     const userId = req.userId;
 
     const { cart, productId } = req.query;
@@ -430,7 +429,7 @@ exports.getCheckoutPage = async (req, res) => {
       const userCart = await CartSchema.findOne({ userId });
 
       if (!cart || userCart?.products.length === 0 || !userCart) {
-        console.log(userCart)
+        console.log(userCart);
         return res.redirect("/cart");
       }
 
@@ -470,11 +469,61 @@ exports.getCheckoutAmount = async (req, res, next) => {
   }
 };
 
+// get the applicable coupon
+exports.getApplicableCoupons = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    if (!userId) {
+      throw new CustomError("User details not found", STATUS_CODES.NOT_FOUND);
+    }
+
+    const checkoutData = await calculateCheckoutAmount(req);
+    if (!checkoutData) {
+      throw new CustomError(
+        "Faild to fetch check out amount",
+        STATUS_CODES.NOT_FOUND
+      );
+    }
+    const totalPayable = checkoutData.totalPayable;
+
+    // Fetch used coupons by the user
+    const usedCoupons = await UserCoupon.find({ userId }).lean();
+    const usedCouponIds = usedCoupons.map(
+      (doc) => new mongoose.Types.ObjectId(doc.couponId)
+    );
+
+    // Fetch available coupons
+    const availableCoupons = await Coupons.aggregate([
+      {
+        $match: {
+          _id: { $nin: usedCouponIds },
+          minOrderAmount: { $lte: totalPayable },
+          startDate: { $lte: new Date() },
+          endDate: { $gte: new Date() },
+          isActive: true,
+        },
+      },
+      { 
+        $sort: { discount: -1 } 
+      }
+    ]);
+
+
+    res.status(200).json({ availableCoupons });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.applyCoupon = async (req, res, next) => {
   try {
+    const user = req.user;
+    if (!user) {
+      throw new CustomError("Session expired", STATUS_CODES.BAD_REQUEST);
+    }
     if (req.session.appliedCouponId) {
       throw new CustomError(
-        "You can only use one coupon is a single order",
+        "You can only use single coupon in an order",
         STATUS_CODES.CONFLICT
       );
     }
@@ -484,34 +533,43 @@ exports.applyCoupon = async (req, res, next) => {
       throw new CustomError("Coupon code needed", STATUS_CODES.BAD_REQUEST);
     }
 
-    const userCoupon = await UserCoupon.findOne({ couponCode });
+    // check if user has used this coupon
+    const userCoupon = await UserCoupon.findOne({
+      userId: user._id,
+      couponCode,
+    });
 
-    if (!userCoupon) {
+    if (userCoupon) {
       throw new CustomError(
-        "You didt have any coupon with this code",
-        STATUS_CODES.NOT_FOUND
+        "You have alredy redeemed this coupon",
+        STATUS_CODES.CONFLICT
       );
     }
 
+    // check if this coupon exists
     const coupon = await Coupons.findOne({ couponCode, isActive: true });
-
     if (!coupon) {
       throw new CustomError("Coupon not found", STATUS_CODES.NOT_FOUND);
     }
 
+    // check if the coupon has expired or not
     const today = new Date();
     const endDate = new Date(coupon.endDate);
-
     if (today > endDate) {
       throw new CustomError(
-        "Coupon validity expired",
+        "Coupon has expired expired",
         STATUS_CODES.BAD_REQUEST
       );
     }
 
     req.session.appliedCouponId = coupon._id;
-    userCoupon.isRedeemed = true;
-    await userCoupon.save();
+
+    const newUserCoupon = new UserCoupon({
+      userId: user._id,
+      couponCode,
+      couponId: coupon._id,
+    });
+    await newUserCoupon.save();
 
     res
       .status(STATUS_CODES.SUCCESS)
@@ -528,12 +586,7 @@ exports.removeAppliedCoupon = async (req, res, next) => {
     if (!userId || !couponId) {
       throw new CustomError("Session expired", STATUS_CODES.BAD_REQUEST);
     }
-    /*
-  find this coupon using it id and get the coupon code
-  from the userCoupons collection, find the coupon with user id and coupon code
-  make the userCoupon.isRedeemed = false and save it
-  delete the req.session.appliedCouponId from sesion
-  */
+
     const coupon = await Coupons.findById(couponId);
     if (!coupon) {
       throw new CustomError(
@@ -542,20 +595,19 @@ exports.removeAppliedCoupon = async (req, res, next) => {
       );
     }
 
-    const userCoupon = await UserCoupon.findOne({
+    const userCoupon = await UserCoupon.findOneAndDelete({
       couponCode: coupon.couponCode,
       userId: userId,
     });
+
     if (!userCoupon) {
       throw new CustomError(
-        "You dont have any coupon with this code",
+        "You didn't use any coupon with this code",
         STATUS_CODES.NOT_FOUND
       );
     }
 
-    userCoupon.isRedeemed = false;
     req.session.appliedCouponId = null;
-    await userCoupon.save();
 
     res.status(STATUS_CODES.SUCCESS).json({ message: "Coupon removed" });
   } catch (error) {
@@ -566,7 +618,6 @@ exports.removeAppliedCoupon = async (req, res, next) => {
 // save changed delivery address to session
 exports.chooseDeliveryAddress = async (req, res, next) => {
   try {
-    console.log(req.body);
     const { addressId } = req.body;
 
     if (!addressId) {
@@ -621,7 +672,10 @@ exports.placeOrder = async (req, res, next) => {
 
   try {
     if (!req.user) {
-      throw new CustomError( "User not found in request.", STATUS_CODES.BAD_REQUEST);
+      throw new CustomError(
+        "User not found in request.",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     const userId = req.user._id;
@@ -642,20 +696,26 @@ exports.placeOrder = async (req, res, next) => {
 
     if (paymentMethod === "COD") {
       if (checkoutData.totalPayable > 5000) {
-        throw new CustomError( "Orders above ₹5000 are not allowed for COD ", STATUS_CODES.BAD_REQUEST);
+        throw new CustomError(
+          "Orders above ₹5000 are not allowed for COD ",
+          STATUS_CODES.BAD_REQUEST
+        );
       }
     } else if (paymentMethod === "Wallet") {
       // check if the wallet amount is less than the totalPayable. if true return error
       const userWallet = await Wallet.findOne({ userId }).session(session);
       if (!userWallet) {
-        throw new CustomError( "Wallet not found", STATUS_CODES.NOT_FOUND);
+        throw new CustomError("Wallet not found", STATUS_CODES.NOT_FOUND);
       }
 
       if (
         userWallet.balanceLeft === 0 ||
         userWallet.balanceLeft < checkoutData.totalPayable
       ) {
-        throw new CustomError( "Insufficient balance in wallet! Try another method", STATUS_CODES.BAD_REQUEST);
+        throw new CustomError(
+          "Insufficient balance in wallet! Try another method",
+          STATUS_CODES.BAD_REQUEST
+        );
       }
 
       userWallet.balanceLeft -= checkoutData.totalPayable;
@@ -672,7 +732,10 @@ exports.placeOrder = async (req, res, next) => {
       await newTransaction.save({ session });
       isPaid = true;
     } else {
-      throw new CustomError( "Please choose a valid payment method", STATUS_CODES.BAD_REQUEST);
+      throw new CustomError(
+        "Please choose a valid payment method",
+        STATUS_CODES.BAD_REQUEST
+      );
     }
 
     // get address id , default address or address choosed from session
@@ -687,7 +750,10 @@ exports.placeOrder = async (req, res, next) => {
           session
         );
         if (!updatedProduct) {
-          throw new CustomError(`Product with ID ${item.productId} is not available`, STATUS_CODES.CONFLICT);
+          throw new CustomError(
+            `Product with ID ${item.productId} is not available`,
+            STATUS_CODES.CONFLICT
+          );
         }
       }
     } else if (req.session.checkoutProductId) {
@@ -722,7 +788,7 @@ exports.placeOrder = async (req, res, next) => {
     const order = await newOrder.save({ session });
 
     if (!order) {
-      throw new CustomError( "Faild to place order", STATUS_CODES.BAD_REQUEST);
+      throw new CustomError("Faild to place order", STATUS_CODES.BAD_REQUEST);
     }
 
     // save order items, if cart-save cart items and delete the cart, if product-save product to orderItems
@@ -749,7 +815,10 @@ exports.placeOrder = async (req, res, next) => {
 
       // check if all items in the order where inserted to db
       if (insertedOrderItems.length !== orderItems.length) {
-        throw new CustomError("Not all order items were added", STATUS_CODES.CONFLICT);
+        throw new CustomError(
+          "Not all order items were added",
+          STATUS_CODES.CONFLICT
+        );
       }
 
       // delete old cart
@@ -787,7 +856,7 @@ exports.placeOrder = async (req, res, next) => {
       .json({ message: "Order Placed Successfully", redirectUrl });
   } catch (error) {
     await session.abortTransaction();
-    next(error)
+    next(error);
   } finally {
     session.endSession();
   }
@@ -800,7 +869,10 @@ exports.createRazorypayOrder = async (req, res, next) => {
 
   try {
     if (!req.user) {
-      throw new CustomError("User not found in request.", STATUS_CODES.NOT_FOUND);
+      throw new CustomError(
+        "User not found in request.",
+        STATUS_CODES.NOT_FOUND
+      );
     }
 
     const cart = req.cart;
@@ -822,7 +894,7 @@ exports.createRazorypayOrder = async (req, res, next) => {
     res.status(STATUS_CODES.SUCCESS).json({ order });
   } catch (error) {
     await session.abortTransaction();
-    next(error)
+    next(error);
   } finally {
     session.endSession();
   }
@@ -910,7 +982,7 @@ exports.varifyPayment = async (req, res, next) => {
 
       // if order creation faild
       if (!currentOrder) {
-        throw new CustomError( "Faild to place order", STATUS_CODES.BAD_REQUEST);
+        throw new CustomError("Faild to place order", STATUS_CODES.BAD_REQUEST);
       }
 
       // create new order item(s) and save to db
@@ -938,7 +1010,10 @@ exports.varifyPayment = async (req, res, next) => {
 
         // check if all items in the order where inserted to db
         if (insertedOrderItems.length !== orderItems.length) {
-          throw new CustomError( "Not all order items were added", STATUS_CODES.BAD_REQUEST);
+          throw new CustomError(
+            "Not all order items were added",
+            STATUS_CODES.BAD_REQUEST
+          );
         }
 
         // delete old cart
@@ -975,7 +1050,10 @@ exports.varifyPayment = async (req, res, next) => {
             session
           );
           if (!updatedProduct) {
-            throw new CustomError( `Product with ID ${item.productId} is not available`, STATUS_CODES.BAD_REQUEST);
+            throw new CustomError(
+              `Product with ID ${item.productId} is not available`,
+              STATUS_CODES.BAD_REQUEST
+            );
           }
         }
       } else if (req.session.checkoutProductId) {
@@ -986,7 +1064,10 @@ exports.varifyPayment = async (req, res, next) => {
         );
 
         if (!updatedProduct) {
-          throw new CustomError( `Product is not available`, STATUS_CODES.BAD_REQUEST);
+          throw new CustomError(
+            `Product is not available`,
+            STATUS_CODES.BAD_REQUEST
+          );
         }
       }
 
@@ -1007,10 +1088,9 @@ exports.varifyPayment = async (req, res, next) => {
     return res
       .status(responseStatus)
       .json({ message: responseMessage, redirectUrl: redirectUrl || null });
-
   } catch (error) {
     await session.abortTransaction();
-    next(error)
+    next(error);
   } finally {
     session.endSession();
   }

@@ -25,7 +25,9 @@
             <div class="address-section flex-grow-1 overflow-auto content-area">
               <div class="address-head d-flex justify-content-between">
                 <p class="address-title">Select Delivery Address</p>
-                <button id="addAddressBtn" onclick="newAddressClicked()"><i class="fa-solid fa-plus"></i>Add Another Address</button>
+                <button id="addAddressBtn" onclick="newAddressClicked()">
+                  <i class="fa-solid fa-plus"></i>Add Another Address
+                </button>
               </div>
               <div class="address-wrapper mt-3" id="addressContainer">
                 <!-- addres card  -->
@@ -39,8 +41,8 @@
                         <i class="fas fa-phone"></i> +123 456 7890
                       </p>
                       <p class="mb-0">
-                        <i class="fa-solid fa-location-dot"></i> 123 Main Street, City,
-                        Country
+                        <i class="fa-solid fa-location-dot"></i> 123 Main
+                        Street, City, Country
                       </p>
                     </div>
 
@@ -53,63 +55,93 @@
                     </div>
                   </div>
                 </div>
-
               </div>
             </div>
             <div class="price-section">
               <div class="coupon-form">
                 <form id="couponForm">
-                  <div >
-                    <input type="text" name="" id="couponInput" placeholder="Enter coupon code here...">
+                  <div>
+                    <input
+                      type="text"
+                      name=""
+                      id="couponInput"
+                      placeholder="Enter coupon code here..."
+                    />
                     <small class="text-danger" id="couponError"></small>
                   </div>
                   <button type="submit" class="apply-btn">Applay</button>
+                  <button type="button" id="couponBtn" onclick="openCouponModal()">Coupons</button>
                 </form>
                 <small class="text-success mt-2" id="couponOffer"></small>
                 <button class="remove-coupon">Remove Coupon</button>
-
               </div>
 
               <div class="payment-section card shadow">
                 <div class="card p-3 shadow-sm">
-                
                   <div class="d-flex justify-content-between">
                     <p class="mb-1">Total Amount:</p>
                     <p class="mb-1 fw-semibold" id="totalAmount">₹0</p>
                   </div>
-                
+
                   <div class="d-flex justify-content-between">
                     <p class="mb-1">Shipping Fee:</p>
-                    <p class="mb-1 fw-semibold text-success" id="shippingFee">0</p>
+                    <p class="mb-1 fw-semibold text-success" id="shippingFee">
+                      0
+                    </p>
                   </div>
-                
+
                   <div class="d-flex justify-content-between">
                     <p class="mb-1">Discount Applied:</p>
-                    <p class="mb-1 fw-semibold text-danger" id="discountAmount">₹0</p>
+                    <p class="mb-1 fw-semibold text-danger" id="discountAmount">
+                      ₹0
+                    </p>
                   </div>
-                
+
                   <hr />
-                
+
                   <div class="d-flex justify-content-between">
                     <p class="fw-bold">Total Payable:</p>
                     <p class="fw-bold text-primary" id="payableAmount">₹0</p>
                   </div>
                 </div>
-              
 
                 <div class="payment-method mt-4">
                   <p>Select Payment Method</p>
                   <div class="form-check mt-2">
-                    <input class="form-check-input" type="radio" name="paymentMethod" id="cashOnDelivery" value="COD" />
-                    <label class="form-check-label" for="cashOnDelivery">Cash on Delivery</label>
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      name="paymentMethod"
+                      id="cashOnDelivery"
+                      value="COD"
+                    />
+                    <label class="form-check-label" for="cashOnDelivery"
+                      >Cash on Delivery</label
+                    >
                   </div>
                   <div class="form-check mt-2">
-                    <input class="form-check-input" type="radio" name="paymentMethod" id="walletPay" value="Wallet" />
-                    <label class="form-check-label" for="walletPay">Wallet Pay</label>
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      name="paymentMethod"
+                      id="walletPay"
+                      value="Wallet"
+                    />
+                    <label class="form-check-label" for="walletPay"
+                      >Wallet Pay</label
+                    >
                   </div>
                   <div class="form-check mt-2">
-                    <input class="form-check-input" type="radio" name="paymentMethod" id="onlinePayment" value="Online" />
-                    <label class="form-check-label" for="onlinePayment">Online Payment</label>
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      name="paymentMethod"
+                      id="onlinePayment"
+                      value="Online"
+                    />
+                    <label class="form-check-label" for="onlinePayment"
+                      >Online Payment</label
+                    >
                   </div>
                 </div>
 
@@ -117,6 +149,19 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- cusom coupon modal  -->
+      <div class="coupon-modal" style="display: none;">
+        <div class="coupon-container">
+          <h2>Available Coupons</h2>
+          <div class="coupon-list" id="couponsContainer">
+
+            <p class="text-center">Loading...</p>
+
+          </div>
+          <button class="close-btn" onclick="closeModal()">Close</button>
         </div>
       </div>
     </div>
