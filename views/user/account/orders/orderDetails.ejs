@@ -250,7 +250,6 @@
     <script>
       const orderMessage = "<%= orderMessage %>";
       const orderErrorMessage = "<%= orderErrorMessage %>";
-      const couponMessage = "<%= couponMessage %>";
 
       if (orderMessage) {
         toastr.success(orderMessage);
@@ -263,12 +262,6 @@
         });
       }
 
-      if (couponMessage) {
-        toastr.success(couponMessage, "Success", {
-          closeButton: true,
-          timeOut: 5000,
-        });
-      }
     </script>
     <script src="/javascripts/user/orderDetails.js"></script>
   </body>

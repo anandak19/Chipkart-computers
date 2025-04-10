@@ -24,7 +24,6 @@ const {
   calculateCheckoutAmount,
   getDeliveryAddress,
 } = require("../utils/sessionUtils");
-const { addUserCoupon } = require("../utils/couponsManager");
 const Wallet = require("../models/Wallet");
 const WalletTransaction = require("../models/WalletTransaction");
 const { STATUS_CODES } = require("../utils/constants");
@@ -839,14 +838,9 @@ exports.placeOrder = async (req, res, next) => {
       await newOrderItem.save({ session });
     }
 
-    // check if the user got any discount coupon in this order
-    const couponDiscount = await addUserCoupon(order._id, session);
 
     const redirectUrl = `/account/orders/all/ord/${order._id}`;
     req.session.orderMessage = `Order Placed Successfully`;
-    if (couponDiscount) {
-      req.session.couponMessage = `Congratulations! You will get a new coupon in this order`;
-    }
 
     await session.commitTransaction();
 
@@ -1071,14 +1065,9 @@ exports.varifyPayment = async (req, res, next) => {
         }
       }
 
-      const couponDiscount = await addUserCoupon(currentOrder._id, session);
 
       req.session.orderMessage = `Order Placed Successfully`;
       req.session.orderErrorMessage = null;
-
-      if (couponDiscount) {
-        req.session.couponMessage = `Congratulations! You will get a new coupon in this order`;
-      }
 
       responseMessage = "Order Placed Successfully";
       responseStatus = STATUS_CODES.SUCCESS;
