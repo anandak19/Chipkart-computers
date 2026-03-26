@@ -348,6 +348,7 @@ exports.postAdminLogin = async (req, res) => {
     req.session.isAdminLogin = true;
     req.session.email = admin.email;
     req.session.adminId = admin._id;
+    req.flash("activePage", "dashboard")
     res.redirect("/admin");
   } catch (error) {
     console.log(error);
