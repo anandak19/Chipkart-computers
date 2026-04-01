@@ -70,7 +70,13 @@
                     <small class="text-danger" id="couponError"></small>
                   </div>
                   <button type="submit" class="apply-btn">Applay</button>
-                  <button type="button" id="couponBtn" onclick="openCouponModal()">Coupons</button>
+                  <button
+                    type="button"
+                    id="couponBtn"
+                    onclick="openCouponModal()"
+                  >
+                    Coupons
+                  </button>
                 </form>
                 <small class="text-success mt-2" id="couponOffer"></small>
                 <button class="remove-coupon">Remove Coupon</button>
@@ -153,13 +159,11 @@
       </div>
 
       <!-- cusom coupon modal  -->
-      <div class="coupon-modal" style="display: none;">
+      <div class="coupon-modal" style="display: none">
         <div class="coupon-container">
           <h2>Available Coupons</h2>
           <div class="coupon-list" id="couponsContainer">
-
             <p class="text-center">Loading...</p>
-
           </div>
           <button class="close-btn" onclick="closeModal()">Close</button>
         </div>

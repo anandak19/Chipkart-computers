@@ -299,7 +299,7 @@ const placeOrderWithOnline = async (paymentMethod) => {
       const { order } = result;
 
       const options = {
-        key: "rzp_test_ZiDJEpnShu93LF",
+        key: "rzp_test_S6YvspMIUR6SGA",
         amount: order.amount,
         currency: "INR",
         name: "Chipkart",
