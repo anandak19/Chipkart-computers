@@ -55,7 +55,9 @@ label {
   text-align: center;
   border: 1px solid #ccc;
   border-radius: 5px;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .otp-box:focus {
@@ -146,13 +148,53 @@ label {
   background-color: #c0c0c0;
 }
 
+.demo-login {
+  margin-top: 1.5rem;
+
+  padding: 1rem;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  background-color: #fafafa;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+
+  p {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #555;
+    text-align: center;
+  }
+
+  #demo-auth-btn {
+    text-decoration: none;
+    text-align: center;
+
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+
+    background-color: #111827;
+    color: white;
+
+    font-weight: 500;
+
+    transition: background-color 0.2s ease;
+  }
+}
+
+#demo-auth-btn:hover {
+  background-color: #1f2937;
+}
+
 /* loader  */
 button .loader {
   width: 20px;
   height: 20px;
   display: none;
   vertical-align: middle;
-  margin-left: 10px; 
+  margin-left: 10px;
 }
 
 button.loading .loader {
