@@ -12,7 +12,6 @@ function formatPrice(price) {
 const showCartItems = (cartItems) => {
   const cartContainer = document.getElementById("cartContainer");
   cartContainer.innerHTML = "";
-  console.log(cartItems.length);
 
   if (cartItems.length !== 0) {
     cartItems.forEach((item) => {
@@ -81,7 +80,6 @@ const getUserCart = async () => {
     const response = await fetch(url);
     const data = await response.json();
     if (response.ok) {
-      console.log(data);
       showCartItems(data.products);
     } else {
       toastr.warning(data.error, "Warning");
@@ -113,7 +111,6 @@ const getCartTotal = async () => {
 };
 
 async function decreaseQuantity(id) {
-  console.log("decrement: ", id);
   try {
     const response = await fetch("/cart/decrease", {
       method: "PATCH",
@@ -135,7 +132,6 @@ async function decreaseQuantity(id) {
 }
 
 async function increaseQuantity(id) {
-  console.log("increment: ", id);
   try {
     const response = await fetch("/cart/increase", {
       method: "PATCH",
@@ -157,7 +153,6 @@ async function increaseQuantity(id) {
 }
 
 async function removeItem(id) {
-  console.log("remove: ", id);
   try {
     const response = await fetch("/cart/remove", {
       method: "DELETE",

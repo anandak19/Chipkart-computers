@@ -59,7 +59,6 @@ const getAddressInfo = async () => {
   try {
     const response = await fetch("/account/orders/all/ord/info/address");
     const data = await response.json();
-    console.log(data);
     if (response.ok) {
       const { address } = data;
       showAddressInfo(address);
@@ -78,10 +77,7 @@ const getOrderItems = async () => {
     const response = await fetch("/account/orders/all/ord/info/itemes");
     const data = await response.json();
     if (response.ok) {
-      console.log(data);
       showOrderItems(data.items);
-    } else {
-      console.log(data);
     }
   } catch (error) {
     alert("Somthing went wrong");
@@ -95,7 +91,6 @@ const getOrderCoupons = async () => {
     const res = await fetch("/account/orders/all/ord/info/rewards");
     const result = await res.json();
     if (res.ok) {
-      console.log(result);
       const couponDiv = document.getElementById("couponDiv");
       couponDiv.innerHTML = "";
       const couponCard = document.createElement("div");
@@ -202,7 +197,6 @@ retryPayBtn.addEventListener("click", async () => {
     const result = await res.json();
 
     if (res.ok) {
-      console.log("ok res from raxor")
       const { order } = result;
 
       const options = {
@@ -244,7 +238,6 @@ retryPayBtn.addEventListener("click", async () => {
           ondismiss: function () {
             console.warn("Payment popup closed by user");
             if (isPaidSuccessfully) {
-              console.log("reload the page")
               location.reload();
             } else {
               alert("Payment process cancelled. Please try again.");
@@ -261,10 +254,7 @@ retryPayBtn.addEventListener("click", async () => {
       rzp.on("payment.failed", async function (response) {
         if (isFailedPaymentCalled) return;
         isFailedPaymentCalled = true;
-        console.log("payment faild");
-        console.log("faidl respp", response);
 
-        console.log(response.error);
         const varificationRes = await fetch(
           "/account/orders/all/ord/payment/varify",
           {

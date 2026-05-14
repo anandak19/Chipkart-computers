@@ -89,7 +89,6 @@ const getSalesReportData = async (
     }
 
     if (startDate && endDate) {
-      console.log(startDate);
       queryParams.push(`startDateQuery=${startDate}&endDateQuery=${endDate}`);
     }
 
@@ -97,13 +96,11 @@ const getSalesReportData = async (
       url += `?${queryParams.join("&")}`;
     }
 
-    console.log(url);
 
     const res = await fetch(url);
     const result = await res.json();
 
     if (res.ok) {
-      console.log(result);
       showOverview(result.reportOverview);
       // showAllOrders(result.allOrders);
       getAllOrders()
@@ -142,7 +139,6 @@ const getCustomeFilterData = () => {
   const endDateQuery = endDate.value;
 
   if (startDateQuery && endDateQuery) {
-    console.log("geting the val of", startDateQuery, endDateQuery);
     getSalesReportData(null, startDateQuery, endDateQuery);
   }
 };

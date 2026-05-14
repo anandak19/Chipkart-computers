@@ -27,7 +27,6 @@ const getAddressUserInfo = async () => {
   try {
     const response = await fetch("/admin/orders/info");
     const data = await response.json();
-    console.log(data);
     if (response.ok) {
       const { address, user } = data;
       showOrderInfo(user, address);
@@ -185,10 +184,7 @@ const getOrderItems = async () => {
     const response = await fetch("/admin/orders/items");
     const data = await response.json();
     if (response.ok) {
-      console.log(data);
       showOrderItems(data.items);
-    } else {
-      console.log(data);
     }
   } catch (error) {
     alert("Somthing went wrong");

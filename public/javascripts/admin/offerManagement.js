@@ -35,8 +35,6 @@ const showOffers = (offers) => {
               `;
       offerTableBody.appendChild(row);
     });
-  } else {
-    console.log("nop");
   }
 };
 
@@ -92,7 +90,6 @@ async function toggleStatus(offerId) {
     });
     const result = await res.json();
     if (res.ok) {
-      console.log(result.message);
       getAllOffer(page);
     } else {
       console.error(result.error);
@@ -119,7 +116,6 @@ searchForm.addEventListener("submit", (e) => {
   }
 
   if (isValid) {
-    console.log(search);
     getAllOffer(0, search);
   }
 });

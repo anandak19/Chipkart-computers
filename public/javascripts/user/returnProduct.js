@@ -49,7 +49,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       const data = await response.json();
-      console.log(data);
       if (response.ok) {
         toastr.success("Your return request has been submitted successfully!");
         returnDialogModal.style.display = "none";

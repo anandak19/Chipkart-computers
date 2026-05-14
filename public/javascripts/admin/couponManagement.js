@@ -29,8 +29,6 @@ const showCoupons = (coupons) => {
             `;
       couponTableBody.appendChild(row);
     });
-  } else {
-    console.log("nop");
   }
 };
 
@@ -87,7 +85,6 @@ async function toggleStatus(couponId) {
     });
     const result = await res.json();
     if (res.ok) {
-      console.log(result.message);
       getAllCoupons(page);
     } else {
       console.error(result.error);

@@ -27,7 +27,6 @@ const signupValidations = async (req, res, next) => {
 
     // save the user to database 
     const referralCode = req.cookies.referralCode;
-    console.log("referal code got in signup validation", referralCode)
     const savedUser = await createNewUser(name, email, phoneNumber, password, false, referralCode)
     req.user = savedUser
     // ------write this code in the startOtpvarifiction 

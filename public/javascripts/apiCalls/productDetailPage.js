@@ -41,7 +41,6 @@ rateBtn.addEventListener("click", () => {
 
 // reviews related apis
 const showReviews = (reviews) => {
-  console.log(reviews);
   // geting review container
   const reviewsContainer = document.getElementById("reviewsContainer");
   reviewsContainer.innerHTML = "";
@@ -140,7 +139,6 @@ const fetchReviews = async () => {
 
     if (response.ok) {
       const data = await response.json();
-      console.log(data);
 
       if (data.status === "success") {
         const { reviews, totalReviews, hasMore, averageRating } = data.data;

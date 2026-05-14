@@ -13,7 +13,6 @@ require("dotenv").config();
 
 // Geting signup page
 exports.getUserSignup = (req, res) => {
-  console.log("Session userEmail:", req.session.userEmail);
   if (req.session.userEmail && req.session.userId) {
     res.redirect(`/varify-otp/${req.session.userId}`);
   } else {
@@ -141,7 +140,6 @@ exports.validateOtp = async (req, res, next) => {
     user.isVerified = true;
     user.otp = null;
     user.otpExpires = null;
-    console.log("Is verified:", req.session.isVerified);
     await user.save();
 
     return res.status(STATUS_CODES.SUCCESS).json({
@@ -321,7 +319,6 @@ exports.getAdminLogin = (req, res) => {
 exports.postAdminLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log(email, password);
 
     if (!email || !password) {
       req.flash("errorMessage", "Please enter the credentials");
@@ -383,10 +380,8 @@ exports.postForgotPassword = async (req, res, next) => {
     }
 
     const resetToken = crypto.randomBytes(32).toString("hex");
-    console.log(resetToken);
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = Date.now() + 60 * 60 * 1000;
-    console.log(user);
 
     const resetLink = `${process.env.BASE_URL}/reset-password/${resetToken}`;
     const html = `<p>Dear ${user.name},</p><p>Click <a href="${resetLink}">here</a> to reset your password. The link will expire in 1 hour</p>Regards,<br>Chipkart Computers</p>`;
@@ -406,13 +401,11 @@ exports.postForgotPassword = async (req, res, next) => {
 
 // get new password form page
 exports.getNewPasswordPage = async (req, res) => {
-  console.log(req.session.isPasswordUpdated);
   if (!req.session.isPasswordUpdated) {
     try {
       const { token } = req.params;
 
       if (!token) {
-        console.log("Token missing");
         req.flash("error", "Token not found, Please try again");
         return res.redirect("/forgot-password");
       }
@@ -423,7 +416,6 @@ exports.getNewPasswordPage = async (req, res) => {
       });
 
       if (!user) {
-        console.log("Token expired");
         req.flash("error", "Password reset link expired! Please try agin");
         return res.redirect("/forgot-password");
       }
@@ -444,7 +436,6 @@ exports.postNewPassword = async (req, res, next) => {
   try {
     const { token } = req.params;
     const { password, confirmPassword } = req.body;
-    console.log(token);
 
     if (!token) {
       throw new CustomError("Your are not authenticated", STATUS_CODES.BAD_REQUEST);

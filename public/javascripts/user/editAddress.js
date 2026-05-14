@@ -147,7 +147,6 @@ editAddressForm.addEventListener("submit", async(e) => {
   
         serverMessage.classList.remove('text-danger')
         serverMessage.classList.add('text-success')
-        console.log("Address added successfully:", data);
         toastr.success(data.message || "Address added successfully")
       } catch (error) {
         console.error("Error adding address:", error);

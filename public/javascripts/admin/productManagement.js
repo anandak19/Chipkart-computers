@@ -64,7 +64,6 @@ const getAllProducts = async (page = 0, q = "") => {
     const res = await fetch(url);
     const data = await res.json();
     if (res.ok) {
-      console.log(data);
       showProducts(data.productsArray);
       updatePaginators(data.hasMore);
     } else {

@@ -50,7 +50,6 @@ resendOtpBtn.addEventListener("click", async () => {
 
     if(response.ok) {
         const data = await response.json()
-        console.log('otp send: ', data)
         alert("Otp resend successfully")
         localStorage.removeItem("otpStartTime");
         window.location.replace(data.redirectUrl);

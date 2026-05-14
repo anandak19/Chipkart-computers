@@ -57,7 +57,6 @@ cropBtn.addEventListener("click", () => {
   canvas.toBlob((blob) => {
     croppedImages[currentFileIndex] = blob; // Save the cropped image blob in the array
     modal.style.display = "none";
-    console.log(croppedImages);
     document.getElementById(`image${currentFileIndex}`).src =
       URL.createObjectURL(blob);
   }, "image/jpeg");

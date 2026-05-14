@@ -1,5 +1,4 @@
 const wishlistItems = document.querySelector('.wishlist-items-container');
-console.log(wishlistItems)
 // method to show the items in wishlist 
 const showWishlistedItems = (items) => {
     wishlistItems.innerHTML = ''
@@ -8,7 +7,6 @@ const showWishlistedItems = (items) => {
         items.forEach(p => {
             const itemCard = document.createElement('div')
             itemCard.classList.add('wishlist-item')
-            console.log(p)
             itemCard.innerHTML = `
                 <div class="item-details">
     
@@ -44,7 +42,6 @@ async function removeWishlistItem(id) {
   
       const result = await res.json() 
       if (res.ok) {
-        console.log(result)
         location.reload();
       }else{
         alert(result.error)

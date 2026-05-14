@@ -78,14 +78,12 @@ const getOrders = async (page) => {
     const data = await response.json();
 
     if (data.success) {
-      console.log(data.orders);
       renderOrders(data.orders);
       updatePaginators(page, data.hasMore);
     } else {
       alert("Response not ok");
     }
   } catch (error) {
-    console.log(error);
     alert("Internal server error");
   }
 };

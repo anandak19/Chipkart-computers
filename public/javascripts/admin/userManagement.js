@@ -107,10 +107,8 @@ const addEvents = () => {
       const userEmail = e.target.getAttribute("data-user-email");
       const toggleState = toggleBtn.innerText;
       if (toggleState === "Block") {
-        console.log("STart blocking");
         blockUser(userId, userEmail);
       } else if (toggleState === "Unblock") {
-        console.log("start unblock");
         unblockUser(userId)
       } else {
         console.error("Error blocking user");
@@ -156,7 +154,6 @@ const showUsers = (users, totalUsers) => {
     const row = document.createElement("tr");
     row.innerHTML = `No users found`;
     userTable.appendChild(row);
-    console.log("no usrs found");
   }
 };
 
@@ -170,7 +167,6 @@ const updatePaginators = (hasMore) => {
 
 // method to call getUsers api
 const getUsers = async (page = 0, search = "") => {
-  console.log(page)
   try {
     let url = `/admin/users/all?page=${page}`;
     if (search) {
@@ -221,7 +217,6 @@ searchForm.addEventListener('submit', (e) => {
   }
 
   if (isValid) {
-    console.log(search)
     getUsers(0, search)
   }
 })

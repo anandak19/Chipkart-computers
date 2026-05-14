@@ -9,7 +9,6 @@ let search = "";
 const showorders = (orders, totalorders) => {
   orderTable.innerHTML = "";
   if (orders.length > 0 || totalorders > 0) {
-    console.log(orders);
     orders.forEach((order, index) => {
       const row = document.createElement("tr");
 
@@ -51,7 +50,6 @@ const showorders = (orders, totalorders) => {
     const row = document.createElement("tr");
     row.innerHTML = `No orders found`;
     orderTable.appendChild(row);
-    console.log("no Orders found");
   }
 };
 
@@ -101,7 +99,6 @@ const getOrders = async (page = 0, search = "") => {
     let data;
     try {
       data = await response.json();
-      console.log(data);
     } catch (jsonError) {
       console.error("Failed to parse JSON:", jsonError);
       alert("Invalid response from the server");
