@@ -19,7 +19,6 @@ const isAdminLogin = async (req, res, next) => {
 
   const admin = await UserSchema.findById(adminId);
   if (!admin.isAdmin) {
-    console.log("This person is not admin");
     return res.redirect("/admin/login");
   }
 

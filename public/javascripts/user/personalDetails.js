@@ -34,7 +34,6 @@ const getUserDetails = () => {
       return response.json();
     })
     .then((data) => {
-      console.log("User data:", data);
 
       userName.value = data.name;
       email.value = data.email;
@@ -207,7 +206,6 @@ const savePassword = async () => {
         passServerMsg.innerText = data.error;
       }
     } catch (error) {
-      console.log("Error:", error);
       alert("Somthing went wrong");
     }
   }

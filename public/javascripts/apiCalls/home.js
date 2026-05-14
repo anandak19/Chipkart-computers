@@ -138,7 +138,6 @@ const getTopCategories = async () => {
     const res = await fetch('/category/top')
     const data = await res.json()
     if (res.ok) {
-      console.log(data.topCategories)
       categoryWrapper.innerHTML = "";
 
       data.topCategories.forEach((category) => {

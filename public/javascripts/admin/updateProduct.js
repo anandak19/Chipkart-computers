@@ -23,7 +23,6 @@ let currentFileIndex = null;
 imageInputs.forEach((imageInput, index) => {
   imageInput.addEventListener("change", (e) => {
     const file = e.target.files[0];
-    console.log("current image", e.target.files[0]);
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -58,9 +57,7 @@ cropBtn.addEventListener("click", () => {
 
   canvas.toBlob((blob) => {
     croppedImages[currentFileIndex] = blob; // Save the cropped image blob in the array
-    console.log("index of file: ", currentFileIndex);
     modal.style.display = "none";
-    console.log("croped image", croppedImages);
     document.getElementById(`image${currentFileIndex}`).src =
       URL.createObjectURL(blob);
   }, "image/jpeg");
@@ -149,7 +146,6 @@ const loader = document.getElementById("loader");
 // API call to update the product data ---------------------------------------------------------
 if (updateProductBtn) {
   updateProductBtn.addEventListener("click", async () => {
-    console.log(window.productId);
 
     const highlightValues = Array.from(highlights)
       .map((input) => input.value.trim())
@@ -175,7 +171,6 @@ if (updateProductBtn) {
       croppedImages.forEach((imageBlob, index) => {
         formData.append("images", imageBlob, `cropped-image-${index + 1}.jpeg`);
         formData.append(`positions[${index}]`, index + 1);
-        console.log(imageBlob, index + 1);
       });
     }
 

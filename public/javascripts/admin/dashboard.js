@@ -40,7 +40,6 @@ const showTopSelling = (topSellingData, wrapperId) => {
   listContainer.innerHTML = "";
   if (topSellingData.length > 0) {
     topSellingData.forEach((item, index) => {
-      console.log(item)
       const listItem = document.createElement("li");
       listItem.classList.add("list-group-item");
       listItem.innerHTML = `${index + 1}. ${item.name}`;
@@ -71,7 +70,6 @@ const getTopSelling = async () => {
     const res = await fetch("/admin/top-selling");
     const data = await res.json();
     if (res.ok) {
-      console.log(data);
       showTopSelling(data.bestSellingProducts, "bestSellingProducts");
       showTopSelling(data.topCategories, "bestSellingCategory");
       showTopSelling(data.bestSellingBrands, "bestSellingBrands");

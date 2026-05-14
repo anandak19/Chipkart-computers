@@ -1,7 +1,6 @@
 const logoutUser = (req, res) => {
   return new Promise((resolve, reject) => {
     try {
-        console.log(req.cookies)
       // Handle logout for Google-authenticated users
       if (req.isAuthenticated && req.isAuthenticated()) {
         req.logout((err) => {

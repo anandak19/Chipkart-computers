@@ -62,7 +62,6 @@ cropButton.addEventListener("click", () => {
   canvas.toBlob((blob) => {
     croppedImage = blob;
     imageModal.style.display = "none";
-    console.log(croppedImage);
     document.getElementById(`previewImage`).src = URL.createObjectURL(blob);
   }, "image/jpeg");
 });

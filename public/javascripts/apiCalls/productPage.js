@@ -88,7 +88,6 @@ async function fetchProducts() {
   try {
     const response = await fetch("/products/p");
     const { products, total, hasMore } = await response.json();
-    console.log(products[0]);
 
     showProducts(products, total, hasMore);
   } catch (error) {
@@ -112,17 +111,14 @@ const getFilters = () => {
   }
   filters.page = page;
 
-  console.log(filters);
   return filters;
 };
 
 // Function to fetch filtered products
 const applyFilters = async () => {
   const filters = getFilters();
-  console.log(filters);
 
   const queryString = new URLSearchParams(filters).toString();
-  console.log(queryString);
 
   try {
     const response = await fetch(`/products/p?${queryString}`);
@@ -189,13 +185,11 @@ categoryList.addEventListener("click", async (event) => {
     if (!isSelected) {
       selectedCategory.classList.add("category-selected");
       categoryId = selectedCategory.getAttribute("data-id");
-      console.log("Selected Category ID:", categoryId);
       page = 0
       applyFilters();
     } else {
       categoryId = null
       delete filters.categoryId
-      console.log("Category deselected");
       applyFilters(); 
     }
   }
@@ -205,7 +199,6 @@ categoryList.addEventListener("click", async (event) => {
 // for search box input
 searchBox.addEventListener("input", () => {
   if (searchBox.value.trim() === "") {
-    console.log("removed search");
     delete filters.search;
     applyFilters();
   } else {

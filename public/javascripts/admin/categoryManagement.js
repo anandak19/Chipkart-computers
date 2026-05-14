@@ -100,7 +100,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function toggleCategory(categoryId) {
   try {
-    console.log(categoryId);
     const res = await fetch(`/admin/categories/toggle-listed/${categoryId}`, {
       method: "PATCH",
     });

@@ -18,7 +18,6 @@ exports.getHome = (req, res) => {
 
   const referralCode = req.query.ref; 
   if (referralCode) {
-    console.log("Saving the referal code: ", referralCode)
     res.cookie("referralCode", referralCode, {
       maxAge: 24 * 60 * 60 * 1000,
       httpOnly: true,
@@ -276,11 +275,6 @@ exports.getAvailableProducts = async (req, res, next) => {
 
     const total = productCount ? productCount.total : 0;
     const hasMore = skip + products.length < total;
-
-    // console.log("filter is: ", filters);
-    // console.log("sort is:", sort);
-    // console.log("limit is:", limit);
-    // console.log("skip is", skip);
 
     res.status(STATUS_CODES.SUCCESS).json({ products, total, hasMore });
   } catch (error) {

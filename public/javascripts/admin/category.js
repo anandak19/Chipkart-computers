@@ -53,7 +53,6 @@ cropButton.addEventListener("click", () => {
     imageModal.style.display = "none";
     uploadText.style.display = "none";
     previewImage.style.display = "flex";
-    console.log(croppedImage);
     document.getElementById(`previewImage`).src = URL.createObjectURL(blob);
   }, "image/jpeg");
 });

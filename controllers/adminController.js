@@ -691,11 +691,9 @@ exports.getProductForm = (req, res) => {
         });
       })
       .catch((error) => {
-        console.log(error);
         res.redirect("/admin/products");
       });
   } catch (error) {
-    console.log(error);
     res.redirect("/admin/products");
   }
 };
@@ -753,13 +751,11 @@ exports.getEditProductForm = async (req, res) => {
   try {
     const productId = req.params.id;
     if (!productId) {
-      console.log("Id not found");
       return res.redirect("/admin/products");
     }
 
     const product = await ProductSchema.findById(productId);
     if (!product) {
-      console.log("product not found in database");
       return res.redirect("/admin/products");
     }
 
@@ -789,7 +785,6 @@ exports.getEditProductForm = async (req, res) => {
       activePage: "products",
     });
   } catch (error) {
-    console.log(error);
     res.redirect("/admin/products");
   }
 };
@@ -1112,7 +1107,6 @@ exports.getUpdateCategoryForm = async (req, res) => {
       activePage: "categories",
     });
   } catch (error) {
-    console.log(error);
     res.redirect("/admin/categories");
   }
 };
@@ -1309,7 +1303,6 @@ exports.getEditOfferForm = async (req, res) => {
       activePage: "offers",
     });
   } catch (error) {
-    console.log(error);
     res.redirect("/admin/offers");
   }
 };
@@ -1723,7 +1716,6 @@ exports.getAllOrders = async (req, res, next) => {
 
     const matchStage = { paymentStatus: "Paid" };
     if (search) {
-      console.log("Search is", search);
       const query = search.trim();
       matchStage.orderId = { $regex: query, $options: "i" };
     }
@@ -1844,7 +1836,6 @@ exports.renderOrderDetailsPage = async (req, res) => {
       activePage: "orders",
     });
   } catch (error) {
-    console.log(error);
     res.redirect("/orders/all");
   }
 };
@@ -2406,7 +2397,6 @@ exports.getEditCouponForm = async (req, res) => {
       activePage: "coupons",
     });
   } catch (error) {
-    console.log(error);
     res.redirect("/admin/coupons");
   }
 };

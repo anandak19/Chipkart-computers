@@ -626,7 +626,6 @@ exports.downloadInvoice = async (req, res, next) => {
       orderDetails,
     });
 
-    console.log("Generated HTML successfully!");
 
     // Launch Puppeteer
     const browser = await puppeteer.launch({
